@@ -3,7 +3,7 @@ do
   if [ -d "${SUBDIR}" ]
   then
     cd $SUBDIR
-    gradle build
+    ../gradlew build
     cd ..
   fi
 done
