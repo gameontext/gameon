@@ -1,0 +1,19 @@
+player:
+  volumes:
+    - '$HOME:$HOME'
+    - './player/player-wlpcfg/servers/gameon-player:/opt/ibm/wlp/usr/servers/defaultServer'
+
+room:
+  volumes:
+    - '$HOME:$HOME'
+    - './room/room-wlpcfg/servers/gameon-room:/opt/ibm/wlp/usr/servers/defaultServer'
+
+concierge:
+  volumes:
+    - '$HOME:$HOME'
+    - './concierge/concierge-wlpcfg/servers/gameon-concierge:/opt/ibm/wlp/usr/servers/defaultServer'
+
+mediator:
+  volumes:
+    - '$HOME:$HOME'
+    - './mediator/mediator-wlpcfg/servers/gameon-mediator:/opt/ibm/wlp/usr/servers/defaultServer'
