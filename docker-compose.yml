@@ -1,0 +1,58 @@
+webapp:
+ build: webapp
+ ports:
+  - "8080:8080"
+ env_file: gameon.env
+
+player:
+ build: player/player-wlpcfg
+ links:
+  - mongo
+  - concierge
+  - room
+ ports:
+  - "9443:9443"
+ env_file: gameon.env
+
+concierge:
+ build: concierge/concierge-wlpcfg
+ ports:
+  - "9081:9081"
+ env_file: gameon.env
+
+mediator:
+ build: mediator/mediator-wlpcfg
+ ports:
+  - "9086:9086"
+ links:
+  - concierge
+  - room
+ env_file: gameon.env
+
+room:
+ build: room/room-wlpcfg
+ links:
+  - concierge
+ ports:
+  - "9080:9080"
+  - "9445:9445"
+ env_file: gameon.env
+
+mongo:
+ image: mongo:2.4
+ expose:
+  - "27017"
+
+proxy:
+ build: proxy
+ env_file: gameon.env
+ links:
+  - webapp
+  - player
+  - concierge
+  - room
+  - mongo
+ ports:
+  - "80:80"
+  - "443:443"
+  - "1936:1936"
