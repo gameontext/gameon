@@ -27,6 +27,7 @@ mediator:
  links:
   - concierge
   - room
+  - player
  env_file: gameon.env
 
 room:
@@ -52,6 +53,7 @@ proxy:
   - concierge
   - room
   - mongo
+  - mediator
  ports:
   - "80:80"
   - "443:443"
