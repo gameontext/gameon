@@ -33,12 +33,12 @@ If you make code changes, just rerun the build.sh, and the docker-compose build 
 This route requires considerable extra setup.. but offers the advantage that code changes can be immediately reflected in the running containers, eliminating many gradle build, docker-compose build, docker-compose up cycles.. It's not exactly how the eclipse tooling is supposed to be used, but for now, it's the only way to cause eclipse to author us the application xml file that we can use to allow us to run with our code live in the workspace.
 
 Make sure the docker-compose.override.yml file is there (if you renamed it because you ran locally the other way, rename it back now). 
+
 To import the projects into eclipse, run the eclipse.sh (it just runs gradle eclipse eclipsewtp against each subdir, again, when we write the gradle for the root project this will be a bit cleaner). This generates the eclipse project files, allowing the projects to be imported.
 
 Fire up eclipse, and go File->Import->General->Import Existing Projects into Workspace
 Select the gameon directory created by the git clone operation.
 Tick the 'search for nested projects' button.
-If you see app-common listed twice, untick one of them, this is temporary, and we'll be fixing this soon.
 
 This should result in a collection of projects being imported to the workspace.
 
