@@ -15,16 +15,23 @@ then
   rm -f keystore/public.crt
 fi
 
-if [ -z "${DOCKER_MACHINE_NAME+xxx}" ]
+# Support environments with docker-machine
+# For base linux users, 127.0.0.1 is fine, but w/ docker-machine we need to
+# use the host ip instead. So we'll generate an over-ridden env file that
+# will get passed/copied properly into the target servers
+name=${DOCKER_MACHINE_NAME-empty}
+if [ "$name" == "empty" ]
 then
   echo "DOCKER_MACHINE_NAME is not set. To avoid warning messages, you might set this to ''."
-elif [ -n $DOCKER_MACHINE_NAME ]
+elif [ -n $name ]
 then
-  if [ ! -f gameon.${DOCKER_MACHINE_NAME}env ]
+  if [ ! -f gameon.${name}env ]
   then
-      IP=$(docker-machine ip $DOCKER_MACHINE_NAME)
-      echo $IP
-      sed -e "s#127.\0.\0\.1#${IP}#g" gameon.env > gameon.${DOCKER_MACHINE_NAME}env
+      IP=$(docker-machine ip $name)
+    echo "Creating new environment file gameon.${name}env to contain environment variable overrides.
+This file will use the docker host ip address ($IP). 
+When the docker containers are up, use https://$IP/ to connect to the game."
+    sed -e "s#127.\0.\0\.1#${IP}#g" gameon.env > gameon.${name}env
   fi
 fi
 
