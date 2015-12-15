@@ -9,9 +9,11 @@ git clone --recursive git@github.com:gameontext/gameon.git
 cd gameon
 ```
 
-Build the projects with gradle. (Note this just runs gradle build against each subdir, until we write some gradle in the root project for a cleaner solution)
+Build the projects with gradle. (Note this just runs gradle build against each subdir, until we write some gradle in the root project for a cleaner solution) 
+And build the keystores player/mediator will use.
 ```
 ./build.sh
+./keystore.sh
 ```
 Now we build the docker containers with docker-compose.
 
