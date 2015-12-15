@@ -2,33 +2,37 @@ webapp:
  build: webapp
  ports:
   - "8080:8080"
- env_file: gameon.env
+ env_file: gameon.${DOCKER_MACHINE_NAME}env
 
 player:
  build: player/player-wlpcfg
+ volumes: 
+  - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
  links:
   - mongo
   - concierge
   - room
  ports:
   - "9443:9443"
- env_file: gameon.env
+ env_file: gameon.${DOCKER_MACHINE_NAME}env
 
 concierge:
  build: concierge/concierge-wlpcfg
  ports:
   - "9081:9081"
- env_file: gameon.env
+ env_file: gameon.${DOCKER_MACHINE_NAME}env
 
 mediator:
  build: mediator/mediator-wlpcfg
+ volumes:
+  - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
  ports:
   - "9086:9086"
  links:
   - concierge
   - room
   - player
- env_file: gameon.env
+ env_file: gameon.${DOCKER_MACHINE_NAME}env
 
 room:
  build: room/room-wlpcfg
@@ -37,7 +41,7 @@ room:
  ports:
   - "9080:9080"
   - "9445:9445"
- env_file: gameon.env
+ env_file: gameon.${DOCKER_MACHINE_NAME}env
 
 mongo:
  image: mongo:2.4
@@ -46,7 +50,7 @@ mongo:
 
 proxy:
  build: proxy
- env_file: gameon.env
+ env_file: gameon.${DOCKER_MACHINE_NAME}env
  links:
   - webapp
   - player
