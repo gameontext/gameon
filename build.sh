@@ -20,7 +20,7 @@ fi
 # use the host ip instead. So we'll generate an over-ridden env file that
 # will get passed/copied properly into the target servers
 name=${DOCKER_MACHINE_NAME-empty}
-if [ "$name" == "empty" ]
+if [ "$name" = "empty" ]
 then
   echo "DOCKER_MACHINE_NAME is not set. To avoid warning messages, you might set this to ''."
 elif [ -n $name ]
