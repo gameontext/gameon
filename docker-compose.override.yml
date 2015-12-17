@@ -21,3 +21,7 @@ mediator:
     - '$HOME:$HOME'
     - './mediator/mediator-wlpcfg/servers/gameon-mediator:/opt/ibm/wlp/usr/servers/defaultServer'
     - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
+
+webapp:
+  volumes:
+    - './webapp/src:/opt/www'
