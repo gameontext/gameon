@@ -1,5 +1,7 @@
+#!/bin/sh
+
 for SUBDIR in *
-do 
+do
   if [ -d "${SUBDIR}" ] && [ -e "${SUBDIR}/build.gradle" ]
   then
     cd $SUBDIR
