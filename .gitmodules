@@ -28,3 +28,6 @@
 [submodule "gitbook"]
 	path = gitbook
 	url = git@github.com:gameontext/gameon-gitbook.git
+[submodule "map"]
+	path = map
+	url = git@github.com:gameontext/gameon-map.git
