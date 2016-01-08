@@ -16,6 +16,12 @@ concierge:
     - './concierge/concierge-wlpcfg/servers/gameon-concierge:/opt/ibm/wlp/usr/servers/defaultServer'
     - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
 
+map:
+  volumes:
+    - '$HOME:$HOME'
+    - './map/map-wlpcfg/servers/gameon-map:/opt/ibm/wlp/usr/servers/defaultServer'
+    - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
+
 mediator:
   volumes:
     - '$HOME:$HOME'

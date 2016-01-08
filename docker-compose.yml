@@ -20,7 +20,21 @@ concierge:
  build: concierge/concierge-wlpcfg
  ports:
   - "9081:9081"
+  - "9444:9444"
  env_file: gameon.${DOCKER_MACHINE_NAME}env
+
+map:
+ build: map/map-wlpcfg
+ links:
+  - map_couchdb
+ ports:
+  - "9447:9447"
+ env_file: gameon.${DOCKER_MACHINE_NAME}env
+
+map_couchdb:
+ image: klaemo/couchdb:latest
+ expose:
+  - "5984"
 
 mediator:
  build: mediator/mediator-wlpcfg
@@ -28,6 +42,7 @@ mediator:
   - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
  ports:
   - "9086:9086"
+  - "9446:9446"
  links:
   - concierge
   - room
