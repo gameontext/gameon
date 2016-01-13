@@ -43,6 +43,14 @@ do
   fi
 done
 
+CHCON=`which chcon`
+if [ -f ${CHCON} ]
+then 
+  echo ""
+  echo "SELinux detected, adding svirt_sandbox_file_t to keystore dir"
+  chcon -Rt svirt_sandbox_file_t ./keystore
+fi
+
 echo "
 If all of that went well, remember to re-spin your docker containers:
  docker-compose build
