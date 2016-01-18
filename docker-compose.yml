@@ -25,10 +25,12 @@ concierge:
 
 map:
  build: map/map-wlpcfg
+ volumes: 
+  - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
  links:
   - map_couchdb
  ports:
-  - "9447:9447"
+  - "9447:9443"
  env_file: gameon.${DOCKER_MACHINE_NAME}env
 
 map_couchdb:
@@ -72,6 +74,7 @@ proxy:
   - concierge
   - room
   - mongo
+  - map
   - mediator
  ports:
   - "80:80"
