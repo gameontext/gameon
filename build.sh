@@ -43,9 +43,11 @@ do
   fi
 done
 
-CHCON=`which chcon`
-if [ -f ${CHCON} ]
-then 
+#check for selinux by looking for chcon and sestatus.. 
+#needed for fedora else the keystore dirs cannot be mapped in by 
+#docker-compose volume mapping
+if [ -x "$(type -P chcon)" ] && [ -x "$(type -P sestatus)" ]
+then
   echo ""
   echo "SELinux detected, adding svirt_sandbox_file_t to keystore dir"
   chcon -Rt svirt_sandbox_file_t ./keystore
