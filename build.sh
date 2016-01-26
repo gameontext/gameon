@@ -39,7 +39,13 @@ do
   then
     cd $SUBDIR
     ../gradlew build
+    rc=$?
     cd ..
+    if [ $rc != 0 ] 
+    then
+      echo Gradle build failed. Please investigate, GameOn is unlikely to work until the issue is resolved.
+      exit 1
+    fi
   fi
 done
 

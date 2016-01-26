@@ -9,15 +9,17 @@ player:
  volumes: 
   - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
  links:
-  - mongo
-  - concierge
-  - room
+  - couchdb 
  ports:
   - "9443:9443"
  env_file: gameon.${DOCKER_MACHINE_NAME}env
 
 concierge:
  build: concierge/concierge-wlpcfg
+ volumes: 
+  - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
+ links:
+  - player
  ports:
   - "9081:9081"
   - "9444:9444"
@@ -28,12 +30,12 @@ map:
  volumes: 
   - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
  links:
-  - map_couchdb
+  - couchdb
  ports:
   - "9447:9443"
  env_file: gameon.${DOCKER_MACHINE_NAME}env
 
-map_couchdb:
+couchdb:
  image: klaemo/couchdb:latest
  expose:
   - "5984"
@@ -60,11 +62,6 @@ room:
   - "9445:9445"
  env_file: gameon.${DOCKER_MACHINE_NAME}env
 
-mongo:
- image: mongo:2.4
- expose:
-  - "27017"
-
 proxy:
  build: proxy
  env_file: gameon.${DOCKER_MACHINE_NAME}env
@@ -73,7 +70,6 @@ proxy:
   - player
   - concierge
   - room
-  - mongo
   - map
   - mediator
  ports:
