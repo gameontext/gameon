@@ -31,3 +31,7 @@ mediator:
 webapp:
   volumes:
     - './webapp/src:/opt/www'
+
+couchdb:
+  ports:
+  - "5984:5984"
