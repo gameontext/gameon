@@ -1,0 +1,14 @@
+#!/bin/bash
+
+CONTAINERS=$(docker ps -a | grep gameon_dev_etcd0)
+if [ -n "$CONTAINERS" ]; then
+  docker stop -t 0 gameon_dev_etcd0
+  docker rm gameon_dev_etcd0
+fi
+
+docker run -d \
+  --name=gameon_dev_etcd0 \
+  -e "ETCD_NAME=gameon_dev_etcd0" \
+  -p 2379 \
+  --volume=gameon_dev_etcd0_data:/data \
+  registry.eu-gb.bluemix.net/gameontext/gameon-etcd:v2.2.4
