@@ -13,6 +13,7 @@ ENV __ETCD_VERSION 2.2.4
 RUN apk --update add curl && \
         curl -sSL https://github.com/coreos/etcd/releases/download/v$__ETCD_VERSION/etcd-v$__ETCD_VERSION-linux-amd64.tar.gz | tar -zx -C /tmp -f - && \
         mv /tmp/etcd-v$__ETCD_VERSION-linux-amd64/etcd /usr/bin/etcd && \
+        mv tmp/etcd-v$__ETCD_VERSION-linux-amd64/etcdctl /usr/bin/etcdctl && \
         rm -rf /tmp/etcd-v$__ETCD_VERSION-linux-amd64 && \
         mkdir /data && \
         mkdir /data.wal
