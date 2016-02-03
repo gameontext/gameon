@@ -32,6 +32,7 @@ map:
  links:
   - couchdb
  ports:
+  - "9099:9090"
   - "9447:9443"
  env_file: gameon.${DOCKER_MACHINE_NAME}env
 
@@ -51,6 +52,7 @@ mediator:
   - concierge
   - room
   - player
+  - map
  env_file: gameon.${DOCKER_MACHINE_NAME}env
 
 room:
