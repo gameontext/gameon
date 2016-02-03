@@ -6,28 +6,28 @@ webapp:
 
 player:
  build: player/player-wlpcfg
- volumes: 
+ volumes:
   - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
  links:
-  - couchdb 
+  - couchdb
  ports:
   - "9443:9443"
  env_file: gameon.${DOCKER_MACHINE_NAME}env
 
 concierge:
  build: concierge/concierge-wlpcfg
- volumes: 
+ volumes:
   - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
  links:
   - player
  ports:
-  - "9081:9081"
-  - "9444:9444"
+  - "9081:9080"
+  - "9444:9443"
  env_file: gameon.${DOCKER_MACHINE_NAME}env
 
 map:
  build: map/map-wlpcfg
- volumes: 
+ volumes:
   - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
  links:
   - couchdb
