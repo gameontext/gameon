@@ -1,0 +1,3 @@
+#!/bin/sh
+
+docker build -t gameon-etcd:v2.2.4 .
