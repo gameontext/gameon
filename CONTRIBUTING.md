@@ -1,18 +1,20 @@
 # Contributing to Game On!
 
-We welcome contributions but request that you follow these guidelines.
+## Pull requests are always welcome
 
-## Bugs
+We are always thrilled to receive pull requests, and do our best to process them as fast as possible. Not sure if that typo is worth a pull request? Do it! We will appreciate it.
 
-Please raise any bug reports on the (respective) project's issue tracker. A search for existing issues is appreciated. 
+If your pull request is not accepted on the first try, don't be discouraged! If there's a problem with the implementation, hopefully you received feedback on what to improve.
 
-A good bug report is one that make it easy for us to understand what you were trying to do and what went wrong. Also, provide as much context as possible so we can try to recreate the issue.
+## Create issues...
 
-## New features
+Any significant improvement should be documented as a GitHub issue before anybody starts working on it.
 
-Please raise any new feature requests on the project's issue tracker.
+### ...but check for existing issues first!
 
-## Coding standards
+Please take a moment to check that an issue doesn't already exist documenting your bug report or improvement proposal. If it does, it never hurts to add a quick "+1" or "I have this problem too". This will help prioritize the most common problems and requests.
+
+## Coding standards and Conventions
 
 There are a few different projects in the repo, in a few different languages. Most have .editorconfig files. Java projects built with Gradle include changes to eclipse project settings for consistent formatting of Java files.
 
