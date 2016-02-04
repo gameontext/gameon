@@ -11,6 +11,7 @@ player:
  links:
   - couchdb
  ports:
+  - "9082:9080"
   - "9443:9443"
  env_file: gameon.${DOCKER_MACHINE_NAME}env
 
@@ -32,7 +33,7 @@ map:
  links:
   - couchdb
  ports:
-  - "9099:9090"
+  - "9099:9080"
   - "9447:9443"
  env_file: gameon.${DOCKER_MACHINE_NAME}env
 
@@ -46,8 +47,8 @@ mediator:
  volumes:
   - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
  ports:
-  - "9086:9086"
-  - "9446:9446"
+  - "9086:9080"
+  - "9446:9443"
  links:
   - concierge
   - room
@@ -61,7 +62,7 @@ room:
   - concierge
  ports:
   - "9080:9080"
-  - "9445:9445"
+  - "9445:9443"
  env_file: gameon.${DOCKER_MACHINE_NAME}env
 
 proxy:
