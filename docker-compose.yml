@@ -15,17 +15,6 @@ player:
   - "9443:9443"
  env_file: gameon.${DOCKER_MACHINE_NAME}env
 
-concierge:
- build: concierge/concierge-wlpcfg
- volumes:
-  - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
- links:
-  - player
- ports:
-  - "9081:9080"
-  - "9444:9443"
- env_file: gameon.${DOCKER_MACHINE_NAME}env
-
 map:
  build: map/map-wlpcfg
  volumes:
@@ -50,8 +39,8 @@ mediator:
   - "9086:9080"
   - "9446:9443"
  links:
-  - concierge
   - room
+  - simpleroom
   - player
   - map
  env_file: gameon.${DOCKER_MACHINE_NAME}env
@@ -59,10 +48,18 @@ mediator:
 room:
  build: room/room-wlpcfg
  links:
-  - concierge
+  - map
  ports:
   - "9080:9080"
   - "9445:9443"
+ env_file: gameon.${DOCKER_MACHINE_NAME}env
+
+simpleroom:
+ build: simpleroom/simpleroom-wlpcfg
+ links:
+  - map
+ ports:
+  - "9090:9080"
  env_file: gameon.${DOCKER_MACHINE_NAME}env
 
 proxy:
@@ -71,7 +68,6 @@ proxy:
  links:
   - webapp
   - player
-  - concierge
   - room
   - map
   - mediator
