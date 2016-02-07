@@ -10,12 +10,6 @@ room:
     - './room/room-wlpcfg/servers/gameon-room:/opt/ibm/wlp/usr/servers/defaultServer'
     - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
 
-concierge:
-  volumes:
-    - '$HOME:$HOME'
-    - './concierge/concierge-wlpcfg/servers/gameon-concierge:/opt/ibm/wlp/usr/servers/defaultServer'
-    - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
-
 map:
   volumes:
     - '$HOME:$HOME'
