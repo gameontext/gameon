@@ -17,8 +17,8 @@ then
     echo "Creating new environment file gameon.${NAME}env to contain environment variable overrides.
 This file will use the docker host ip address ($IP).
 When the docker containers are up, use https://$IP/ to connect to the game."
-    sed -e "s#127.\0.\0\.1#${IP}#g" gameon.env > gameon.${NAME}env
   fi
+  sed -e "s#127.\0.\0\.1#${IP}#g" gameon.env > gameon.${NAME}env
 fi
 
 # If the keystore directory doesn't exist, then we should generate
