@@ -21,6 +21,7 @@ map:
   - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
  links:
   - couchdb
+  - player
  ports:
   - "9099:9080"
   - "9447:9443"
