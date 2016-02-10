@@ -15,8 +15,7 @@ RUN apk --update add curl && \
         mv /tmp/etcd-v$__ETCD_VERSION-linux-amd64/etcd /usr/bin/etcd && \
         mv tmp/etcd-v$__ETCD_VERSION-linux-amd64/etcdctl /usr/bin/etcdctl && \
         rm -rf /tmp/etcd-v$__ETCD_VERSION-linux-amd64 && \
-        mkdir /data && \
-        mkdir /data.wal
+        mkdir /data
 
 EXPOSE      2379 2380 4001 7001
 
