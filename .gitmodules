@@ -34,3 +34,6 @@
 [submodule "simpleroom"]
 	path = simpleroom
 	url = git@github.com:gameontext/gameon-simpleroom.git
+[submodule "sweep"]
+	path = sweep
+	url = git@github.com:gameontext/gameon-sweep.git
