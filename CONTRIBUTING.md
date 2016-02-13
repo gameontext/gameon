@@ -20,18 +20,57 @@ There are a few different projects in the repo, in a few different languages. Mo
 
 In general, uses spaces, not tabs. 4 spaces for Java, and 2 spaces for just about everything else. Opening braces should be on the same line, with the closing brace on its own line, unless the block is empty or for else clauses.
 
-### Contributor License Agreement
 
-In order for us to accept pull requests, the contributor must complete
-a Contributor License Agreement (CLA). This clarifies the intellectual 
-property license granted with any contribution. It is for your protection as a 
-Contributor as well as the protection of IBM and its customers; it does not 
-change your rights to use your own Contributions for any other purpose.
+### Sign your work
 
-You can download the CLAs here:
+The sign-off is a simple line at the end of the commit message
+which certifies that you wrote it or otherwise have the right to
+pass it on as an open-source patch.  The rules are pretty simple: if you
+can certify the below (from [developercertificate.org](http://developercertificate.org/)):
+```
+Developer Certificate of Origin
+Version 1.1
 
- - [individual](http://wasdev.github.io/legal/wasdev-cla-individual.pdf)
- - [corporate](http://wasdev.github.io/legal/wasdev-cla-corporate.pdf)
+Copyright (C) 2004, 2006 The Linux Foundation and its contributors.
+660 York Street, Suite 102,
+San Francisco, CA 94110 USA
 
-If you are an IBMer, please contact us directly as the contribution process is
-slightly different.
+Everyone is permitted to copy and distribute verbatim copies of this
+license document, but changing it is not allowed.
+
+
+Developer's Certificate of Origin 1.1
+
+By making a contribution to this project, I certify that:
+
+(a) The contribution was created in whole or in part by me and I
+    have the right to submit it under the open source license
+    indicated in the file; or
+
+(b) The contribution is based upon previous work that, to the best
+    of my knowledge, is covered under an appropriate open source
+    license and I have the right under that license to submit that
+    work with modifications, whether created in whole or in part
+    by me, under the same open source license (unless I am
+    permitted to submit under a different license), as indicated
+    in the file; or
+
+(c) The contribution was provided directly to me by some other
+    person who certified (a), (b) or (c) and I have not modified
+    it.
+
+(d) I understand and agree that this project and the contribution
+    are public and that a record of the contribution (including all
+    personal information I submit with it, including my sign-off) is
+    maintained indefinitely and may be redistributed consistent with
+    this project or the open source license(s) involved.
+```
+
+then you just add a line to end of the git commit message:
+
+    Signed-off-by: Joe Smith <joe.smith@email.com>
+
+using your real name. Sorry, no pseudonyms or anonymous contributions.
+
+Many Git UI tools have support for adding the `Signed-off-by` line to the end of your commit
+message. This line can be automatically added by the `git commit` command by using the `-s` option.
