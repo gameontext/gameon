@@ -1,0 +1,8 @@
+allprojects {
+    group = 'org.gameon'
+    version = '1.0'
+
+    repositories {
+        mavenCentral()
+    }
+}
