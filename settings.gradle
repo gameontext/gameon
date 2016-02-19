@@ -1,0 +1,18 @@
+rootProject.name = 'gameon'
+
+include 'player:player-app'
+include 'player:player-wlpcfg'
+include 'map:map-app'
+include 'map:map-wlpcfg'
+include 'room:room-app'
+include ':app-common'
+project(':app-common').projectDir = new File('room/app-common')
+include 'room:room-wlpcfg'
+include 'mediator:mediator-app'
+include 'mediator:mediator-wlpcfg'
+include 'simpleroom:simpleroom-app'
+include 'simpleroom:simpleroom-wlfcfg'
+include 'sweep:sweep-app'
+include 'sweep:sweep-wlpcfg'
+include 'webapp'
+
