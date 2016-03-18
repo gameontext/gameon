@@ -38,8 +38,7 @@ If you run on an operating system that uses a host VM for docker images (e.g. Wi
 If you prefer a top-down-republish approach, rename `docker-compose.override.yml` to `docker-compose.override.yml.backup` to skip mounting volumes. Re-run `build.sh` and the docker-compose build steps to publish the updates.
 
 ### Iterative development of Java applications with WDT
-
-We highly recommend using WDT to work with the Java services contained in the sample. Going along with the incremental publish support provided by the `docker-compose-override.yml` file, there is some (one time) [configuration required to make WDT happy with the docker-hosted applications](https://gameontext.gitbooks.io/gameon-gitbook/content/getting-started/eclipse_and_wdt.html).
+We highly recommend using WebSphere Developer Tools (WDT) to work with the Java services contained in the sample. Going along with the incremental publish support provided by the `docker-compose-override.yml` file, there is some (one time) [configuration required to make WDT happy with the docker-hosted applications](https://gameontext.gitbooks.io/gameon-gitbook/content/getting-started/eclipse_and_wdt.html).
 
 ## Contributing
 
