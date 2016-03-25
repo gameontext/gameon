@@ -1,6 +1,3 @@
-[submodule "concierge"]
-	path = concierge
-	url = git@github.com:gameontext/gameon-concierge.git
 [submodule "logstash"]
 	path = logstash
 	url = git@github.com:gameontext/gameon-logstash.git
