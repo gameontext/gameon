@@ -4,6 +4,9 @@
 [submodule "gitbook"]
 	path = gitbook
 	url = https://github.com/gameontext/gameon-gitbook.git
+[submodule "logstash"]
+	path = logstash
+	url = https://github.com/gameontext/gameon-logstash.git
 [submodule "player"]
 	path = player
 	url = https://github.com/gameontext/gameon-player.git
