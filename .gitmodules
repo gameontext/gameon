@@ -1,6 +1,9 @@
 [submodule "mediator"]
 	path = mediator
 	url = https://github.com/gameontext/gameon-mediator.git
+[submodule "gitbook"]
+	path = gitbook
+	url = https://github.com/gameontext/gameon-gitbook.git
 [submodule "player"]
 	path = player
 	url = https://github.com/gameontext/gameon-player.git
