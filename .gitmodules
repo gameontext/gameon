@@ -1,27 +1,27 @@
 [submodule "mediator"]
 	path = mediator
-	url = https://github.com:gameontext/gameon-mediator.git
+	url = https://github.com/gameontext/gameon-mediator.git
 [submodule "player"]
 	path = player
-	url = https://github.com:gameontext/gameon-player.git
+	url = https://github.com/gameontext/gameon-player.git
 [submodule "proxy"]
 	path = proxy
-	url = https://github.com:gameontext/gameon-proxy.git
+	url = https://github.com/gameontext/gameon-proxy.git
 [submodule "room"]
 	path = room
-	url = https://github.com:gameontext/gameon-room.git
+	url = https://github.com/gameontext/gameon-room.git
 [submodule "room-nodejs"]
 	path = room-nodejs
-	url = https://github.com:gameontext/gameon-room-nodejs.git
+	url = https://github.com/gameontext/gameon-room-nodejs.git
 [submodule "swagger"]
 	path = swagger
-	url = https://github.com:gameontext/gameon-swagger.git
+	url = https://github.com/gameontext/gameon-swagger.git
 [submodule "webapp"]
 	path = webapp
-	url = https://github.com:gameontext/gameon-webapp.git
+	url = https://github.com/gameontext/gameon-webapp.git
 [submodule "map"]
 	path = map
-	url = https://github.com:gameontext/gameon-map.git
+	url = https://github.com/gameontext/gameon-map.git
 [submodule "simpleroom"]
 	path = simpleroom
-	url = https://github.com:gameontext/gameon-simpleroom.git
+	url = https://github.com/gameontext/gameon-simpleroom.git
