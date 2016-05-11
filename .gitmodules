@@ -10,9 +10,6 @@
 [submodule "room"]
 	path = room
 	url = https://github.com/gameontext/gameon-room.git
-[submodule "room-nodejs"]
-	path = room-nodejs
-	url = https://github.com/gameontext/gameon-room-nodejs.git
 [submodule "swagger"]
 	path = swagger
 	url = https://github.com/gameontext/gameon-swagger.git
