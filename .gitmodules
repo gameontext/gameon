@@ -19,6 +19,3 @@
 [submodule "map"]
 	path = map
 	url = https://github.com/gameontext/gameon-map.git
-[submodule "simpleroom"]
-	path = simpleroom
-	url = https://github.com/gameontext/gameon-simpleroom.git
