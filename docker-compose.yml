@@ -41,7 +41,6 @@ mediator:
   - "9446:9443"
  links:
   - room
-  - simpleroom
   - player
   - map
  env_file: gameon.${DOCKER_MACHINE_NAME}env
@@ -53,14 +52,6 @@ room:
  ports:
   - "9080:9080"
   - "9445:9443"
- env_file: gameon.${DOCKER_MACHINE_NAME}env
-
-simpleroom:
- build: simpleroom/simpleroom-wlpcfg
- links:
-  - map
- ports:
-  - "9090:9080"
  env_file: gameon.${DOCKER_MACHINE_NAME}env
 
 proxy:
