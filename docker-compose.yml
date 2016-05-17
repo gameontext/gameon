@@ -67,3 +67,22 @@ proxy:
   - "80:80"
   - "443:443"
   - "1936:1936"
+
+zookeeper:
+ container_name: zookeeper
+ image: "wurstmeister/zookeeper"
+ ports:
+   - "2181:2181"
+
+kafka:
+ container_name: kafka
+ image: "cantireinnovations/kafka:0.9.0.0"
+ environment:
+  KAFKA_BROKER_ID: 1
+  KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+  KAFKA_ZOOKEEPER_SESSION_TIMEOUT_MS: 1000
+ ports:
+  - "9092:9092"
+  - "7080:7080"
+ links:
+ - "zookeeper:zookeeper"
