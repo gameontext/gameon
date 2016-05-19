@@ -49,6 +49,7 @@ room:
  build: room/room-wlpcfg
  links:
   - map
+  - kafka
  ports:
   - "9080:9080"
   - "9445:9443"
