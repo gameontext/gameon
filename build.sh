@@ -41,7 +41,7 @@ do
     ../gradlew build
     rc=$?
     cd ..
-    if [ $rc != 0 ] 
+    if [ $rc != 0 ]
     then
       echo Gradle build failed. Please investigate, GameOn is unlikely to work until the issue is resolved.
       exit 1
@@ -49,8 +49,8 @@ do
   fi
 done
 
-#check for selinux by looking for chcon and sestatus.. 
-#needed for fedora else the keystore dirs cannot be mapped in by 
+#check for selinux by looking for chcon and sestatus..
+#needed for fedora else the keystore dirs cannot be mapped in by
 #docker-compose volume mapping
 if [ -x "$(type -P chcon)" ] && [ -x "$(type -P sestatus)" ]
 then
@@ -61,7 +61,7 @@ fi
 
 echo "
 If all of that went well, remember to re-spin your docker containers:
- docker-compose build
+ docker-compose pull
  docker-compose up
 
 The game will be running at https://${IP}/ when you're all done."
