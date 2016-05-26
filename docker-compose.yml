@@ -1,11 +1,13 @@
 webapp:
- build: webapp
+ # build: webapp
+ image: gameontext/gameon-webapp
  ports:
   - "8080:8080"
  env_file: gameon.${DOCKER_MACHINE_NAME}env
 
 player:
- build: player/player-wlpcfg
+ # build: player/player-wlpcfg
+ image: gameontext/gameon-player
  volumes:
   - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
  links:
@@ -16,7 +18,8 @@ player:
  env_file: gameon.${DOCKER_MACHINE_NAME}env
 
 map:
- build: map/map-wlpcfg
+ # build: map/map-wlpcfg
+ image: gameontext/gameon-map
  volumes:
   - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
  links:
@@ -33,7 +36,8 @@ couchdb:
   - "5984"
 
 mediator:
- build: mediator/mediator-wlpcfg
+ # build: mediator/mediator-wlpcfg
+ image: gameontext/gameon-mediator
  volumes:
   - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
  ports:
@@ -46,7 +50,8 @@ mediator:
  env_file: gameon.${DOCKER_MACHINE_NAME}env
 
 room:
- build: room/room-wlpcfg
+ # build: room/room-wlpcfg
+ image: gameontext/gameon-room
  links:
   - map
   - kafka
@@ -56,7 +61,8 @@ room:
  env_file: gameon.${DOCKER_MACHINE_NAME}env
 
 proxy:
- build: proxy
+ # build: proxy
+ image: gameontext/gameon-proxy
  env_file: gameon.${DOCKER_MACHINE_NAME}env
  links:
   - webapp
