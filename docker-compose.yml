@@ -75,6 +75,14 @@ proxy:
   - "443:443"
   - "1936:1936"
 
+kafkaviewer:
+ build: kafkaviewer/kafkaviewer-wlpcfg
+ env_file: gameon.${DOCKER_MACHINE_NAME}env
+ links:
+  - kafka
+ ports:
+  - "7080:7080"
+
 zookeeper:
  container_name: zookeeper
  image: "wurstmeister/zookeeper"
@@ -84,12 +92,13 @@ zookeeper:
 kafka:
  container_name: kafka
  image: "cantireinnovations/kafka:0.9.0.0"
+ restart: always
  environment:
   KAFKA_BROKER_ID: 1
   KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
   KAFKA_ZOOKEEPER_SESSION_TIMEOUT_MS: 1000
+  KAFKA_CREATE_TOPICS: "gameon:1:1,playerEvents:1:1,siteEvents:1:1"
  ports:
   - "9092:9092"
-  - "7080:7080"
  links:
  - "zookeeper:zookeeper"
