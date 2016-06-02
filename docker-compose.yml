@@ -75,14 +75,6 @@ proxy:
   - "443:443"
   - "1936:1936"
 
-kafkaviewer:
- build: kafkaviewer/kafkaviewer-wlpcfg
- env_file: gameon.${DOCKER_MACHINE_NAME}env
- links:
-  - kafka
- ports:
-  - "7080:7080"
-
 zookeeper:
  container_name: zookeeper
  image: "wurstmeister/zookeeper"
