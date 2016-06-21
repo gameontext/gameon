@@ -1,6 +1,6 @@
 # gameon: The Root Repository / Quick start developers guide.
 
-This is the TL;DR version. For more details/background/links, see: [Getting Started (GitBook)](https://gameontext.gitbooks.io/gameon-gitbook/content/getting-started/index.html)
+This is the TL;DR version. For more details/background/links, see: [Getting Started (GitBook)](https://gameontext.gitbooks.io/gameon-gitbook/content/)
 
 Obtain the source (SSH preferred, works better with submodules)
 ```
