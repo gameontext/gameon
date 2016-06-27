@@ -15,7 +15,7 @@ Build/initialize the projects (includes building wars and creating keystores req
 
 Now we build the docker containers with docker-compose (see [below](#notes))
 ```
-docker-compose build
+docker-compose build --pull
 docker-compose up
 ```
 
@@ -24,6 +24,10 @@ Game On! is now running locally.
 * If you're running Mac or Windows, access it using the docker host IP address (see [below](#notes))
 
 ## Notes
+
+### Supporting 3rd party auth
+
+3rd party authentication (twitter, github, etc.) will not work locally, but the anonymous/dummy user will. If you want to test with one of the 3rd party authentication providers, you'll need to set up your own tokens to do so.
 
 ### Use the right IP address
 
