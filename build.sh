@@ -60,8 +60,11 @@ then
 fi
 
 echo "
-If all of that went well, remember to re-spin your docker containers:
- docker-compose pull
- docker-compose up
+Make sure you have installed amalgam8 ..
+ pip install a8ctl
+Now, if you haven't already, start the platform services with:
+ ./run-platform-services.sh start
+If all of that went well, rebuild the and launch the game-on docker containers with:
+ ./rebuild.sh all
 
 The game will be running at https://${IP}/ when you're all done."
