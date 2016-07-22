@@ -1,16 +1,29 @@
-webapp:
- build: webapp
+auth:
+ build: auth/auth-wlpcfg
+ volumes:
+  - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
+ external_links:
+  - kafka
+  - registry
+  - logstash
+  - controller
  ports:
-  - "8080:8080"
+  - "9089:9080"
+  - "9449:9443"
  env_file: gameon.${DOCKER_MACHINE_NAME}env
 
 player:
  build: player/player-wlpcfg
  volumes:
   - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
- links:
+ external_links:
   - couchdb
+  - kafka
+  - registry
+  - logstash
+  - controller
  ports:
+  - "4201:4201"
   - "9082:9080"
   - "9443:9443"
  env_file: gameon.${DOCKER_MACHINE_NAME}env
@@ -19,17 +32,16 @@ map:
  build: map/map-wlpcfg
  volumes:
   - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
- links:
+ external_links:
   - couchdb
+  - kafka
+  - registry
+  - logstash
+  - controller
  ports:
   - "9099:9080"
   - "9447:9443"
  env_file: gameon.${DOCKER_MACHINE_NAME}env
-
-couchdb:
- image: klaemo/couchdb:latest
- expose:
-  - "5984"
 
 mediator:
  build: mediator/mediator-wlpcfg
@@ -40,38 +52,44 @@ mediator:
   - "9446:9443"
  links:
   - room
-  - simpleroom
-  - player
-  - map
+ external_links:
+  - kafka
+  - registry
+  - logstash
+  - controller
+ env_file: gameon.${DOCKER_MACHINE_NAME}env
+
+proxy:
+ build: proxy
+ env_file: gameon.${DOCKER_MACHINE_NAME}env
+ links: 
+  - webapp
+  - room
+ external_links:
+  - kafka
+  - registry
+  - logstash
+  - controller
+ ports:
+  - "80:80"
+  - "443:443"
+  - "1936:1936"
+
+webapp:
+ build: webapp
+ # image: gameontext/gameon-webapp
+ ports:
+  - "8080:8080"
  env_file: gameon.${DOCKER_MACHINE_NAME}env
 
 room:
  build: room/room-wlpcfg
  links:
   - map
+ external_links:
+  - kafka
  ports:
   - "9080:9080"
   - "9445:9443"
  env_file: gameon.${DOCKER_MACHINE_NAME}env
 
-simpleroom:
- build: simpleroom/simpleroom-wlpcfg
- links:
-  - map
- ports:
-  - "9090:9080"
- env_file: gameon.${DOCKER_MACHINE_NAME}env
-
-proxy:
- build: proxy
- env_file: gameon.${DOCKER_MACHINE_NAME}env
- links:
-  - webapp
-  - player
-  - room
-  - map
-  - mediator
- ports:
-  - "80:80"
-  - "443:443"
-  - "1936:1936"

@@ -1,0 +1,27 @@
+player:
+  volumes:
+    - '$HOME:$HOME'
+    - './player/player-wlpcfg/servers/gameon-player:/opt/ibm/wlp/usr/servers/defaultServer'
+    - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
+
+room:
+  volumes:
+    - '$HOME:$HOME'
+    - './room/room-wlpcfg/servers/gameon-room:/opt/ibm/wlp/usr/servers/defaultServer'
+    - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
+
+map:
+  volumes:
+    - '$HOME:$HOME'
+    - './map/map-wlpcfg/servers/gameon-map:/opt/ibm/wlp/usr/servers/defaultServer'
+    - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
+
+mediator:
+  volumes:
+    - '$HOME:$HOME'
+    - './mediator/mediator-wlpcfg/servers/gameon-mediator:/opt/ibm/wlp/usr/servers/defaultServer'
+    - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
+
+webapp:
+  volumes:
+    - './webapp/src:/opt/www'
