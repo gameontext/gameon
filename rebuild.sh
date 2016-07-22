@@ -35,9 +35,9 @@ echo Relaunching container $PROJECTS
 sudo docker-compose -f docker-compose.yml -f ./platformservices.yml up -d $PROJECTS
 
 #setup A8 env vars before using a8ctl..
-NAME=${DOCKER_MACHINE_NAME}
+NAME=${DOCKER_MACHINE_NAME-empty}
 IP=127.0.0.1
-if [ -n $NAME ]
+if [ $NAME != "empty" ]
 then
   IP=$(docker-machine ip $NAME)
 fi
