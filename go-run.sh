@@ -19,32 +19,45 @@ else
 fi
 shift
 
-case "$ACTION" in
-  start|up)
-    echo "docker-compose up -d $@"
+up_log() {
+    echo "docker-compose up -d $@, logs will continue in the foreground."
     docker-compose up -d $@
     docker-compose logs --tail="5" -f $@
+}
+
+down_rm() {
+    echo "docker-compose stop $@"
+    docker-compose stop $@
+    docker-compose rm $@
+}
+
+case "$ACTION" in
+  logs)
+    docker-compose logs -f $@
+  ;;
+  start|up)
+    up_log $@
   ;;
   stop|down)
     echo "docker-compose stop $@"
     docker-compose stop $@
   ;;
   restart)
-    echo "docker-compose stop $@"
-    docker-compose stop $@
-    docker-compose rm $@
-    echo "docker-compose up -d $@"
-    docker-compose up -d $@
-    docker-compose logs --tail="5" -f $@
+    down_rm $@
+    up_log $@
   ;;
   rebuild)
-    echo "docker-compose stop $@"
-    docker-compose stop $@
-    docker-compose rm $@
+    down_rm $@
     echo "docker-compose build --pull $@"
     docker-compose build --pull
-    echo "docker-compose up -d $@"
-    docker-compose up -d $@
-    docker-compose logs --tail="5" -f $@
+    up_log $@
+  ;;
+  rm)
+    echo "docker-compose rm $@"
+    docker-compose rm $@
   ;; 
-
+  *)
+    echo "Actions: start|stop|restart|rebuild|rm|logs"
+    echo "Use optional arguments to select one or more specific image"
+  ;;
+esac
