@@ -7,7 +7,7 @@ then
 fi
 
 echo Stopping container $PROJECTS
-sudo docker-compose -f docker-compose.yml -f ./platformservices.yml stop $PROJECTS
+docker-compose -f docker-compose.yml -f ./platformservices.yml stop $PROJECTS
 
 for project in "$PROJECTS"
 do
@@ -26,15 +26,15 @@ do
 done
 
 echo Removing container $PROJECTS
-sudo docker-compose -f docker-compose.yml -f ./platformservices.yml rm -f $PROJECTS
+docker-compose -f docker-compose.yml -f ./platformservices.yml rm -f $PROJECTS
 
 echo Rebuilding container $PROJECTS
-sudo docker-compose -f docker-compose.yml -f ./platformservices.yml build $PROJECTS
+docker-compose -f docker-compose.yml -f ./platformservices.yml build $PROJECTS
 
 echo Relaunching container $PROJECTS
-sudo docker-compose -f docker-compose.yml -f ./platformservices.yml up -d $PROJECTS
+docker-compose -f docker-compose.yml -f ./platformservices.yml up -d $PROJECTS
 
-#setup A8 env vars before using a8ctl..
+#setup a8 env vars.. 
 NAME=${DOCKER_MACHINE_NAME-empty}
 IP=127.0.0.1
 if [ $NAME != "empty" ]
@@ -44,4 +44,4 @@ fi
 echo Setting default routes where needed
 export A8_CONTROLLER_URL=http://${IP}:31200
 export A8_REGISTRY_URL=http://${IP}:31300
-for service in `a8ctl route-list | grep UNVERSIONED | cut -d'|' -f 2 ` ; do a8ctl route-set --default v1 $service; done
+for service in auth map mediator players proxy ; do curl -X PUT ${A8_CONTROLLER_URL}/v1/versions/${service} -d '{"default" : "v1"}' -H "Authorization: local" -H "Content-Type: application/json"; done
