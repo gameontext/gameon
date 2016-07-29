@@ -21,9 +21,12 @@ SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 if [ "$1" == "start" ]; then
     echo "starting platform services (kafka, ELK stack, couchdb, a8 controller,registry,gateway)"
+    
     docker-compose -f $SCRIPTDIR/platformservices.yml up -d
+    
     echo "waiting for the platform to initialize.."
     sleep 60
+    
     AR=$(docker inspect -f '{{.NetworkSettings.IPAddress}}' registry ):8080
     AC=localhost:31200
     KA=$(docker inspect -f '{{.NetworkSettings.IPAddress}}' kafka ):9092
