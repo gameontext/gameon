@@ -1,53 +1,65 @@
-webapp:
- # build: webapp
- image: gameontext/gameon-webapp
- ports:
-  - "8080:8080"
- env_file: gameon.${DOCKER_MACHINE_NAME}env
+##Game on Services.. 
+## Any service registering as an a8 service should have 
+## external_links:
+##  - kafka
+##  - registry
+##  - logstash
+##  - controller
+## as part of it's docker compose config. This allows the a8
+## sidecar to communicate with the a8 registry etc. 
+## (urls for a8 are set within the gameon.env file, assuming
+##  these external links are present)
 
 auth:
- build: auth/auth-wlpcfg
+ #build: auth/auth-wlpcfg
+ image: gameontext/gameon-auth
  volumes:
   - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
- links:
+ external_links:
   - kafka
+  - registry
+  - logstash
+  - controller
  ports:
   - "9089:9080"
   - "9449:9443"
  env_file: gameon.${DOCKER_MACHINE_NAME}env
 
 player:
- # build: player/player-wlpcfg
+ #build: player/player-wlpcfg
  image: gameontext/gameon-player
  volumes:
   - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
- links:
+ external_links:
   - couchdb
+  - kafka
+  - registry
+  - logstash
+  - controller
  ports:
+  - "4201:4201"
   - "9082:9080"
   - "9443:9443"
  env_file: gameon.${DOCKER_MACHINE_NAME}env
 
 map:
- # build: map/map-wlpcfg
+ #build: map/map-wlpcfg
  image: gameontext/gameon-map
  volumes:
   - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
- links:
+ external_links:
   - couchdb
-  - player
+  - kafka
+  - registry
+  - logstash
+  - controller
  ports:
   - "9099:9080"
   - "9447:9443"
  env_file: gameon.${DOCKER_MACHINE_NAME}env
 
-couchdb:
- image: klaemo/couchdb:latest
- expose:
-  - "5984"
-
 mediator:
- # build: mediator/mediator-wlpcfg
+ #build: mediator/mediator-wlpcfg
  image: gameontext/gameon-mediator
  volumes:
   - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
@@ -56,53 +68,45 @@ mediator:
   - "9446:9443"
  links:
   - room
-  - player
-  - map
- env_file: gameon.${DOCKER_MACHINE_NAME}env
-
-room:
- # build: room/room-wlpcfg
- image: gameontext/gameon-room
- links:
-  - map
+ external_links:
   - kafka
- ports:
-  - "9080:9080"
-  - "9445:9443"
+  - registry
+  - logstash
+  - controller
  env_file: gameon.${DOCKER_MACHINE_NAME}env
 
 proxy:
- # build: proxy
+ #build: proxy
  image: gameontext/gameon-proxy
  env_file: gameon.${DOCKER_MACHINE_NAME}env
  links:
-  - auth
   - webapp
-  - player
   - room
-  - map
-  - mediator
+ external_links:
+  - kafka
+  - registry
+  - logstash
+  - controller
  ports:
   - "80:80"
   - "443:443"
   - "1936:1936"
 
-zookeeper:
- container_name: zookeeper
- image: "wurstmeister/zookeeper"
+webapp:
+ #build: webapp
+ image: gameontext/gameon-webapp
  ports:
-   - "2181:2181"
+  - "8080:8080"
+ env_file: gameon.${DOCKER_MACHINE_NAME}env
 
-kafka:
- container_name: kafka
- image: "cantireinnovations/kafka:0.9.0.0"
- restart: always
- environment:
-  KAFKA_BROKER_ID: 1
-  KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
-  KAFKA_ZOOKEEPER_SESSION_TIMEOUT_MS: 1000
-  KAFKA_CREATE_TOPICS: "gameon:1:1,playerEvents:1:1,siteEvents:1:1"
- ports:
-  - "9092:9092"
+room:
+ #build: room/room-wlpcfg
+ image: gameontext/gameon-room
  links:
- - "zookeeper:zookeeper"
+  - map
+ external_links:
+  - kafka
+ ports:
+  - "9080:9080"
+  - "9445:9443"
+ env_file: gameon.${DOCKER_MACHINE_NAME}env
