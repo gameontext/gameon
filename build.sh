@@ -60,9 +60,7 @@ then
 fi
 
 echo "
-Make sure you have installed amalgam8 ..
- pip install a8ctl
-Now, if you haven't already, start the platform services with:
+If you haven't already, start the platform services with:
  ./run-platform-services.sh start
 If all of that went well, rebuild the and launch the game-on docker containers with:
  ./rebuild.sh all
