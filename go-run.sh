@@ -19,11 +19,14 @@ else
   shift
 fi
 
-if [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]
+if [ "$(uname)" == "Darwin" ]
 then
     COMPOSE="docker-compose"
-else
+elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]
+then
     COMPOSE="sudo docker-compose"
+else
+    COMPOSE="docker-compose"
 fi
 
 up_log() {
