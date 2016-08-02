@@ -16,31 +16,38 @@ then
   ACTION=help
 else
   ACTION=$1
+  shift
 fi
-shift
+
+if [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]
+then
+    COMPOSE="docker-compose"
+else
+    COMPOSE="sudo docker-compose"
+fi
 
 up_log() {
-    echo "docker-compose up -d $@, logs will continue in the foreground."
-    docker-compose up -d $@
-    docker-compose logs --tail="5" -f $@
+    echo "${COMPOSE} up -d $@, logs will continue in the foreground."
+    ${COMPOSE} up -d $@
+    ${COMPOSE} logs --tail="5" -f $@
 }
 
 down_rm() {
     echo "docker-compose stop $@"
-    docker-compose stop $@
-    docker-compose rm $@
+    ${COMPOSE} stop $@
+    ${COMPOSE} rm $@
 }
 
 case "$ACTION" in
   logs)
-    docker-compose logs -f $@
+    ${COMPOSE} logs -f $@
   ;;
   start|up)
     up_log $@
   ;;
   stop|down)
     echo "docker-compose stop $@"
-    docker-compose stop $@
+    ${COMPOSE} stop $@
   ;;
   restart)
     down_rm $@
@@ -49,12 +56,12 @@ case "$ACTION" in
   rebuild)
     down_rm $@
     echo "docker-compose build --pull $@"
-    docker-compose build --pull
+    ${COMPOSE} build --pull
     up_log $@
   ;;
   rm)
     echo "docker-compose rm $@"
-    docker-compose rm $@
+    ${COMPOSE} rm $@
   ;; 
   *)
     echo "Actions: start|stop|restart|rebuild|rm|logs"
