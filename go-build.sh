@@ -61,8 +61,8 @@ fi
 
 echo "
 If you haven't already, start the platform services with:
- ./run-platform-services.sh start
+ ./go-platform-services.sh start
 If all of that went well, rebuild the and launch the game-on docker containers with:
- ./rebuild.sh all
+ ./go-rebuild.sh all
 
 The game will be running at https://${IP}/ when you're all done."

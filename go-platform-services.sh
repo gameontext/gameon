@@ -21,11 +21,31 @@ SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 if [ "$1" == "start" ]; then
     echo "starting platform services (kafka, ELK stack, couchdb, a8 controller,registry,gateway)"
+    
     docker-compose -f $SCRIPTDIR/platformservices.yml up -d
+    
     echo "waiting for the platform to initialize.."
     sleep 60
+    
+
+    NAME=${DOCKER_MACHINE_NAME-empty}
+    IP=127.0.0.1
+    if [ "$NAME" = "empty" ]; then
+      echo "DOCKER_MACHINE_NAME is not set. If you don't use docker-machine, you can ignore this, or export DOCKER_MACHINE_NAME=''"
+    elif [ -n $NAME ]; then
+      IP=$(docker-machine ip $NAME)
+      rc=$?
+      if [ $rc != 0 ] || [ -z ${DOCKER_HOST} ]
+      then
+        echo "Is your docker host running? Did you start docker-machine, e.g. 
+  docker-machine start default
+  eval \$(docker-machine env default)"
+        exit 1 
+      fi
+    fi
+
     AR=$(docker inspect -f '{{.NetworkSettings.IPAddress}}' registry ):8080
-    AC=localhost:31200
+    AC=$IP:31200
     KA=$(docker inspect -f '{{.NetworkSettings.IPAddress}}' kafka ):9092
     echo "Setting up a new tenant named 'local'"
     read -d '' tenant << EOF
