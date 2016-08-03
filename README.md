@@ -13,25 +13,25 @@ As a prerequisite, make sure Docker is installed and running.
   * HTTPS: `git clone https://github.com/gameontext/gameon.git`
   * SSH: `git clone git@github.com:gameontext/gameon.git`
 
-1. One time setup, this will ensure that required keystores are setup, and that you have an
-env file suitable for use with docker-compose (whether you're using docker-machine or not).
-```
-./go-setup.sh
-```
-This setup step also pulls the initial images required for running the system.
+2. One time setup, this will ensure that required keystores are setup, and that you have an
+  env file suitable for use with docker-compose (whether you're using docker-machine or not).
+  ```
+  ./go-setup.sh
+  ```
+  This setup step also pulls the initial images required for running the system.
 
-2. Start Game ON platform services (amalgam8, couchdb, and an elk stack!).
-These services are configured in `platformservices.yml`.
-```
-./go-platform-services.sh start
-```
+3. Start Game ON platform services (amalgam8, couchdb, and an elk stack!).
+  These services are configured in `platformservices.yml`.
+  ```
+  ./go-platform-services.sh start
+  ```
 
-3. Start the core Game ON services (Player, Mediator, Map)
-```
-./go-run.sh start
-```
-The `go-run.sh` script contains shorthand operations to help with starting,
-stopping, and cleaning up after Game ON core services (in `docker-compose.yml`).
+4. Start the core Game ON services (Player, Mediator, Map)
+  ```
+  ./go-run.sh start
+  ```
+  The `go-run.sh` script contains shorthand operations to help with starting,
+  stopping, and cleaning up after Game ON core services (in `docker-compose.yml`).
 
 Game On! is now running locally.
 * If you're running a \*nix variant, you can access it at http://127.0.0.1/
@@ -46,21 +46,21 @@ Carry on with building your rooms!
   * SSH: `git clone git@github.com:gameontext/gameon.git`
 
 2. Change to the gameon directory
-```
-cd gameon
-```
+  ```
+  cd gameon
+  ```
 
 3. Build/initialize the projects (includes building wars and creating keystores
    required for local development).
-```
-./go-build.sh
-```
+  ```
+  ./go-build.sh
+  ```
 
 4. Build the docker containers with docker-compose (see [below](#notes))
-```
-docker-compose build --pull
-docker-compose up
-```
+   ```
+   docker-compose build --pull
+   docker-compose up
+   ```
 
 Game On! is now running locally.
 * If you're running a \*nix variant, you can access it at http://127.0.0.1/
