@@ -1,27 +1,38 @@
-player:
-  volumes:
-    - '$HOME:$HOME'
-    - './player/player-wlpcfg/servers/gameon-player:/opt/ibm/wlp/usr/servers/defaultServer'
-    - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
-
-room:
-  volumes:
-    - '$HOME:$HOME'
-    - './room/room-wlpcfg/servers/gameon-room:/opt/ibm/wlp/usr/servers/defaultServer'
-    - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
+auth:
+  build: auth/auth-wlpcfg
 
 map:
+  build: map/map-wlpcfg
   volumes:
     - '$HOME:$HOME'
     - './map/map-wlpcfg/servers/gameon-map:/opt/ibm/wlp/usr/servers/defaultServer'
     - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
 
 mediator:
+  build: mediator/mediator-wlpcfg
   volumes:
     - '$HOME:$HOME'
     - './mediator/mediator-wlpcfg/servers/gameon-mediator:/opt/ibm/wlp/usr/servers/defaultServer'
     - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
 
+player:
+  build: player/player-wlpcfg
+  volumes:
+    - '$HOME:$HOME'
+    - './player/player-wlpcfg/servers/gameon-player:/opt/ibm/wlp/usr/servers/defaultServer'
+    - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
+
+proxy:
+  build: proxy
+
+room:
+  build: room/room-wlpcfg
+  volumes:
+    - '$HOME:$HOME'
+    - './room/room-wlpcfg/servers/gameon-room:/opt/ibm/wlp/usr/servers/defaultServer'
+    - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
+
 webapp:
+  build: webapp
   volumes:
     - './webapp/src:/opt/www'
