@@ -14,23 +14,46 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-
-set -x
+#set -x
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 if [ "$1" == "start" ]; then
-    echo "starting platform services (kafka, ELK stack, couchdb, a8 controller,registry,gateway)"
+
+    if [ "$2" != "--force" ]; then
+      echo "Testing for running platform.. "
+   
+      EXPECTED="controller couchdb elasticsearch gateway kafka kibana logstash registry" 
+      FOUND=`docker ps --format="{{.Names}}"`
+      OK=1
+      for svc in $EXPECTED; do
+        echo -n "Checking for Service $svc"
+        echo $FOUND | grep -qs $svc
+        if [ $? == 0 ]; then
+          echo -e "\t..found."
+        else
+          echo -e "\t..not found."
+          OK=0
+        fi
+      done
+
+      if [ $OK == 1 ]; then
+        echo "Running platform found. No need to start platform"
+        exit 0
+      fi
+    fi
+
+    echo "Starting platform services (kafka, ELK stack, couchdb, a8 controller,registry,gateway)"
     
     docker-compose -f $SCRIPTDIR/platformservices.yml up -d
     
-    echo "waiting for the platform to initialize.."
+    echo "Waiting 1 minute for the platform to initialize.."
     sleep 60
+    echo "Platform considered initialized, proceeding.."
     
-
     NAME=${DOCKER_MACHINE_NAME-empty}
     IP=127.0.0.1
-    if [ "$NAME" = "empty" ]; then
+    if [ "$NAME" == "empty" ]; then
       echo "DOCKER_MACHINE_NAME is not set. If you don't use docker-machine, you can ignore this, or export DOCKER_MACHINE_NAME=''"
     elif [ -n $NAME ]; then
       IP=$(docker-machine ip $NAME)
@@ -47,7 +70,7 @@ if [ "$1" == "start" ]; then
     AR=$(docker inspect -f '{{.NetworkSettings.IPAddress}}' registry ):8080
     AC=$IP:31200
     KA=$(docker inspect -f '{{.NetworkSettings.IPAddress}}' kafka ):9092
-    echo "Setting up a new tenant named 'local'"
+    echo "Setting up a new tenant named 'local' via controller $AC"
     read -d '' tenant << EOF
 {
     "credentials": {
@@ -68,6 +91,6 @@ elif [ "$1" == "stop" ]; then
     docker-compose -f $SCRIPTDIR/platformservices.yml kill
     docker-compose -f $SCRIPTDIR/platformservices.yml rm -f
 else
-    echo "usage: $0 start|stop"
+    echo "usage: $0 start|stop (--force)"
     exit 1
 fi

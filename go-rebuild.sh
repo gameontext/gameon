@@ -9,10 +9,12 @@ fi
 echo Stopping container $PROJECTS
 docker-compose -f docker-compose.yml -f ./platformservices.yml stop $PROJECTS
 
-for project in "$PROJECTS"
+for project in $PROJECTS
 do
+  echo "Evaluating ${project} for gradle build."
   if [ -d "${project}" ] && [ -e "${project}/build.gradle" ]
   then
+    echo "Building project ${project} with gradle"
     cd "$project"
     ../gradlew build
     rc=$?
@@ -22,6 +24,8 @@ do
       echo Gradle build failed. Please investigate, GameOn is unlikely to work until the issue is resolved.
       exit 1
     fi
+  else
+    echo "No need to gradle build project ${project}"
   fi
 done
 
@@ -44,4 +48,4 @@ fi
 echo Setting default routes where needed
 export A8_CONTROLLER_URL=http://${IP}:31200
 export A8_REGISTRY_URL=http://${IP}:31300
-for service in auth map mediator players proxy ; do curl -X PUT ${A8_CONTROLLER_URL}/v1/versions/${service} -d '{"default" : "v1"}' -H "Authorization: local" -H "Content-Type: application/json"; done
+for service in auth map mediator players proxy ; do curl -sS -X PUT ${A8_CONTROLLER_URL}/v1/versions/${service} -d '{"default" : "v1"}' -H "Authorization: local" -H "Content-Type: application/json"; done
