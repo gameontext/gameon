@@ -2,7 +2,7 @@
 
 This is the TL;DR version. For more details/background/links, see: [Intro to Game On! (GitBook)](https://gameontext.gitbooks.io/gameon-gitbook/content/)
 
-As a prerequisite, make sure Docker is installed and running.
+As a prerequisite, make sure [Docker](https://docs.docker.com/engine/installation/) is installed and running.
 
 * [Local room development](#local-room-development)
 * [Core game development](#core-game-development)
@@ -13,20 +13,25 @@ As a prerequisite, make sure Docker is installed and running.
   * HTTPS: `git clone https://github.com/gameontext/gameon.git`
   * SSH: `git clone git@github.com:gameontext/gameon.git`
 
-2. One time setup, this will ensure that required keystores are setup, and that you have an
+2. Change to the gameon directory
+  ```
+  cd gameon
+  ```
+
+3. One time setup, this will ensure that required keystores are setup, and that you have an
   env file suitable for use with docker-compose (whether you're using docker-machine or not).
   ```
   ./go-setup.sh
   ```
   This setup step also pulls the initial images required for running the system.
 
-3. Start Game ON platform services (amalgam8, couchdb, and an elk stack!).
+4. Start Game ON platform services (amalgam8, couchdb, and an elk stack!).
   These services are configured in `platformservices.yml`.
   ```
   ./go-platform-services.sh start
   ```
 
-4. Start the core Game ON services (Player, Mediator, Map)
+5. Start the core Game ON services (Player, Mediator, Map)
   ```
   ./go-run.sh start
   ```
@@ -50,13 +55,20 @@ Carry on with building your rooms!
   cd gameon
   ```
 
-3. Build/initialize the projects (includes building wars and creating keystores
-   required for local development).
+3. One time setup, this will ensure that required keystores are setup, and that you have an
+  env file suitable for use with docker-compose (whether you're using docker-machine or not).
   ```
-  ./go-build.sh
+  ./go-setup.sh
+  ```
+  This setup step also pulls the initial images required for running the system.
+
+4. Start Game ON platform services (amalgam8, couchdb, and an elk stack!).
+  These services are configured in `platformservices.yml`.
+  ```
+  ./go-platform-services.sh start
   ```
 
-4. Build the docker containers with docker-compose (see [below](#notes))
+5. Build the docker containers with docker-compose (see [below](#notes))
    ```
    docker-compose build --pull
    docker-compose up
@@ -65,6 +77,38 @@ Carry on with building your rooms!
 Game On! is now running locally.
 * If you're running a \*nix variant, you can access it at http://127.0.0.1/
 * If you're running Mac or Windows, access it using the docker host IP address (see [below](#notes))
+
+## Core Game Development - changing code
+
+Using the [map project](https://github.com/gameontext/gameon-map) as an example,
+
+1. Obtain the source for the project that you want to change.
+  ```
+  git submodule init map
+  git submodule update map
+  ```
+
+2. Build the project(s) (includes building wars and creating keystores
+   required for local development).
+  ```
+  ./go-build.sh
+  ```
+
+3. Re-enable the build directive in the docker-compose.yml file.
+  ```
+  map:
+   build: map/map-wlpcfg
+   image: gameontext/gameon-map
+   volumes:
+    - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
+  ```
+
+4. Stop, rebuild and restart the docker container with the new code.
+  ```
+  docker-compose stop map
+  docker-compose build map
+  docker-compose up map
+  ```
 
 ## Notes
 
