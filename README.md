@@ -88,13 +88,7 @@ Using the [map project](https://github.com/gameontext/gameon-map) as an example,
   git submodule update map
   ```
 
-2. Build the project(s) (includes building wars and creating keystores
-   required for local development).
-  ```
-  ./go-build.sh
-  ```
-
-3. Re-enable the build directive in the docker-compose.yml file.
+2. Re-enable the build directive in the docker-compose.yml file.
   ```
   map:
    build: map/map-wlpcfg
@@ -103,12 +97,14 @@ Using the [map project](https://github.com/gameontext/gameon-map) as an example,
     - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
   ```
 
-4. Stop, rebuild and restart the docker container with the new code.
+3. Build the project(s) (includes building wars and creating keystores
+   required for local development).
+   to be deployed.
   ```
-  docker-compose stop map
-  docker-compose build map
-  docker-compose up map
+  ./go-rebuild.sh
   ```
+
+For subsequent code changes to the same project, you just need to execute the `go-rebuild.sh` script. 
 
 ## Notes
 
