@@ -68,10 +68,9 @@ Carry on with building your rooms!
   ./go-platform-services.sh start
   ```
 
-5. Build the docker containers with docker-compose (see [below](#notes))
+5. Build the docker containers (see [below](#notes))
    ```
-   docker-compose build --pull
-   docker-compose up
+   ./go-run.sh rebuild
    ```
 
 Game On! is now running locally.
@@ -101,10 +100,12 @@ Using the [map project](https://github.com/gameontext/gameon-map) as an example,
    required for local development).
    to be deployed.
   ```
-  ./go-rebuild.sh
+  ./go-run.sh rebuild map
   ```
 
-For subsequent code changes to the same project, you just need to execute the `go-rebuild.sh` script. 
+For subsequent code changes to the same project, you just need to execute `go-run.sh rebuild map`.
+To rebuild multiple projects, you can specify multiple projects as arguments, eg. `go-run.sh rebuild map player auth`
+To rebuild all projects, use `go-run.sh rebuild` or `go-run.sh rebuild all`
 
 ## Notes
 
@@ -116,7 +117,7 @@ For subsequent code changes to the same project, you just need to execute the `g
 
 If you run on an operating system that uses a host VM for docker images (e.g. Windows or Mac), then you need to update some values in `gameon.env` to match the IP address of your host. The host IP address is returned by `docker-machine ip <machine-name>`.
 
-`go-setup.sh` and `go-build.sh` will create a customized copy of `gameon.env` for the active DOCKER_MACHINE_NAME, that will perform the substitution to the associated IP address.
+`go-setup.sh` will create a customized copy of `gameon.env` for the active DOCKER_MACHINE_NAME, that will perform the substitution to the associated IP address.
 
 ### Iterative development of Java applications with WDT
 We highly recommend using WebSphere Developer Tools (WDT) to work with the Java services contained in the sample.
