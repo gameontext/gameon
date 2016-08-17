@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Support environments with docker-machine
 # For base linux users, 127.0.0.1 is fine, but w/ docker-machine we need to
