@@ -41,6 +41,13 @@ fi
 # the keystores we need for local signed JWTs to work
 if [ ! -d keystore ]
 then
+  echo "Checking for keytool..."
+  keytool -help > /dev/null 2>&1
+  if [ $? != 0 ]
+  then
+     echo "Error: keytool is missing from the path, please correct this, then retry"
+	 exit 1
+  fi
   echo "Generating key stores using ${IP}"
   mkdir -p keystore
   keytool -genkey -alias default -storepass testOnlyKeystore -keypass testOnlyKeystore -keystore keystore/key.jks -keyalg RSA -sigalg SHA1withRSA -validity 365 -dname "CN=${IP},OU=unknown,O=unknown,L=unknown,ST=unknown,C=CA"
