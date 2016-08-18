@@ -93,7 +93,7 @@ gateway:
 
 ########CouchDB##################
 couchdb:
- image: klaemo/couchdb:latest
+ image: klaemo/couchdb:1.6.1
  ports:
   - "5984:5984"
  container_name: couchdb
