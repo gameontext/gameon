@@ -40,15 +40,17 @@ else
   PROJECTS=$@
 fi
 
+OVERRIDE=
+if [ -f docker-compose.override.yml ]
+then
+  OVERRIDE='-f docker-compose.override.yml'
+fi
+
 #configure docker compose command
-if [ "$(uname)" == "Darwin" ]
+COMPOSE="docker-compose -f docker-compose.yml ${OVERRIDE} -f platformservices.yml"
+if [ "$(uname)" != "Darwin" ] && [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]
 then
-    COMPOSE="docker-compose -f docker-compose.yml -f platformservices.yml"
-elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]
-then
-    COMPOSE="sudo docker-compose -f docker-compose.yml -f platformservices.yml"
-else
-    COMPOSE="docker-compose -f docker-compose.yml -f platformservices.yml"
+    COMPOSE="sudo ${COMPOSE}"
 fi
 
 #setup docker ip.
