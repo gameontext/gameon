@@ -102,6 +102,8 @@ webapp:
 room:
  #build: room/room-wlpcfg
  image: gameontext/gameon-room
+ volumes:
+  - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
  links:
   - map
  external_links:
