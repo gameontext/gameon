@@ -78,6 +78,8 @@ mediator:
 proxy:
  #build: proxy
  image: gameontext/gameon-proxy
+ volumes:
+  - './keystore:/keystore'
  env_file: gameon.${DOCKER_MACHINE_NAME}env
  links:
   - webapp
