@@ -34,7 +34,7 @@ then
 This file will use the docker host ip address ($IP).
 When the docker containers are up, use https://$IP/ to connect to the game."
   fi
-  sed -e "s#127.\0.\0\.1#${IP}#g" gameon.env > gameon.${NAME}env
+  cat gameon.env | sed  -e "s#127\.0\.0\.1\:6379#A8LOCALHOSTPRESERVE#g" | sed -e "s#127\.0\.0\.1#${IP}#g" | sed -e "s#A8LOCALHOSTPRESERVE#127\.0\.0\.1\:6379#" > gameon.${NAME}env
 fi
 
 # If the keystore directory doesn't exist, then we should generate
