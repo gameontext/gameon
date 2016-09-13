@@ -35,7 +35,7 @@ es:
   container_name: elasticsearch
 logstash:
   image: logstash
-  command: logstash --verbose -e "input { beats {codec=>'json' port=>8092 type=>'nginx'}} output {elasticsearch {hosts =>'es:9200' codec=>'json' index=>'nginx'} stdout { codec => rubydebug }}"
+  command: logstash --verbose -e "input { beats {codec=>'json' port=>8092}} output {elasticsearch {hosts =>'es:9200' codec=>'json'} }"
   ports:
     - "8092:8092"
   links:
@@ -51,44 +51,56 @@ kibana:
     - "30500:5601"
   container_name: kibana
 
-#######Service Registry###########
+#######A8 Control Plane###########
 
 registry:
-  image: amalgam8/a8-registry:0.2
+  image: amalgam8/a8-registry
   ports:
     - "31300:8080"
-  command: -auth_mode=trusted
   container_name: registry
+  environment:
+    - A8_STORE=redis
+    - A8_STORE_ADDRESS=redis:6379
+  links:
+    - redis
 
 controller:
-  image: amalgam8/a8-controller:0.2
+  image: amalgam8/a8-controller
   ports:
-    - "31200:6379"
+    - "31200:8080"
   environment:
-    - A8_POLL_INTERVAL=5s
     - A8_LOG_LEVEL=info
+    - A8_DATABASE_TYPE=redis
+    - A8_DATABASE_HOST=redis://redis:6379
   links:
-    - kafka
-    - registry
+    - redis
   container_name: controller
+
+#Redis Backend
+redis:
+  image: redis:alpine
+  ports:
+    - "31400:6379"
+  container_name: redis
 
 ########Gateway##################
 gateway:
-  image: amalgam8/a8-sidecar:0.2-alpine
+  image: amalgam8/a8-sidecar:0.3-alpine
   environment:
-    - A8_CONTROLLER_URL=http://controller:6379
-    - A8_TENANT_TOKEN=local
-    - A8_KAFKA_BROKER=kafka:9092
-    - A8_REGISTER=false
+    - A8_CONTROLLER_URL=http://controller:8080
+    - A8_REGISTRY_URL=http://registry:8080
+    - A8_PROXY=true
+    - A8_LOG=true
     - A8_SERVICE=gateway
     - A8_LOGSTASH_SERVER='logstash:8092'
-    - A8_CONTROLLER_POLL=15s
+    - A8_CONTROLLER_POLL=5s
+    - A8_REGISTRY_POLL=5s
   ports:
     - "32000:6379"
   links:
-    - kafka
     - logstash
     - controller
+    - registry
   container_name: gateway
 
 ########CouchDB##################

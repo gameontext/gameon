@@ -23,7 +23,7 @@ if [ "$1" == "start" ]; then
     if [ "$2" != "--force" ]; then
       echo "Testing for running platform.. "
    
-      EXPECTED="controller couchdb elasticsearch gateway kafka kibana logstash registry" 
+      EXPECTED="controller couchdb elasticsearch gateway kafka kibana logstash registry redis" 
       FOUND=`docker ps --format="{{.Names}}"`
       OK=1
       for svc in $EXPECTED; do
@@ -43,7 +43,7 @@ if [ "$1" == "start" ]; then
       fi
     fi
 
-    echo "Starting platform services (kafka, ELK stack, couchdb, a8 controller,registry,gateway)"
+    echo "Starting platform services (kafka, ELK stack, couchdb, a8-controller, a8-registry, redis, gateway)"
     
     docker-compose -f $SCRIPTDIR/platformservices.yml up -d
     
@@ -67,25 +67,47 @@ if [ "$1" == "start" ]; then
       fi
     fi
 
-    AR=$(docker inspect -f '{{.NetworkSettings.IPAddress}}' registry ):8080
-    AC=$IP:31200
-    KA=$(docker inspect -f '{{.NetworkSettings.IPAddress}}' kafka ):9092
-    echo "Setting up a new tenant named 'local' via controller $AC"
-    read -d '' tenant << EOF
-{
-    "credentials": {
-        "kafka": {
-            "brokers": ["${KA}"],
-            "sasl": false
-        },
-        "registry": {
-            "url": "http://${AR}",
-            "token": "local"
-        }
-    }
-}
-EOF
-    echo $tenant | curl -H "Content-Type: application/json" -H "Authorization: local" -d @- "http://${AC}/v1/tenants"
+    REGISTRY_URL=http://$IP:31300
+    CONTROLLER_URL=http://$IP:31200
+
+    # Wait for controller route to set up
+    echo "Waiting for controller route to set up"
+    attempt=0
+    while true; do
+        code=$(curl -w "%{http_code}" "${CONTROLLER_URL}/health" -o /dev/null)
+        if [ "$code" = "200" ]; then
+            echo "Controller route is set to '$CONTROLLER_URL'"
+            break
+        fi
+
+        attempt=$((attempt + 1))
+        if [ "$attempt" -gt 10 ]; then
+            echo "Timeout waiting for controller route: /health returned HTTP ${code}"
+            echo "Deploying the controlplane has failed"
+            exit 1
+        fi
+        sleep 10s
+    done
+
+    # Wait for registry route to set up
+    echo "Waiting for registry route to set up"
+    attempt=0
+    while true; do
+        code=$(curl -w "%{http_code}" "${REGISTRY_URL}/uptime" -o /dev/null)
+        if [ "$code" = "200" ]; then
+            echo "Registry route is set to '$REGISTRY_URL'"
+            break
+        fi
+
+        attempt=$((attempt + 1))
+        if [ "$attempt" -gt 10 ]; then
+            echo "Timeout waiting for registry route: /uptime returned HTTP ${code}"
+            echo "Deploying the controlplane has failed"
+            exit 1
+        fi
+        sleep 10s
+    done
+
 elif [ "$1" == "stop" ]; then
     echo "Stopping control plane services..."
     docker-compose -f $SCRIPTDIR/platformservices.yml kill
