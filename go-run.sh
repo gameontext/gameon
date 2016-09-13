@@ -62,12 +62,6 @@ then
 fi
 
 up_log() {
-    #setup a8 default routes.
-    echo Setting default routes where needed
-    export A8_CONTROLLER_URL=http://${IP}:31200
-    export A8_REGISTRY_URL=http://${IP}:31300
-    for service in auth map mediator players proxy ; do curl -sS -X PUT ${A8_CONTROLLER_URL}/v1/versions/${service} -d '{"default" : "v1"}' -H "Authorization: local" -H "Content-Type: application/json"; done
-     
     if [ $NOLOGS -eq 0 ]
     then
       echo "${COMPOSE} up -d $PROJECTS, logs will continue in the foreground."
