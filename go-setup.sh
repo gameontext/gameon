@@ -11,6 +11,12 @@
 # One-time, initial setup
 #
 
+if [ -z ${JAVA_HOME} ]
+then
+  echo "JAVA_HOME is not set. Please set and re-run this script."
+  exit 1
+fi
+
 NAME=${DOCKER_MACHINE_NAME-empty}
 IP=127.0.0.1
 if [ "$NAME" = "empty" ]
@@ -100,6 +106,11 @@ cat > setup-utils/PemExporter.java << 'EOT'
 EOT
   cd setup-utils
   $JAVA_HOME/bin/javac PemExporter.java
+  if [ $? != 0 ]
+  then
+     echo "Error: failed to compile the certificate exported"
+   exit 1
+  fi
   cd ..
 
   echo "Generating key stores using ${IP}"

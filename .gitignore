@@ -3,3 +3,4 @@ keystore
 gameon.devenv
 gameon.defaultenv
 docker-compose.override.yml
+setup-utils
