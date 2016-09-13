@@ -200,6 +200,12 @@ EOT
     -noprompt \
     -trustcacerts \
     -file keystore/gameonca.crt
+  #add all jvm cacerts to the truststore.
+  keytool -importkeystore \
+    -srckeystore $JAVA_HOME/jre/lib/security/cacerts \
+    -destkeystore keystore/truststore.jks \
+    -srcstorepass changeit \
+    -deststorepass truststore
   #clean up the public cert..
   rm -f keystore/public.crt
 fi
