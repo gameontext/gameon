@@ -256,7 +256,9 @@ echo "
 If you haven't already, start the platform services with:
  ./go-platform-services.sh start
 
-If all of that went well, rebuild the and launch the game-on docker containers with:
- ./go-run.sh all
+If all of that went well, rebuild and launch the game-on docker containers with:
+ ./go-run.sh rebuild all
+or if you are only using images (the default) just launch them with:
+ ./go-run.sh start all 
 
 The game will be running at https://${IP}/ when you're all done."
