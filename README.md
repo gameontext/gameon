@@ -6,6 +6,7 @@ As a prerequisite, make sure [Docker](https://docs.docker.com/engine/installatio
 
 * [Local room development](#local-room-development)
 * [Core game development](#core-game-development)
+* [Additional notes](#notes)
 
 ## Local Room Development
 
@@ -43,6 +44,8 @@ Game On! is now running locally.
 * If you're running Mac or Windows, access it using the docker host IP address (see [below](#notes))
 
 Carry on with building your rooms!
+
+-----
 
 ## Core Game Development
 
@@ -106,6 +109,8 @@ Using the [map project](https://github.com/gameontext/gameon-map) as an example,
 For subsequent code changes to the same project, you just need to execute `go-run.sh rebuild map`.
 To rebuild multiple projects, you can specify multiple projects as arguments, eg. `go-run.sh rebuild map player auth`
 To rebuild all projects, use `go-run.sh rebuild` or `go-run.sh rebuild all`
+
+----
 
 ## Notes
 
