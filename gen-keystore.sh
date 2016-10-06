@@ -24,63 +24,13 @@ then
   exit 1
 fi
 
-echo "Building pem extractor"
-mkdir -p setup-utils
-
-#HAProxy will need the private key in PEM format, but keytool
-# only allows us to save private keys in pkcs12, thankfully java
-# is pretty easy to use to create us a tool to export private keys
-# in PEM format.. so we'll just inline a small bit here to let us
-# do that later.
-# (Yes, you can do this with openssl, but we don't have that as a prereq)
-cat > setup-utils/PemExporter.java << 'EOT'
-  import java.util.*;
-  import java.io.*;
-  import java.security.*;
-
-  public class PemExporter
-  {
-      private File keystoreFile;
-      private String keyStoreType;
-      private char[] keyStorePassword;
-      private char[] keyPassword;
-      private String alias;
-      private File exportedFile;
-      private static final byte[] CRLF = new byte[] {'\r', '\n'};
-
-      public void export() throws Exception {
-          KeyStore keystore = KeyStore.getInstance(keyStoreType);
-          keystore.load(new FileInputStream(keystoreFile), keyStorePassword);
-          Key key = keystore.getKey(alias, keyPassword);
-          String encoded = Base64.getMimeEncoder(64,CRLF).encodeToString(key.getEncoded());
-          FileWriter fw = new FileWriter(exportedFile);
-          fw.write("-----BEGIN PRIVATE KEY-----\n");
-          fw.write(encoded);
-          fw.write("\n");
-          fw.write("-----END PRIVATE KEY-----");
-          fw.close();
-      }
-
-      public static void main(String args[]) throws Exception {
-          PemExporter export = new PemExporter();
-          export.keystoreFile = new File(args[0]);
-          export.keyStoreType = args[1];
-          export.keyStorePassword = args[2].toCharArray();
-          export.alias = args[3];
-          export.keyPassword = args[4].toCharArray();
-          export.exportedFile = new File(args[5]);
-          export.export();
-      }
-  }
-EOT
-cd setup-utils
-javac PemExporter.java
+echo "Checking for openssl..."
+openssl version > /dev/null 2>&1
 if [ $? != 0 ]
 then
-  echo "Error: failed to compile the certificate exported"
+  echo "Error: openssl is missing from the path, please correct this, then retry"
   exit 1
 fi
-cd ..
 
 echo "Generating key stores using ${IP}"
 
@@ -161,13 +111,22 @@ keytool -exportcert \
   -file keystore/app.pem \
   -rfc
 #export the private key in pem format for proxy to use
-$JAVA_HOME/bin/java -cp setup-utils PemExporter\
-  keystore/key.jks \
-  JCEKS \
-  testOnlyKeystore \
-  default \
-  testOnlyKeystore \
-  keystore/private.pem
+keytool -importkeystore \
+  -srckeystore keystore/key.jks \
+  -destkeystore keystore/key.p12 \
+  -srcstoretype jks \
+  -deststoretype pkcs12 \
+  -srcstorepass testOnlyKeystore \
+  -deststorepass testOnlyKeystore \
+  -srckeypass testOnlyKeystore \
+  -destkeypass testOnlyKeystore \
+  -srcalias default
+openssl pkcs12 \
+  -in keystore/key.p12 \
+  -out keystore/private.pem \
+  -nocerts \
+  -nodes \
+  -password pass:testOnlyKeystore
 #concat the public and private key for haproxy
 cat keystore/app.pem keystore/private.pem > keystore/proxy.pem
 #add the cacert to the truststore
