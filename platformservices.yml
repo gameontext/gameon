@@ -14,100 +14,103 @@
 
 ## GameOn Local Platform Services ## 
 
+version: '2'
+
+services:
+
 ###############Integration Bus############
-kafka:
-  image: rshriram/kafka-0.9
-  environment:
-    - ADVERTISED_HOST=kafka
-    - ADVERTISED_PORT=9092
-    - AUTO_CREATE_TOPICS=true
-  ports:
-    - "9092:9092"
-  hostname: kafka
-  container_name: kafka
-
+  kafka:
+    image: rshriram/kafka-0.9
+    environment:
+      - ADVERTISED_HOST=kafka
+      - ADVERTISED_PORT=9092
+      - AUTO_CREATE_TOPICS=true
+    ports:
+      - "9092:9092"
+    hostname: kafka
+    container_name: kafka
+  
 ##########ELK Stack##############
-es:
-  image: elasticsearch
-  ports:
-    - 9300
-    - "30200:9200"
-  container_name: elasticsearch
-logstash:
-  image: logstash
-  command: logstash --verbose -e "input { beats {codec=>'json' port=>8092}} output {elasticsearch {hosts =>'es:9200' codec=>'json'} }"
-  ports:
-    - "8092:8092"
-  links:
-    - es
-  container_name: logstash
-kibana:
-  image: kibana
-  links:
-    - es
-  environment:
-    - ELASTICSEARCH_URL=http://es:9200
-  ports:
-    - "30500:5601"
-  container_name: kibana
-
+  es:
+    image: elasticsearch
+    ports:
+      - 9300
+      - "30200:9200"
+    container_name: elasticsearch
+  logstash:
+    image: logstash
+    command: logstash --verbose -e "input { beats {codec=>'json' port=>8092}} output {elasticsearch {hosts =>'es:9200' codec=>'json'} }"
+    ports:
+      - "8092:8092"
+    links:
+      - es
+    container_name: logstash
+  kibana:
+    image: kibana
+    links:
+      - es
+    environment:
+      - ELASTICSEARCH_URL=http://es:9200
+    ports:
+      - "30500:5601"
+    container_name: kibana
+  
 #######A8 Control Plane###########
-
-registry:
-  image: amalgam8/a8-registry
-  ports:
-    - "31300:8080"
-  container_name: registry
-  environment:
-    - A8_STORE=redis
-    - A8_STORE_ADDRESS=redis:6379
-  links:
-    - redis
-
-controller:
-  image: amalgam8/a8-controller
-  ports:
-    - "31200:8080"
-  environment:
-    - A8_LOG_LEVEL=info
-    - A8_DATABASE_TYPE=redis
-    - A8_DATABASE_HOST=redis://redis:6379
-  links:
-    - redis
-  container_name: controller
-
+  
+  registry:
+    image: amalgam8/a8-registry
+    ports:
+      - "31300:8080"
+    container_name: registry
+    environment:
+      - A8_STORE=redis
+      - A8_STORE_ADDRESS=redis:6379
+    links:
+      - redis
+  
+  controller:
+    image: amalgam8/a8-controller
+    ports:
+      - "31200:8080"
+    environment:
+      - A8_LOG_LEVEL=info
+      - A8_DATABASE_TYPE=redis
+      - A8_DATABASE_HOST=redis://redis:6379
+    links:
+      - redis
+    container_name: controller
+  
 #Redis Backend
-redis:
-  image: redis:alpine
-  ports:
-    - "31400:6379"
-  container_name: redis
-
+  redis:
+    image: redis:alpine
+    ports:
+      - "31400:6379"
+    container_name: redis
+  
 ########Gateway##################
-gateway:
-  image: amalgam8/a8-sidecar:0.3-alpine
-  environment:
-    - A8_CONTROLLER_URL=http://controller:8080
-    - A8_REGISTRY_URL=http://registry:8080
-    - A8_PROXY=true
-    - A8_LOG=true
-    - A8_SERVICE=gateway
-    - A8_LOGSTASH_SERVER='logstash:8092'
-    - A8_CONTROLLER_POLL=5s
-    - A8_REGISTRY_POLL=5s
-  ports:
-    - "32000:6379"
-  links:
-    - logstash
-    - controller
-    - registry
-  container_name: gateway
-
+  gateway:
+    image: amalgam8/a8-sidecar:0.3-alpine
+    environment:
+      - A8_CONTROLLER_URL=http://controller:8080
+      - A8_REGISTRY_URL=http://registry:8080
+      - A8_PROXY=true
+      - A8_LOG=true
+      - A8_SERVICE=gateway
+      - A8_LOGSTASH_SERVER='logstash:8092'
+      - A8_CONTROLLER_POLL=5s
+      - A8_REGISTRY_POLL=5s
+    ports:
+      - "32000:6379"
+    links:
+      - logstash
+      - controller
+      - registry
+    container_name: gateway
+  
 ########CouchDB##################
-couchdb:
- image: klaemo/couchdb:1.6.1
- ports:
-  - "5984:5984"
- container_name: couchdb
-
+  couchdb:
+   image: klaemo/couchdb:1.6.1
+   ports:
+    - "5984:5984"
+   container_name: couchdb
 

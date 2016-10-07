@@ -37,27 +37,21 @@ When the docker containers are up, use https://$IP/ to connect to the game."
   cat gameon.env | sed  -e "s#127\.0\.0\.1\:6379#A8LOCALHOSTPRESERVE#g" | sed -e "s#127\.0\.0\.1#${IP}#g" | sed -e "s#A8LOCALHOSTPRESERVE#127\.0\.0\.1\:6379#" > gameon.${NAME}env
 fi
 
-# If the keystore directory doesn't exist, then we should generate
-# the keystores we need for local signed JWTs to work
-if [ ! -d keystore ]
-then
-  mkdir keystore
-
-  #check for selinux by looking for chcon and sestatus..
-  #needed for fedora else the keystore dirs cannot be mapped in by
-  #docker-compose volume mapping
-  if [ -x "$(type -P chcon)" ] && [ -x "$(type -P sestatus)" ]
-  then
-    echo ""
-    echo "SELinux detected, adding svirt_sandbox_file_t to keystore dir"
-    chcon -Rt svirt_sandbox_file_t ./keystore
-  fi
-
-  # Generate keystore
-  docker run -v $(pwd):/host -w /host -it ibmjava:sdk ./gen-keystore.sh ${IP}
-fi
-
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+# If the keystore volume doesn't exist, then we should generate
+# the keystores we need for local signed JWTs to work
+docker volume inspect keystore &> /dev/null
+rc=$?
+if [ $rc != 0 ]
+then
+  docker volume create --name keystore
+  # Generate keystore
+  docker run \
+    -v keystore:/tmp/keystore \
+    -v $SCRIPTDIR/gen-keystore.sh:/tmp/gen-keystore.sh \
+    -w /tmp --rm ibmjava bash ./gen-keystore.sh ${IP}
+fi
 
 echo " Downloading platform services (one time)"
 
