@@ -93,10 +93,11 @@ Using the [map project](https://github.com/gameontext/gameon-map) as an example,
 2. Re-enable the build directive in the docker-compose.yml file and comment out the image directive.
   ```
   map:
-   build: map/map-wlpcfg
+   build:
+     context:  map/map-wlpcfg
   #image: gameontext/gameon-map
    volumes:
-    - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
+    - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
   ```
 
 3. Build the project(s) (includes building wars and creating keystores

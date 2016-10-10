@@ -10,107 +10,122 @@
 ## (urls for a8 are set within the gameon.env file, assuming
 ##  these external links are present)
 
-auth:
- #build: auth/auth-wlpcfg
- image: gameontext/gameon-auth
- volumes:
-  - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
- external_links:
-  - kafka
-  - registry
-  - logstash
-  - controller
- ports:
-  - "9089:9080"
-  - "9449:9443"
- env_file: gameon.${DOCKER_MACHINE_NAME}env
+version: '2'
 
-player:
- #build: player/player-wlpcfg
- image: gameontext/gameon-player
- volumes:
-  - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
- external_links:
-  - couchdb
-  - kafka
-  - registry
-  - logstash
-  - controller
- ports:
-  - "4201:4201"
-  - "9082:9080"
-  - "9443:9443"
- env_file: gameon.${DOCKER_MACHINE_NAME}env
+services:
 
-map:
- #build: map/map-wlpcfg
- image: gameontext/gameon-map
- volumes:
-  - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
- external_links:
-  - couchdb
-  - kafka
-  - registry
-  - logstash
-  - controller
- ports:
-  - "9099:9080"
-  - "9447:9443"
- env_file: gameon.${DOCKER_MACHINE_NAME}env
+  auth:
+   #build:
+   #  context: auth/auth-wlpcfg
+   image: gameontext/gameon-auth
+   volumes:
+    - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
+   external_links:
+    - kafka
+    - registry
+    - logstash
+    - controller
+   ports:
+    - "9089:9080"
+    - "9449:9443"
+   env_file: gameon.${DOCKER_MACHINE_NAME}env
+  
+  player:
+   #build:
+   #  context: player/player-wlpcfg
+   image: gameontext/gameon-player
+   volumes:
+    - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
+   external_links:
+    - couchdb
+    - kafka
+    - registry
+    - logstash
+    - controller
+   ports:
+    - "4201:4201"
+    - "9082:9080"
+    - "9443:9443"
+   env_file: gameon.${DOCKER_MACHINE_NAME}env
+  
+  map:
+   #build:
+   #  context: map/map-wlpcfg
+   image: gameontext/gameon-map
+   volumes:
+    - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
+   external_links:
+    - couchdb
+    - kafka
+    - registry
+    - logstash
+    - controller
+   ports:
+    - "9099:9080"
+    - "9447:9443"
+   env_file: gameon.${DOCKER_MACHINE_NAME}env
+  
+  mediator:
+   #build:
+   #  context: mediator/mediator-wlpcfg
+   image: gameontext/gameon-mediator
+   volumes:
+    - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
+   ports:
+    - "9086:9080"
+    - "9446:9443"
+   links:
+    - room
+   external_links:
+    - kafka
+    - registry
+    - logstash
+    - controller
+   env_file: gameon.${DOCKER_MACHINE_NAME}env
+  
+  proxy:
+   #build:
+   #  context: proxy
+   image: gameontext/gameon-proxy
+   volumes:
+    - 'keystore:/keystore'
+   env_file: gameon.${DOCKER_MACHINE_NAME}env
+   links:
+    - webapp
+    - room
+   external_links:
+    - kafka
+    - registry
+    - logstash
+    - controller
+   ports:
+    - "80:80"
+    - "443:443"
+    - "1936:1936"
+  
+  webapp:
+   #build:
+   #  context: webapp
+   image: gameontext/gameon-webapp
+   ports:
+    - "8080:8080"
+   env_file: gameon.${DOCKER_MACHINE_NAME}env
+  
+  room:
+   #build:
+   #  context: room/room-wlpcfg
+   image: gameontext/gameon-room
+   volumes:
+    - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
+   links:
+    - map
+   external_links:
+    - kafka
+   ports:
+    - "9080:9080"
+    - "9445:9443"
+   env_file: gameon.${DOCKER_MACHINE_NAME}env
 
-mediator:
- #build: mediator/mediator-wlpcfg
- image: gameontext/gameon-mediator
- volumes:
-  - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
- ports:
-  - "9086:9080"
-  - "9446:9443"
- links:
-  - room
- external_links:
-  - kafka
-  - registry
-  - logstash
-  - controller
- env_file: gameon.${DOCKER_MACHINE_NAME}env
-
-proxy:
- #build: proxy
- image: gameontext/gameon-proxy
- volumes:
-  - './keystore:/keystore'
- env_file: gameon.${DOCKER_MACHINE_NAME}env
- links:
-  - webapp
-  - room
- external_links:
-  - kafka
-  - registry
-  - logstash
-  - controller
- ports:
-  - "80:80"
-  - "443:443"
-  - "1936:1936"
-
-webapp:
- #build: webapp
- image: gameontext/gameon-webapp
- ports:
-  - "8080:8080"
- env_file: gameon.${DOCKER_MACHINE_NAME}env
-
-room:
- #build: room/room-wlpcfg
- image: gameontext/gameon-room
- volumes:
-  - './keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
- links:
-  - map
- external_links:
-  - kafka
- ports:
-  - "9080:9080"
-  - "9445:9443"
- env_file: gameon.${DOCKER_MACHINE_NAME}env
+volumes:
+  keystore:
+    external: true
