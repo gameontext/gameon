@@ -2,7 +2,7 @@
 
 This is the TL;DR version. For more details/background/links, see: [Intro to Game On! (GitBook)](https://gameontext.gitbooks.io/gameon-gitbook/content/)
 
-As a prerequisite, make sure [Docker](https://docs.docker.com/engine/installation/) is installed and running.
+As a prerequisite, make sure Java is installed, and [Docker](https://docs.docker.com/engine/installation/) is installed and running.
 
 * [Local room development](#local-room-development)
 * [Core game development](#core-game-development)
