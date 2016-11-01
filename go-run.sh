@@ -5,7 +5,7 @@
 # use the host ip instead. So we'll generate an over-ridden env file that
 # will get passed/copied properly into the target servers
 #
-# Use this script when you're developing rooms, or a subset of 
+# Use this script when you're developing rooms, or a subset of
 # Game On services
 #
 # This will help start/stop Game On services
@@ -33,8 +33,8 @@ ALLPROJECTS="auth map mediator player proxy room webapp"
 if [ $# -lt 1 ]
 then
   PROJECTS=$ALLPROJECTS
-elif [ $1 == "all" ] 
-then 
+elif [ $1 == "all" ]
+then
   PROJECTS=$ALLPROJECTS
 else
   PROJECTS=$@
@@ -69,7 +69,7 @@ up_log() {
       echo "${COMPOSE} up -d $PROJECTS, logs are viewable using go-run.sh logs $PROJECTS"
     fi
     ${COMPOSE} up -d $@
-    if [ $NOLOGS -eq 0 ] 
+    if [ $NOLOGS -eq 0 ]
     then
       ${COMPOSE} logs --tail="5" -f $@
     fi
@@ -104,7 +104,7 @@ gradle_build() {
 }
 
 usage() {
-    echo "Actions: start|stop|restart|rebuild|rm|logs"
+    echo "Actions: start|stop|restart|build|rebuild|rm|logs"
     echo "Use optional arguments to select one or more specific image"
 }
 
@@ -123,19 +123,23 @@ case "$ACTION" in
     down_rm $PROJECTS
     up_log $PROJECTS
   ;;
+  build)
+    down_rm $PROJECTS
+    ${COMPOSE} build $PROJECTS
+  ;;
   rebuild)
     down_rm $PROJECTS
     echo "gradle build for $PROJECTS"
     gradle_build $PROJECTS
     if [ $? != 0 ]
-    then 
+    then
       echo Gradle build of $PROJECTS failed.. please examine logs and retry as appropriate.
       exit 3
     fi
     echo "docker-compose build --pull $PROJECTS"
     ${COMPOSE} build --pull
     if [ $? != 0 ]
-    then 
+    then
       echo Docker build of $PROJECTS failed.. please examine logs and retry as appropriate.
       exit 2
     fi
@@ -144,7 +148,7 @@ case "$ACTION" in
   rm)
     echo "docker-compose rm $PROJECTS"
     ${COMPOSE} rm $PROJECTS
-  ;; 
+  ;;
   *)
 	usage
   ;;
