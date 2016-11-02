@@ -137,7 +137,7 @@ case "$ACTION" in
       exit 3
     fi
     echo "docker-compose build --pull $PROJECTS"
-    ${COMPOSE} build --pull
+    ${COMPOSE} build --pull $PROJECTS
     if [ $? != 0 ]
     then
       echo Docker build of $PROJECTS failed.. please examine logs and retry as appropriate.
