@@ -38,6 +38,13 @@ When the docker containers are up, use https://$IP/ to connect to the game."
 fi
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+DOCKERPATHPREFIX=
+docker version -f '{{.Client.Os}}' | grep windows
+if [ $rc == 0 ]
+then
+  DOCKERPATHPREFIX=/
+  sed -i 's/\r//' $SCRIPTDIR/gen-keystore.sh
+fi
 
 # If the keystore volume doesn't exist, then we should generate
 # the keystores we need for local signed JWTs to work
@@ -46,10 +53,15 @@ rc=$?
 if [ $rc != 0 ]
 then
   docker volume create --name keystore
+  # Dump cmd.. 
+  echo docker run \
+    -v keystore:/tmp/keystore \
+    -v ${DOCKERPATHPREFIX}${SCRIPTDIR}/gen-keystore.sh:/tmp/gen-keystore.sh \
+    -w /tmp --rm ibmjava bash ./gen-keystore.sh ${IP}
   # Generate keystore
   docker run \
     -v keystore:/tmp/keystore \
-    -v $SCRIPTDIR/gen-keystore.sh:/tmp/gen-keystore.sh \
+    -v ${DOCKERPATHPREFIX}${SCRIPTDIR}/gen-keystore.sh:/tmp/gen-keystore.sh \
     -w /tmp --rm ibmjava bash ./gen-keystore.sh ${IP}
 fi
 
