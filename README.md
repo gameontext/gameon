@@ -49,25 +49,24 @@ Carry on with [building your rooms](https://gameontext.gitbooks.io/gameon-gitboo
 
 ## Core Game Development
 
-If you want to contribute to the game's core services, the easiest way is to take advantage of 
-[git submodules](https://gameontext.gitbooks.io/gameon-gitbook/content/walkthroughs/git.html)
+If you want to contribute to the game's core services, no worries! 
 
-Assuming you've performed the steps above at least once, and using the 
-[map project](https://github.com/gameontext/gameon-map) as an example:
+Assuming you've performed the steps above at least once (and using the `map` service as an example):
 
 1. Change to the gameon directory
   ```
   cd gameon
   ```
 
-2. Obtain the source for the project that you want to change.
+2. Obtain the source for the project that you want to change. The easiest way is to take advantage of 
+[git submodules](https://gameontext.gitbooks.io/gameon-gitbook/content/walkthroughs/git.html).
   ```
   git submodule init map
   git submodule update map
   ```
 
 3. Copy the `docker-compose.override.yml.example` file to `docker-compose.override.yml`,
-   and uncomment the section for the service you want to change
+   and uncomment the section for the service you want to change: 
   ```
   map:
    build:
@@ -80,8 +79,7 @@ Assuming you've performed the steps above at least once, and using the
    that supports incremental publish / hot swap, mapping in this volume ensures paths will resolve properly.
 
 3. Build the project(s) (includes building wars and creating keystores
-   required for local development)
-   to be deployed.
+   required for local development) to be deployed.
   ```
   ./go-run.sh rebuild map
   ```
