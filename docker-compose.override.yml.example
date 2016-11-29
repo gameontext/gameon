@@ -2,51 +2,51 @@ version: '2'
 
 services:
 
-  auth:
-    build:
-      context: auth/auth-wlpcfg
+#  auth:
+#    build:
+#      context: auth/auth-wlpcfg
   
-  map:
-    build:
-      context: map/map-wlpcfg
-    volumes:
-      - '$HOME:$HOME'
-      - './map/map-wlpcfg/servers/gameon-map:/opt/ibm/wlp/usr/servers/defaultServer'
-      - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
+#  map:
+#    build:
+#      context: map/map-wlpcfg
+#    volumes:
+#      - '$HOME:$HOME'
+#      - './map/map-wlpcfg/servers/gameon-map:/opt/ibm/wlp/usr/servers/defaultServer'
+#      - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
   
-  mediator:
-    build:
-      context: mediator/mediator-wlpcfg
-    volumes:
-      - '$HOME:$HOME'
-      - './mediator/mediator-wlpcfg/servers/gameon-mediator:/opt/ibm/wlp/usr/servers/defaultServer'
-      - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
+#  mediator:
+#    build:
+#      context: mediator/mediator-wlpcfg
+#    volumes:
+#      - '$HOME:$HOME'
+#      - './mediator/mediator-wlpcfg/servers/gameon-mediator:/opt/ibm/wlp/usr/servers/defaultServer'
+#      - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
   
-  player:
-    build:
-      context: player/player-wlpcfg
-    volumes:
-      - '$HOME:$HOME'
-      - './player/player-wlpcfg/servers/gameon-player:/opt/ibm/wlp/usr/servers/defaultServer'
-      - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
+#  player:
+#    build:
+#      context: player/player-wlpcfg
+#    volumes:
+#      - '$HOME:$HOME'
+#      - './player/player-wlpcfg/servers/gameon-player:/opt/ibm/wlp/usr/servers/defaultServer'
+#      - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
   
-  proxy:
-    build:
-      context: proxy
+#  proxy:
+#    build:
+#      context: proxy
   
-  room:
-    build:
-      context: room/room-wlpcfg
-    volumes:
-      - '$HOME:$HOME'
-      - './room/room-wlpcfg/servers/gameon-room:/opt/ibm/wlp/usr/servers/defaultServer'
-      - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
+#  room:
+#    build:
+#      context: room/room-wlpcfg
+#    volumes:
+#      - '$HOME:$HOME'
+#      - './room/room-wlpcfg/servers/gameon-room:/opt/ibm/wlp/usr/servers/defaultServer'
+#      - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
   
-  webapp:
-    build:
-      context: webapp
-    volumes:
-      - './webapp/src:/opt/www'
+#  webapp:
+#    build:
+#      context: webapp
+#    volumes:
+#      - './webapp/src:/opt/www'
 
 volumes:
   keystore:
