@@ -21,7 +21,7 @@ elif [ -n $NAME ]
 then
   IP=$(docker-machine ip $NAME)
   rc=$?
-  if [ $rc != 0 ] || [ -z ${DOCKER_HOST} ]
+  if [ $rc -ne 0 ] || [ -z ${DOCKER_HOST} ]
   then
     echo "Is your docker host running? Did you start docker-machine, e.g.
   docker-machine start default
@@ -40,7 +40,8 @@ fi
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 DOCKERPATHPREFIX=
 docker version -f '{{.Client.Os}}' | grep windows
-if [ $rc == 0 ]
+rc=$?
+if [ $rc -eq 0 ]
 then
   DOCKERPATHPREFIX=/
   sed -i 's/\r//' $SCRIPTDIR/gen-keystore.sh
@@ -50,7 +51,7 @@ fi
 # the keystores we need for local signed JWTs to work
 docker volume inspect keystore &> /dev/null
 rc=$?
-if [ $rc != 0 ]
+if [ $rc -ne 0 ]
 then
   docker volume create --name keystore
   # Dump cmd.. 
@@ -69,7 +70,7 @@ echo " Downloading platform services (one time)"
 
 docker-compose -f $SCRIPTDIR/platformservices.yml pull
 rc=$?
-if [ $rc != 0 ]
+if [ $rc -ne 0 ]
 then
   echo "Trouble pulling required platform images, we need to sort that first"
   exit 1
@@ -77,7 +78,7 @@ fi
 
 docker-compose pull
 rc=$?
-if [ $rc != 0 ]
+if [ $rc -ne 0 ]
 then
   echo "Trouble pulling core images, we need to sort that first"
   exit 1
@@ -88,9 +89,11 @@ echo "
 If you haven't already, start the platform services with:
  ./go-platform-services.sh start
 
-If all of that went well, rebuild and launch the game-on docker containers with:
- ./go-run.sh rebuild all
-or if you are only using images (the default) just launch them with:
- ./go-run.sh start all 
+Once platform services have started successfully: 
+  * Launch core game services using: 
+    ./go-run.sh start all 
+
+  * If you are editing/updating core game services, rebuild and launch using:
+    ./go-run.sh rebuild all
 
 The game will be running at https://${IP}/ when you're all done."
