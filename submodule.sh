@@ -1,125 +1,80 @@
-#!/bin/bash
-MODULE=$1
-ACTION=$2
-LIVE=$3
+#!/usr/bin/python
+import sys
+import ruamel.yaml
+import io
 
-if [ -z $MODULE ]
-then
-  echo "Bad Usage. Pass ModuleName (eg, auth, webapp), then (build|image) then (live|docker)"
-  exit 3
-fi
+if ( len(sys.argv) != 4 ) :
+  print 'Error, Usage: submodule.sh modulename build|image live|docker'
+  sys.exit(1)
 
-case "$ACTION" in
-  build)
-  ;;
-  image)
-  ;;
-  *)
-    echo "Unknown use type $ACTION requested for module $MODULE"
-    exit 1;
-  ;;
-esac
+module = sys.argv[1]
+action = sys.argv[2]
+live = sys.argv[3]
 
-case "$LIVE" in
-  live)
-  ;;
-  docker)
-  ;;
-  *)
-    echo "Unknown build type of $LIVE requested for module $MODULE, supported values are (live|docker)"
-    exit 2;
-  ;;
-esac
+if( not (action == 'build' or action == 'image') ) :
+  print 'Error, Action must be build or image. Found: '+action
+  sys.exit(2)
 
-case "$MODULE" in
-  proxy)
-    TARGET='./proxy:/etc/haproxy'
-  ;;
-  webapp)
-    TARGET='./webapp/src:/opt/www'
-  ;;
-  *)
-    TARGET='./'$MODULE'/'$MODULE'-wlpcfg/servers/gameon-'$MODULE':/opt/ibm/wlp/usr/servers/defaultServer'
-  ;;
-esac
+if( not (live == 'live' or live == 'docker') ) :
+  print 'Error, Build type must be live or docker. Found: '+live
+  sys.exit(3)
 
+print 'Configured for module: '+module+' '+action+' '+live
 
-gawk '\
-BEGIN { FOUND=0; INBLOCK=0; FOUNDVOLUMES=0;}\
-{\
-  if( !INBLOCK && $1=="'$MODULE':" ) { \
-    INBLOCK=1; \
-    FOUND=1; \
-    VOLUMES=0; \
-    FOUNDVOLUMES=0; \
-    print $0; \
-  } else if( INBLOCK && /^[a-z]*:$/ ) { \
-    INBLOCK=0; \
-    if( !FOUNDVOLUMES && "'$LIVE'"=="live") { \
-      FOUNDVOLUMES=1;\
-      print " volumes:"; \
-      print "  - '\'$TARGET\''";\
-    } \
-    print $0 \
-  } else if( INBLOCK && /[ #]build:.*/ ) { \
-    idx=match($0, "[ #]build:(.*)",matches);\
-    if ( "'$ACTION'" == "build" ){ \
-      print " build:",matches[1]; \
-    } else { \
-      print " #build:",matches[1]; \
-    } \
-  } else if( INBLOCK && /[ #]image:.*/ ) { \
-    idx=match($0, "[ #]image:(.*)",matches);\
-    if ( "'$ACTION'" == "build" ){ \
-      print " #image:",matches[1]; \
-    } else { \
-      print " image:",matches[1]; \
-    } \
-  } else if( INBLOCK && !VOLUMES && /[ #]volumes:.*/ ) { \
-    VOLUMES=1; \
-    FOUNDVOLUMES=1; \
-    FOUNDTARGET=0; \
-    print $0;\
-  } else if( INBLOCK && VOLUMES ) { \
-    if( /(^[ ]*$|[ ]*#.*|[ ]*-[ ]*.*)/ ) { \
-      if( /[ #]-[ ]*.*/ ) { \
-        idx=match($0,"([ #]*-[ ]*)(.*)",matches); \
-        if( "'\'$TARGET\''"==matches[2] ){ \
-          FOUNDTARGET=1; \
-          if( "'$LIVE'" == "live" ){ \
-             print "  - '$TARGET'";\
-          } else { \
-             print "#  - '$TARGET'";\
-          } \
-        } else { \
-          print $0; \
-        } \
-      } else { \
-        print $0;
-      }
-    } else { \
-      if( !FOUNDTARGET ) { \
-          if( "'$LIVE'" == "live" ){ \
-             print "  - '$TARGET'";\
-          } else { \
-             print "#  - '$TARGET'";\
-          } \
-       } \
-      VOLUMES=0; \
-      print $0;\
-    } \
-  } \
-  else print $0; \
-}\
-END { if ( FOUND && !FOUNDVOLUMES && "'$LIVE'"=="live") { \
-      print " volumes:"; \
-      print "  - '\'$TARGET\''";\
-} } \
-' docker-compose.yml > docker-compose2.yml
+with io.open('docker-compose.yml', 'r') as stream:
+   data = ruamel.yaml.load(stream, ruamel.yaml.RoundTripLoader)
 
-if [ $? == 0 ]; then
-  rm docker-compose.yml ; mv docker-compose2.yml docker-compose.yml
-else
-  echo "Error during yml processing, please report with log via github"
-fi
+if( module in data['services'] ):
+  print "Module "+module+" found in yaml"
+else:
+  print "Module "+module+" unknown"
+  sys.exit(4)
 
+target = './'+module+'/'+module+'-wlpcfg/servers/gameon-'+module+':/opt/ibm/wlp/usr/servers/defaultServer'
+context = module+'/'+module+'-wlpcfg'
+
+if( module == 'proxy' ):
+  target = './proxy:/etc/haproxy'
+  context = 'proxy'
+
+if( module == 'webapp' ):
+  target = './webapp/src:/opt/www'
+  context = 'webapp'
+
+if( action == 'build' ):
+  data['services'][module].pop('image', None)
+  data['services'][module].pop('build', None)
+  contextblock = dict( context = context )
+  data['services'][module]['build'] = contextblock
+
+if( action == 'image' ):
+  data['services'][module].pop('image', None)
+  data['services'][module].pop('build', None)
+  data['services'][module]['image'] = 'gameontext/gameon-'+module
+
+if( live == 'docker' ):
+  if( 'volumes' in data['services'][module] ):
+    clean = []
+    for v in data['services'][module]['volumes'] :
+      if( not target == v ):
+        clean.append(v)
+    if( len(clean) > 0 ):
+      data['services'][module]['volumes'] = clean
+    else:
+      print('removing empty volumes block')
+      data['services'][module].pop('volumes',None)
+
+if( live == 'live' ): 
+  if( not 'volumes' in data['services'][module] ):
+     data['services'][module]['volumes'] = []
+  found = False
+  for v in data['services'][module]['volumes'] :
+     if( target == v ):
+        found=True
+  if( not found ):
+    data['services'][module]['volumes'].append(target)
+
+#print(ruamel.yaml.dump(data, Dumper=ruamel.yaml.RoundTripDumper))
+
+with open('docker-compose.yml', 'w') as outfile:
+    ruamel.yaml.dump(data, outfile, Dumper=ruamel.yaml.RoundTripDumper)
