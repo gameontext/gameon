@@ -17,7 +17,7 @@ if [ "$NAME" = "empty" ]
 then
   echo "DOCKER_MACHINE_NAME is not set. If you don't use docker-machine, you can ignore this, or
   export DOCKER_MACHINE_NAME=''"
-elif [ -n $NAME ]
+elif [ "$NAME" != "" ]
 then
   IP=$(docker-machine ip $NAME)
   rc=$?
@@ -54,7 +54,7 @@ rc=$?
 if [ $rc -ne 0 ]
 then
   docker volume create --name keystore
-  # Dump cmd.. 
+  # Dump cmd..
   echo docker run \
     -v keystore:/tmp/keystore \
     -v ${DOCKERPATHPREFIX}${SCRIPTDIR}/gen-keystore.sh:/tmp/gen-keystore.sh \
@@ -84,14 +84,20 @@ then
   exit 1
 fi
 
+if [ -d ./webapp/app ]
+then
+  echo "** webapp source exists. Building using `docker-compose run webapp-build` "
+  docker-compose run  --rm webapp-build
+fi
+
 echo "
 
 If you haven't already, start the platform services with:
  ./go-platform-services.sh start
 
-Once platform services have started successfully: 
-  * Launch core game services using: 
-    ./go-run.sh start all 
+Once platform services have started successfully:
+  * Launch core game services using:
+    ./go-run.sh start all
 
   * If you are editing/updating core game services, rebuild and launch using:
     ./go-run.sh rebuild all
