@@ -56,7 +56,7 @@ fi
 #setup docker ip.
 NAME=${DOCKER_MACHINE_NAME-empty}
 IP=127.0.0.1
-if [ $NAME != "empty" ]
+if [ "$NAME" != "empty" ] && [ "$NAME" != "" ]
 then
   IP=$(docker-machine ip $NAME)
 fi
@@ -82,30 +82,34 @@ down_rm() {
 }
 
 gradle_build() {
-	for project in $@
-	do
-	  echo -n "Evaluating ${project} for gradle build. :: "
-	  if [ -d "${project}" ] && [ -e "${project}/build.gradle" ]
-	  then
-		echo "Building project ${project} with gradle"
-		cd "$project"
-		../gradlew build
-		rc=$?
-		cd ..
-		if [ $rc != 0 ]
-		then
-		  echo Gradle build failed. Please investigate, GameOn is unlikely to work until the issue is resolved.
-		  exit 1
-		fi
-	  else
-		echo "No need to gradle build project ${project}"
-	  fi
-	done
+  for project in $@
+  do
+    echo -n "Evaluating ${project} for gradle build. :: "
+    if [ -d "${project}" ] && [ -e "${project}/build.gradle" ]
+    then
+      echo "Building project ${project} with gradle"
+      cd "$project"
+      ../gradlew build
+      rc=$?
+      cd ..
+      if [ $rc != 0 ]
+      then
+        echo Gradle build failed. Please investigate, GameOn is unlikely to work until the issue is resolved.
+        exit 1
+      fi
+    elif [ "${project}" == "webapp" ]
+    then
+      echo "Docker-based build for webapp using `docker-compose run webapp-build` "
+      docker-compose run --rm webapp-build
+    else
+      echo "No need to gradle build project ${project}"
+    fi
+  done
 }
 
 usage() {
-    echo "Actions: start|stop|restart|build|rebuild|rm|logs"
-    echo "Use optional arguments to select one or more specific image"
+  echo "Actions: start|stop|restart|build|rebuild|rm|logs"
+  echo "Use optional arguments to select one or more specific image"
 }
 
 case "$ACTION" in
@@ -129,7 +133,7 @@ case "$ACTION" in
   ;;
   rebuild)
     down_rm $PROJECTS
-    echo "gradle build for $PROJECTS"
+    echo "rebuilding $PROJECTS"
     gradle_build $PROJECTS
     if [ $? != 0 ]
     then
@@ -150,6 +154,6 @@ case "$ACTION" in
     ${COMPOSE} rm $PROJECTS
   ;;
   *)
-	usage
+  usage
   ;;
 esac
