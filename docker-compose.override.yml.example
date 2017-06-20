@@ -5,7 +5,7 @@ services:
 #  auth:
 #    build:
 #      context: auth/auth-wlpcfg
-  
+
 #  map:
 #    build:
 #      context: map/map-wlpcfg
@@ -13,7 +13,7 @@ services:
 #      - '$HOME:$HOME'
 #      - './map/map-wlpcfg/servers/gameon-map:/opt/ibm/wlp/usr/servers/defaultServer'
 #      - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
-  
+
 #  mediator:
 #    build:
 #      context: mediator/mediator-wlpcfg
@@ -21,7 +21,7 @@ services:
 #      - '$HOME:$HOME'
 #      - './mediator/mediator-wlpcfg/servers/gameon-mediator:/opt/ibm/wlp/usr/servers/defaultServer'
 #      - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
-  
+
 #  player:
 #    build:
 #      context: player/player-wlpcfg
@@ -29,11 +29,11 @@ services:
 #      - '$HOME:$HOME'
 #      - './player/player-wlpcfg/servers/gameon-player:/opt/ibm/wlp/usr/servers/defaultServer'
 #      - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
-  
+
 #  proxy:
 #    build:
 #      context: proxy
-  
+
 #  room:
 #    build:
 #      context: room/room-wlpcfg
@@ -41,12 +41,21 @@ services:
 #      - '$HOME:$HOME'
 #      - './room/room-wlpcfg/servers/gameon-room:/opt/ibm/wlp/usr/servers/defaultServer'
 #      - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
-  
+
+
+#  webapp-build:
+#    build:
+#       context: webapp
+#       dockerfile: Dockerfile-node
+#    command: /usr/local/bin/docker-build.sh
+#    volumes:
+#      - './webapp/app:/app'
+
 #  webapp:
 #    build:
 #      context: webapp
 #    volumes:
-#      - './webapp/src:/opt/www'
+#      - './webapp/app:/opt/www'
 
 volumes:
   keystore:
