@@ -3,7 +3,8 @@
 #
 # This script is only intended to run in the IBM DevOps Services Pipeline Environment.
 #
-echo Setting up Docker...
+echo Setting up Docker in $PWD
+
 mkdir dockercfg ; cd dockercfg
 echo -e $KEY > key.pem
 echo -e $CA_CERT > ca.pem
@@ -16,19 +17,34 @@ cd ..
 echo Obtaining docker.
 curl https://download.docker.com/linux/static/stable/x86_64/docker-17.06.0-ce.tgz | tar xvz
 
-cd $TARGET_DIR
+if [ "$TARGET_DIR" != "" ]; then
+  cd $TARGET_DIR
+  DOCKER="../docker/docker"
+else
+  DOCKER="docker/docker"
+fi
 
-../docker/docker build -t $TARGET_CONTAINER -f Dockerfile .
+echo Docker path is ${DOCKER} from ${PWD}
+
+${DOCKER} build -t $TARGET_CONTAINER -f Dockerfile .
 if [ $? != 0 ]
 then
   echo "Docker build failed, will NOT attempt to stop/rm/start-new-container."
   exit -2
 else
   echo Attempting to remove old containers.
-  ../docker/docker stop -t 0 $TARGET_CONTAINER || true
-  ../docker/docker rm $TARGET_CONTAINER || true
+  ${DOCKER} stop -t 0 $TARGET_CONTAINER || true
+  ${DOCKER} rm $TARGET_CONTAINER || true
   echo Starting new container.
-  ../docker/docker run -d -p $HTTP:9080 -p $HTTPS:9443 --restart=always --link etcd -e LICENSE=accept -e ETCDCTL_ENDPOINT=http://etcd:4001 --name=$TARGET_CONTAINER $TARGET_CONTAINER
+
+  if [ -n $HTTP ]; then
+    HTTP="-p $HTTP:9080"
+  fi
+  if [ -n $HTTPS ]; then
+    HTTPS="-p $HTTPS:9443"
+  fi
+
+  ${DOCKER} run -d $HTTP $HTTPS $PORT_MAPPINGS --restart=always --link etcd -e LICENSE=accept -e ETCDCTL_ENDPOINT=http://etcd:4001 --name=$TARGET_CONTAINER $TARGET_CONTAINER
   if [ $? != 0 ]
   then
     echo "Docker run failed.. it's too late.. the damage is done already."
@@ -36,5 +52,9 @@ else
   fi
 fi
 
-cd ..
+if [ -n $TARGET_DIR ]; then
+  cd ..
+fi
+
 rm -rf dockercfg
+rm -rf docker
