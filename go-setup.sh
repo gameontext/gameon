@@ -17,6 +17,14 @@ if [ "$NAME" = "empty" ]
 then
   echo "DOCKER_MACHINE_NAME is not set. If you don't use docker-machine, you can ignore this, or
   export DOCKER_MACHINE_NAME=''"
+elif [ "$NAME" == "vagrant" ]
+then
+  if [ ! -f gameon.${NAME}env ]
+  then
+    echo "Creating new environment file gameon.${NAME}env to contain environment variable overrides.
+          This file will use the docker host ip address ($IP), but will re-map ports for forwarding from the VM."
+    cat gameon.env | sed -e 's/FRONT_END_\\(.*\\)127.0.0.1\\(.*\\)/FRONT_END_\\1127.0.0.1:9943\\2/g' > gameon.${NAME}env
+  fi
 elif [ "$NAME" != "" ]
 then
   IP=$(docker-machine ip $NAME)

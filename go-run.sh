@@ -56,7 +56,7 @@ fi
 #setup docker ip.
 NAME=${DOCKER_MACHINE_NAME-empty}
 IP=127.0.0.1
-if [ "$NAME" != "empty" ] && [ "$NAME" != "" ]
+if [ "$NAME" != "empty" ] && [ "$NAME" != "vagrant" ] && [ "$NAME" != "" ]
 then
   IP=$(docker-machine ip $NAME)
 fi
