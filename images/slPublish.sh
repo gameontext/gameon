@@ -17,7 +17,8 @@ cd ..
 echo Obtaining docker.
 curl https://download.docker.com/linux/static/stable/x86_64/docker-17.06.0-ce.tgz | tar xvz
 
-if [ "$TARGET_DIR" != "" ]; then
+DIR=${TARGET_DIR-empty}
+if [ "$DIR" != "empty" ] && [ "$TARGET_DIR" != "" ]; then
   cd $TARGET_DIR
   DOCKER="../docker/docker"
 else
