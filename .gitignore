@@ -1,4 +1,7 @@
 .gradle
-gameon.devenv
-gameon.defaultenv
+.*.swp
+.DS_Store
+.vagrant
+*.log
+gameon.?*env
 docker-compose.override.yml
