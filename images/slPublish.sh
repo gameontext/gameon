@@ -28,7 +28,7 @@ else
   ../docker/docker stop -t 0 $TARGET_CONTAINER || true
   ../docker/docker rm $TARGET_CONTAINER || true
   echo Starting new container.
-  ../docker/docker run -d -p 9089:9080 -p 9449:9443 --restart=always --link etcd -e LICENSE=accept -e ETCDCTL_ENDPOINT=http://etcd:4001 --name=$TARGET_CONTAINER $TARGET_CONTAINER
+  ../docker/docker run -d -p $HTTP:9080 -p $HTTPS:9443 --restart=always --link etcd -e LICENSE=accept -e ETCDCTL_ENDPOINT=http://etcd:4001 --name=$TARGET_CONTAINER $TARGET_CONTAINER
   if [ $? != 0 ]
   then
     echo "Docker run failed.. it's too late.. the damage is done already."
