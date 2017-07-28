@@ -25,9 +25,14 @@ else
   DOCKER="docker/docker"
 fi
 
+FILE=${Dockerfile-empty}
+if [ "$DIR" == "empty" ] || [ "$Dockerfile" == "" ]; then
+  Dockerfile="Dockerfile"
+fi
+
 echo Docker path is ${DOCKER} from ${PWD}
 
-${DOCKER} build -t $TARGET_CONTAINER -f Dockerfile .
+${DOCKER} build -t $TARGET_CONTAINER -f ${Dockerfile} .
 if [ $? != 0 ]
 then
   echo "Docker build failed, will NOT attempt to stop/rm/start-new-container."
