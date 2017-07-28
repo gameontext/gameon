@@ -126,6 +126,15 @@ services:
       - "9445:9443"
     env_file: gameon.${DOCKER_MACHINE_NAME}env
 
+  swagger:
+    #build:
+    #  context: swagger
+    image: gameontext/gameon-swagger
+    ports:
+      - "8081:8080"
+    env_file: gameon.${DOCKER_MACHINE_NAME}env
+
+
 volumes:
   keystore:
     external: true
