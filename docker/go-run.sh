@@ -11,6 +11,12 @@
 # This will help start/stop Game On services
 #
 
+SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+source $SCRIPTDIR/go-common
+
+# Ensure we're executing from project root directory
+cd "${SCRIPTDIR}"/..
+
 #set the action, default to help if none passed.
 if [ $# -lt 1 ]
 then
@@ -40,67 +46,63 @@ else
   PROJECTS=$@
 fi
 
-OVERRIDE=
-if [ -f docker-compose.override.yml ]
-then
-  OVERRIDE='-f docker-compose.override.yml'
-fi
-
-#configure docker compose command
-COMPOSE="docker-compose -f docker-compose.yml ${OVERRIDE} -f platformservices.yml"
-if [ "$(uname)" != "Darwin" ] && [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]
-then
-    COMPOSE="sudo ${COMPOSE}"
-fi
-
-#setup docker ip.
-NAME=${DOCKER_MACHINE_NAME-empty}
-IP=127.0.0.1
-if [ "$NAME" != "empty" ] && [ "$NAME" != "vagrant" ] && [ "$NAME" != "" ]
-then
-  IP=$(docker-machine ip $NAME)
-fi
-
 up_log() {
-    if [ $NOLOGS -eq 0 ]
-    then
-      echo "${COMPOSE} up -d $PROJECTS, logs will continue in the foreground."
-    else
-      echo "${COMPOSE} up -d $PROJECTS, logs are viewable using go-run.sh logs $PROJECTS"
-    fi
-    ${COMPOSE} up -d $@
-    if [ $NOLOGS -eq 0 ]
-    then
-      ${COMPOSE} logs --tail="5" -f $@
-    fi
+  ensure_keystore
+  if [ $NOLOGS -eq 0 ]
+  then
+    echo "${COMPOSE} up -d $PROJECTS, logs will continue in the foreground."
+  else
+    echo "${COMPOSE} up -d $PROJECTS, logs are viewable using go-run.sh logs $PROJECTS"
+  fi
+  ${COMPOSE} up -d $@
+  if [ $NOLOGS -eq 0 ]
+  then
+    ${COMPOSE} logs --tail="5" -f $@
+  fi
 }
 
 down_rm() {
-    echo "docker-compose stop $@"
+    echo "${COMPOSE} stop $@"
     ${COMPOSE} stop $@
     ${COMPOSE} rm $@
+}
+
+re_pull() {
+  ## Refresh base images (betas)
+  echo "${COMPOSE}  build --pull $PROJECTS"
+  ${COMPOSE} build --pull $PROJECTS
+  if [ $? != 0 ]
+  then
+    echo Docker build of $PROJECTS failed.. please examine logs and retry as appropriate.
+    exit 2
+  fi
 }
 
 gradle_build() {
   for project in $@
   do
-    echo -n "Evaluating ${project} for gradle build. :: "
+    echo -n "Building ${project} :: "
     if [ -d "${project}" ] && [ -e "${project}/build.gradle" ]
     then
       echo "Building project ${project} with gradle"
+
       cd "$project"
-      ../gradlew build
+      ./gradlew build
       rc=$?
-      cd ..
       if [ $rc != 0 ]
       then
-        echo Gradle build failed. Please investigate, GameOn is unlikely to work until the issue is resolved.
+        echo Gradle build failed. Please investigate, Game On! is unlikely to work until the issue is resolved.
         exit 1
       fi
+
+      # Build Docker image
+      ${COMPOSE} build ${project}
+
+      cd ..
     elif [ "${project}" == "webapp" ]
     then
-      echo "Docker-based build for webapp using `docker-compose run webapp-build` "
-      docker-compose run --rm webapp-build
+      echo "Docker-based build for webapp using ${COMPOSE} run webapp-build"
+      build_webapp
     else
       echo "No need to gradle build project ${project}"
     fi
@@ -120,7 +122,7 @@ case "$ACTION" in
     up_log $PROJECTS
   ;;
   stop|down)
-    echo "docker-compose stop $PROJECTS"
+    echo "${COMPOSE}  stop $PROJECTS"
     ${COMPOSE} stop $PROJECTS
   ;;
   restart)
@@ -131,27 +133,33 @@ case "$ACTION" in
     down_rm $PROJECTS
     ${COMPOSE} build $PROJECTS
   ;;
+  rebuild_only)
+    echo "rebuilding $PROJECTS"
+    gradle_build $PROJECTS
+  ;;
   rebuild)
     down_rm $PROJECTS
     echo "rebuilding $PROJECTS"
+    re_pull
     gradle_build $PROJECTS
-    if [ $? != 0 ]
-    then
-      echo Gradle build of $PROJECTS failed.. please examine logs and retry as appropriate.
-      exit 3
-    fi
-    echo "docker-compose build --pull $PROJECTS"
-    ${COMPOSE} build --pull $PROJECTS
-    if [ $? != 0 ]
-    then
-      echo Docker build of $PROJECTS failed.. please examine logs and retry as appropriate.
-      exit 2
-    fi
     up_log $PROJECTS
   ;;
   rm)
-    echo "docker-compose rm $PROJECTS"
+    echo "${COMPOSE}  rm $PROJECTS"
     ${COMPOSE} rm $PROJECTS
+  ;;
+  wait)
+    echo "Waiting until http://${IP}/site_alive returns OK."
+    echo "This may take awhile, as it is starting a number of containers at the same time."
+    echo "If you're curious, cancel this, and use './docker/go-run.sh logs' to watch what is happening"
+
+    until $(curl --output /dev/null --silent --head --fail http://${IP}/site_alive)
+    do
+      printf '.'
+      sleep 5
+    done
+    echo ""
+    echo "Game On! You're ready to play: https://${IP}/"
   ;;
   *)
   usage

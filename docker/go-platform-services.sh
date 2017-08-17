@@ -17,13 +17,17 @@
 #set -x
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+source $SCRIPTDIR/go-common
+
+# Ensure we're executing from project root directory
+cd "${SCRIPTDIR}"/..
 
 if [ "$1" == "start" ]; then
 
     if [ "$2" != "--force" ]; then
       echo "Testing for running platform.. "
-   
-      EXPECTED="controller couchdb elasticsearch gateway kafka kibana logstash registry redis" 
+
+      EXPECTED="controller couchdb elasticsearch gateway kafka kibana logstash registry redis"
       FOUND=`docker ps --format="{{.Names}}"`
       OK=1
       for svc in $EXPECTED; do
@@ -44,28 +48,12 @@ if [ "$1" == "start" ]; then
     fi
 
     echo "Starting platform services (kafka, ELK stack, couchdb, a8-controller, a8-registry, redis, gateway)"
-    
+
     docker-compose -f $SCRIPTDIR/platformservices.yml up -d
-    
+
     echo "Waiting 1 minute for the platform to initialize.."
     sleep 60
     echo "Platform considered initialized, proceeding.."
-    
-    NAME=${DOCKER_MACHINE_NAME-empty}
-    IP=127.0.0.1
-    if [ "$NAME" == "empty" ]; then
-      echo "DOCKER_MACHINE_NAME is not set. If you don't use docker-machine, you can ignore this, or export DOCKER_MACHINE_NAME=''"
-    elif [ -n $NAME ]; then
-      IP=$(docker-machine ip $NAME)
-      rc=$?
-      if [ $rc != 0 ] || [ -z ${DOCKER_HOST} ]
-      then
-        echo "Is your docker host running? Did you start docker-machine, e.g. 
-  docker-machine start default
-  eval \$(docker-machine env default)"
-        exit 1 
-      fi
-    fi
 
     REGISTRY_URL=http://$IP:31300
     CONTROLLER_URL=http://$IP:31200

@@ -11,6 +11,12 @@
 # One-time, initial setup
 #
 
+SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+source $SCRIPTDIR/go-common
+
+# Ensure we're executing from project root directory
+cd "${SCRIPTDIR}"/..
+
 NAME=${DOCKER_MACHINE_NAME-empty}
 IP=127.0.0.1
 if [ "$NAME" = "empty" ]
@@ -45,46 +51,9 @@ When the docker containers are up, use https://$IP/ to connect to the game."
   cat gameon.env | sed  -e "s#127\.0\.0\.1\:6379#A8LOCALHOSTPRESERVE#g" | sed -e "s#127\.0\.0\.1#${IP}#g" | sed -e "s#A8LOCALHOSTPRESERVE#127\.0\.0\.1\:6379#" > gameon.${NAME}env
 fi
 
-SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-DOCKERPATHPREFIX=
-docker version -f '{{.Client.Os}}' | grep windows
-rc=$?
-if [ $rc -eq 0 ]
-then
-  DOCKERPATHPREFIX=/
-  sed -i 's/\r//' $SCRIPTDIR/gen-keystore.sh
-fi
+ensure_keystore
 
-# If the keystore volume doesn't exist, then we should generate
-# the keystores we need for local signed JWTs to work
-docker volume inspect keystore &> /dev/null
-rc=$?
-if [ $rc -ne 0 ]
-then
-  docker volume create --name keystore
-  # Dump cmd..
-  echo docker run \
-    -v keystore:/tmp/keystore \
-    -v ${DOCKERPATHPREFIX}${SCRIPTDIR}/gen-keystore.sh:/tmp/gen-keystore.sh \
-    -w /tmp --rm ibmjava bash ./gen-keystore.sh ${IP}
-  # Generate keystore
-  docker run \
-    -v keystore:/tmp/keystore \
-    -v ${DOCKERPATHPREFIX}${SCRIPTDIR}/gen-keystore.sh:/tmp/gen-keystore.sh \
-    -w /tmp --rm ibmjava bash ./gen-keystore.sh ${IP}
-fi
-
-echo " Downloading platform services (one time)"
-
-docker-compose -f $SCRIPTDIR/platformservices.yml pull
-rc=$?
-if [ $rc -ne 0 ]
-then
-  echo "Trouble pulling required platform images, we need to sort that first"
-  exit 1
-fi
-
-docker-compose pull
+${COMPOSE} pull
 rc=$?
 if [ $rc -ne 0 ]
 then
@@ -92,22 +61,21 @@ then
   exit 1
 fi
 
-if [ -d ./webapp/app ]
-then
-  echo "** webapp source exists. Building using `docker-compose run webapp-build` "
-  docker-compose run  --rm webapp-build
-fi
+${SCRIPTDIR}/go-run.sh rebuild_only
 
 echo "
 
-If you haven't already, start the platform services with:
- ./go-platform-services.sh start
+Start the Game On! platform using:
+  ./go-admin.sh up
 
-Once platform services have started successfully:
-  * Launch core game services using:
-    ./go-run.sh start all
+Alternately (more detailed):
 
-  * If you are editing/updating core game services, rebuild and launch using:
-    ./go-run.sh rebuild all
+  1. Start platform services:
+    ./docker/go-platform-services.sh start
+  2. Launch core game services using:
+    ./docker/go-run.sh start all
+
+If you are editing/updating core game services, rebuild and launch using:
+  ./docker/go-run.sh rebuild all
 
 The game will be running at https://${IP}/ when you're all done."

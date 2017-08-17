@@ -4,7 +4,7 @@
 
 if (( $# != 1))
 then
-  echo "Usage: ./gen-keystore.sh <IP>"
+  echo "Usage: ./bin/gen-keystore.sh <IP>"
   exit 1
 fi
 
