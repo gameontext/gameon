@@ -38,24 +38,25 @@ then
   echo "Docker build failed, will NOT attempt to stop/rm/start-new-container."
   exit -2
 else
-  echo Attempting to remove old containers.
-  ${DOCKER} stop -t 0 $TARGET_CONTAINER || true
-  ${DOCKER} rm $TARGET_CONTAINER || true
-  echo Starting new container.
+  echo Build successful.
+  #echo Attempting to remove old containers.
+  #${DOCKER} stop -t 0 $TARGET_CONTAINER || true
+  #${DOCKER} rm $TARGET_CONTAINER || true
+  #echo Starting new container.
 
-  if [ -n $HTTP ]; then
-    HTTP="-p $HTTP:9080"
-  fi
-  if [ -n $HTTPS ]; then
-    HTTPS="-p $HTTPS:9443"
-  fi
+  #if [ -n $HTTP ]; then
+  #  HTTP="-p $HTTP:9080"
+  #fi
+  #if [ -n $HTTPS ]; then
+  #  HTTPS="-p $HTTPS:9443"
+  #fi
 
-  ${DOCKER} run -d $HTTP $HTTPS $PORT_MAPPINGS --restart=always --link etcd -e LICENSE=accept -e ETCDCTL_ENDPOINT=http://etcd:4001 --name=$TARGET_CONTAINER $TARGET_CONTAINER
-  if [ $? != 0 ]
-  then
-    echo "Docker run failed.. it's too late.. the damage is done already."
-    exit -3
-  fi
+  #${DOCKER} run -d $HTTP $HTTPS $PORT_MAPPINGS --restart=always --link etcd -e LICENSE=accept -e ETCDCTL_ENDPOINT=http://etcd:4001 --name=$TARGET_CONTAINER $TARGET_CONTAINER
+  #if [ $? != 0 ]
+  #then
+  #  echo "Docker run failed.. it's too late.. the damage is done already."
+  #  exit -3
+  #fi
 fi
 
 if [ -n $TARGET_DIR ]; then
