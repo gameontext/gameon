@@ -13,6 +13,10 @@ fi
 echo "Updating $WLP_INSTALL_DIR"
 TOP=$PWD
 
+dir=$(dirname $0)
+pushd "$dir"/..  > /dev/null
+echo "Finding Java projects in $PWD"
+
 for SUBDIR in *
 do
   if [ -d "${SUBDIR}" ] && [ -d "${SUBDIR}/${SUBDIR}-wlpcfg" ]
@@ -28,3 +32,5 @@ do
       cd $TOP
   fi
 done
+
+popd  > /dev/null
