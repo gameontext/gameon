@@ -21,27 +21,42 @@ As a prerequisite, make sure Java 8 is installed, and [Docker](https://docs.dock
   cd gameon
   ```
 
-3. One time setup, this will ensure that required keystores are setup, and that you have an
-  env file suitable for use with docker-compose (whether you're using docker-machine or not).
-  ```
-  ./go-setup.sh
-  ```
-  This setup step also pulls the initial images required for running the system.
+3. (Optional) Use Vagrant for your development environment
+  1. Install Vagrant
+  2. `vagrant up` (likley with `--provider=virtualbox`)
+  3. `vagrant ssh`
+  4. use `pwd` to ensure you're in the `/vagrant` directory.
 
-4. Start Game ON platform services (amalgam8, couchdb, and an elk stack!).
-  These services are configured in `platformservices.yml`.
+  * Notes:
+    * the Vagrantfile updates the .bashrc for the vagrant user to set `DOCKER_MACHINE_NAME=vagrant` to tweak script behavior for use with vagrant.
+    * VM provisioning will perform the next two steps on your behalf. To toggle between Kubernetes via minikube and Docker Compose in the Vagrant VM, set the DEPLOYMENT environment variable at provisioning time.
+
+4. Set up required keystores and environment variables. This step also pulls the initial images required for running the system. (This action only needs to be run once).
+```
+./go-admin.sh setup
+```
+
+  * This script uses `DEPLOYMENT` to choose between using Docker Compose or Kubernetes for deployment.
+    * `DEPLOYMENT=docker-compose` -- Scripts related to provisioning with Docker Compose are in the `docker` directory.
+    * `DEPLOYMENT=minikube` -- Scripts related to provisioning with helm and kubernetes are in the `kubernetes` directory. Local deployment will be via minikube.
+
+5. Start the game (supporting platform and core services):
+```
+./go-admin.sh up
+```
+  * When using Docker Compose, this is a two step process, that can be emulated using:
   ```
-  ./go-platform-services.sh start
+  ./docker/go-platform-services.sh start
+  ./docker/go-run.sh start
   ```
 
-5. Start the core Game ON services (Player, Mediator, Map)
-  ```
-  ./go-run.sh start
-  ```
-  The `go-run.sh` script contains shorthand operations to help with starting,
-  stopping, and cleaning up after Game ON core services (in `docker-compose.yml`).
+    `./docker/go-run.sh` contains useful short-hand operations for working with docker containers defined by the yml files in the `docker` directory.
 
-Game On! is now running locally.
+
+### Game On! is now running locally.
+
+When http://127.0.0.1/site_alive returns 200 OK, everything is up and running.
+
 * If you're running a \*nix variant, you can access it at http://127.0.0.1/
 * If you're running Mac or Windows, access it using the docker host IP address (see [below](#notes))
 
@@ -51,7 +66,7 @@ Carry on with [building your rooms](https://gameontext.gitbooks.io/gameon-gitboo
 
 ## Core Game Development
 
-If you want to contribute to the game's core services, no worries! 
+If you want to contribute to the game's core services, no worries!
 
 Assuming you've performed the steps above at least once (and using the `map` service as an example):
 
@@ -60,15 +75,15 @@ Assuming you've performed the steps above at least once (and using the `map` ser
   cd gameon
   ```
 
-2. Obtain the source for the project that you want to change. The easiest way is to take advantage of 
+2. Obtain the source for the project that you want to change. The easiest way is to take advantage of
 [git submodules](https://gameontext.gitbooks.io/gameon-gitbook/content/walkthroughs/git.html).
   ```
   git submodule init map
   git submodule update map
   ```
 
-3. Copy the `docker-compose.override.yml.example` file to `docker-compose.override.yml`,
-   and uncomment the section for the service you want to change: 
+3. Copy the `docker/docker-compose.override.yml.example` file to `docker/docker-compose.override.yml`,
+   and uncomment the section for the service you want to change:
   ```
   map:
    build:
@@ -80,24 +95,24 @@ Assuming you've performed the steps above at least once (and using the `map` ser
    The volume mapping in the `$HOME` directory is optional. If you're using a runtime like Liberty
    that supports incremental publish / hot swap, mapping in this volume ensures paths will resolve properly.
 
-3. Build the project(s) (includes building wars and creating keystores
+4. Build the project(s) (includes building wars and creating keystores
    required for local development) to be deployed.
   ```
-  ./go-run.sh rebuild map
+  ./docker/go-run.sh rebuild map
   ```
 
-4. Iterate!
-  * For subsequent code changes to the same project: 
-  
-    `go-run.sh rebuild map`
-    
+5. Iterate!
+  * For subsequent code changes to the same project:
+
+    `./docker/go-run.sh rebuild map`
+
   * To rebuild multiple projects, specify multiple projects as arguments, e.g.
-  
-    `go-run.sh rebuild map player auth`
-   
+
+    `./docker/go-run.sh rebuild map player auth`
+
   * To rebuild all projects, use either:
-  
-    `go-run.sh rebuild` or `go-run.sh rebuild all`
+
+    `./docker/go-run.sh rebuild` or `./docker/go-run.sh rebuild all`
 
 ----
 
@@ -109,7 +124,7 @@ Assuming you've performed the steps above at least once (and using the `map` ser
 
 ### Use the right IP address
 
-If you run on an operating system that uses a host VM for docker images (e.g. Docker Toolbox on Windows or Mac), then you need to update some values in `gameon.env` to match the IP address of your host. The host IP address is returned by `docker-machine ip <machine-name>`. `go-setup.sh` will create a customized copy of `gameon.env` for the active `DOCKER_MACHINE_NAME`, that will perform the substitution to the associated IP address.
+If you run on an operating system that uses a host VM for docker images (e.g. Docker Toolbox on Windows or Mac), then you need to update some values in `gameon.env` to match the IP address of your host. `go-setup.sh` will create a customized copy of `gameon.env` for the active `DOCKER_MACHINE_NAME`, that will perform the substitution to the host IP address returned by `docker-machine ip <machine-name>`.
 
 ## Contributing
 

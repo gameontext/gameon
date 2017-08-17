@@ -1,0 +1,94 @@
+BIN_DIR=$( cd "$SCRIPTDIR/../bin" && pwd )
+GO_DIR=$( cd "$SCRIPTDIR/.." && pwd )
+
+OVERRIDE=
+if [ -f $SCRIPTDIR/docker-compose.override.yml ]
+then
+  OVERRIDE="-f $SCRIPTDIR/docker-compose.override.yml"
+fi
+
+#configure docker compose command
+COMPOSE="docker-compose -f $SCRIPTDIR/docker-compose.yml ${OVERRIDE} -f $SCRIPTDIR/platformservices.yml"
+if [ "$(uname)" != "Darwin" ] && [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]
+then
+    COMPOSE="sudo ${COMPOSE}"
+fi
+
+echo "# Compose command w/ file sources: $COMPOSE"
+
+#setup docker NAME / IP.
+NAME=${DOCKER_MACHINE_NAME-empty}
+IP=127.0.0.1
+if [ "$NAME" != "empty" ] && [ "$NAME" != "vagrant" ] && [ "$NAME" != "" ]
+then
+  IP=$(docker-machine ip $NAME)
+  rc=$?
+  if [ $rc != 0 ] || [ -z ${DOCKER_HOST} ]
+  then
+    exit 1
+  fi
+fi
+
+
+build_webapp() {
+  if [ -d ${GO_DIR}/webapp/app ]
+  then
+    echo "** webapp source exists. **"
+    if [ "${OVERRIDE}" == "" ]
+    then
+      echo "Copy the `docker/docker-compose.override.yml.example` file to `docker/docker-compose.override.yml`,
+ and uncomment the section for the service you want to change. For webapp, that includes webapp-build."
+    elif grep -q webapp-build $SCRIPTDIR/docker-compose.override.yml
+    then
+      echo "Building using ${COMPOSE} run webapp-build"
+      ${COMPOSE} run --rm webapp-build
+      rc=$?
+      if [ $rc != 0 ]
+      then
+        echo Node build failed. Please investigate, Game On! is unlikely to work until the issue is resolved.
+        exit 1
+      fi
+
+      # Build the final Docker image
+      ${COMPOSE} build webapp
+    else
+      echo "The web front-end is compiled and run in two different containers."
+      echo "******"
+      echo "Ensure that both webapp and webapp-build exist in docker-compose.override.yml"
+      echo "as shown in docker-compose.override.yml.example"
+      echo "******"
+    fi
+  fi
+}
+
+ensure_keystore() {
+  ## Creating Keystores
+  # Docker volume operations need absolute paths
+  DOCKERPATHPREFIX=
+  docker version -f '{{.Client.Os}}' | grep windows
+  rc=$?
+  if [ $rc -eq 0 ]
+  then
+    DOCKERPATHPREFIX=/
+    sed -i 's/\r//' ${BIN_DIR}/gen-keystore.sh
+  fi
+
+  # If the keystore volume doesn't exist, then we should generate
+  # the keystores we need for local signed JWTs to work
+  docker volume inspect keystore &> /dev/null
+  rc=$?
+  if [ $rc -ne 0 ]
+  then
+    docker volume create --name keystore
+    # Dump cmd..
+    echo docker run \
+      -v keystore:/tmp/keystore \
+      -v ${DOCKERPATHPREFIX}${BIN_DIR}/gen-keystore.sh:/tmp/gen-keystore.sh \
+      -w /tmp --rm ibmjava bash ./gen-keystore.sh ${IP}
+    # Generate keystore
+    docker run \
+      -v keystore:/tmp/keystore \
+      -v ${DOCKERPATHPREFIX}${BIN_DIR}/gen-keystore.sh:/tmp/gen-keystore.sh \
+      -w /tmp --rm ibmjava bash ./gen-keystore.sh ${IP}
+  fi
+}

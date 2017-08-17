@@ -15,8 +15,6 @@ version: '2'
 services:
 
   auth:
-    #build:
-    #  context: auth/auth-wlpcfg
     image: gameontext/gameon-auth
     volumes:
       - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
@@ -28,11 +26,9 @@ services:
     ports:
       - "9089:9080"
       - "9449:9443"
-    env_file: gameon.${DOCKER_MACHINE_NAME}env
+    env_file: ../gameon.${DOCKER_MACHINE_NAME}env
 
   player:
-    #build:
-    #  context: player/player-wlpcfg
     image: gameontext/gameon-player
     volumes:
       - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
@@ -46,11 +42,9 @@ services:
       - "4201:4201"
       - "9082:9080"
       - "9443:9443"
-    env_file: gameon.${DOCKER_MACHINE_NAME}env
+    env_file: ../gameon.${DOCKER_MACHINE_NAME}env
 
   map:
-    #build:
-    #  context: map/map-wlpcfg
     image: gameontext/gameon-map
     volumes:
       - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
@@ -63,11 +57,9 @@ services:
     ports:
       - "9099:9080"
       - "9447:9443"
-    env_file: gameon.${DOCKER_MACHINE_NAME}env
+    env_file: ../gameon.${DOCKER_MACHINE_NAME}env
 
   mediator:
-    #build:
-    #  context: mediator/mediator-wlpcfg
     image: gameontext/gameon-mediator
     volumes:
       - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
@@ -81,15 +73,13 @@ services:
       - registry
       - logstash
       - controller
-    env_file: gameon.${DOCKER_MACHINE_NAME}env
+    env_file: ../gameon.${DOCKER_MACHINE_NAME}env
 
   proxy:
-    #build:
-    #  context: proxy
     image: gameontext/gameon-proxy
     volumes:
       - 'keystore:/keystore'
-    env_file: gameon.${DOCKER_MACHINE_NAME}env
+    env_file: ../gameon.${DOCKER_MACHINE_NAME}env
     links:
       - webapp
       - room
@@ -104,16 +94,12 @@ services:
       - "1936:1936"
 
   webapp:
-    #build:
-    #  context: webapp
     image: gameontext/gameon-webapp
     ports:
       - "8080:8080"
-    env_file: gameon.${DOCKER_MACHINE_NAME}env
+    env_file: ../gameon.${DOCKER_MACHINE_NAME}env
 
   room:
-    #build:
-    #  context: room/room-wlpcfg
     image: gameontext/gameon-room
     volumes:
       - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
@@ -124,15 +110,13 @@ services:
     ports:
       - "9080:9080"
       - "9445:9443"
-    env_file: gameon.${DOCKER_MACHINE_NAME}env
+    env_file: ../gameon.${DOCKER_MACHINE_NAME}env
 
   swagger:
-    #build:
-    #  context: swagger
     image: gameontext/gameon-swagger
     ports:
       - "8081:8080"
-    env_file: gameon.${DOCKER_MACHINE_NAME}env
+    env_file: ../gameon.${DOCKER_MACHINE_NAME}env
 
 
 volumes:
