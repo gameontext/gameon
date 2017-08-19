@@ -56,12 +56,6 @@ if [ "$1" == "start" ]; then
 
     # Start new ones
     ${COMPOSE} up -d ${PLATFORM}
-
-    echo "Waiting 1 minute for the platform to initialize.."
-    sleep 10
-    echo "Platform considered initialized, proceeding.."
-    verify_amalgam8
-
 elif [ "$1" == "stop" ]; then
     echo "Stopping control plane services..."
     ${COMPOSE} kill  ${PLATFORM}

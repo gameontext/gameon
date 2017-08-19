@@ -108,14 +108,14 @@ CONTROLLER_URL=http://$IP:31200
 
 verify_amalgam8() {
   i=1
-  echo "Checking amalgam8 controller and registry: $i"
+  echo "- Check amalgam8 control plane ($i)"
   ${COMPOSE} exec a8admin /usr/local/bin/a8sanity.sh
   while [ $? -ne 0 -a $i -lt 11 ]
   do
       echo "retrying in 2s"
       sleep 2s
       i=$(($i+1))
-      echo "Checking amalgam8 controller and registry: $i"
+      echo "- Check amalgam8 control plane ($i)"
       ${COMPOSE} exec a8admin /usr/local/bin/a8sanity.sh
   done
 

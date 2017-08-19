@@ -51,6 +51,8 @@ When the docker containers are up, use https://$IP/ to connect to the game."
   cat gameon.env | sed  -e "s#127\.0\.0\.1\:6379#A8LOCALHOSTPRESERVE#g" | sed -e "s#127\.0\.0\.1#${IP}#g" | sed -e "s#A8LOCALHOSTPRESERVE#127\.0\.0\.1\:6379#" > gameon.${NAME}env
 fi
 
+ensure_keystore
+
 ${COMPOSE} pull
 rc=$?
 if [ $rc -ne 0 ]

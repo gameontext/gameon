@@ -30,10 +30,6 @@ services:
     ports:
       - "9089:9080"
       - "9449:9443"
-    healthcheck:
-      test: wget -q -O /dev/null --no-check-certificate https://localhost:9443/auth/health
-      timeout: 10s
-      retries: 3
     env_file: ../gameon.${DOCKER_MACHINE_NAME}env
     container_name: auth
     networks:
@@ -54,10 +50,6 @@ services:
       - "4201:4201"
       - "9082:9080"
       - "9443:9443"
-    healthcheck:
-      test: wget -q -O /dev/null --no-check-certificate https://localhost:9443/players/v1/health
-      timeout: 10s
-      retries: 3
     env_file: ../gameon.${DOCKER_MACHINE_NAME}env
     container_name: player
     networks:
@@ -77,10 +69,6 @@ services:
     ports:
       - "9099:9080"
       - "9447:9443"
-    healthcheck:
-      test: wget -q -O /dev/null --no-check-certificate https://localhost:9443/map/v1/health
-      timeout: 10s
-      retries: 3
     env_file: ../gameon.${DOCKER_MACHINE_NAME}env
     container_name: map
     networks:
@@ -100,10 +88,6 @@ services:
     ports:
       - "9086:9080"
       - "9446:9443"
-    healthcheck:
-      test: wget -q -O /dev/null --no-check-certificate https://localhost:9443/mediator/
-      timeout: 10s
-      retries: 3
     env_file: ../gameon.${DOCKER_MACHINE_NAME}env
     container_name: mediator
     networks:
@@ -134,10 +118,6 @@ services:
         condition: service_healthy
     ports:
       - "8080:8080"
-    healthcheck:
-      test: wget -q -O /dev/null http://localhost:8080/
-      timeout: 10s
-      retries: 3
     env_file: ../gameon.${DOCKER_MACHINE_NAME}env
     container_name: webapp
     networks:
@@ -155,10 +135,6 @@ services:
     ports:
       - "9080:9080"
       - "9445:9443"
-    healthcheck:
-      test: wget -q -O /dev/null http://localhost:9080/
-      timeout: 10s
-      retries: 3
     env_file: ../gameon.${DOCKER_MACHINE_NAME}env
     container_name: room
     networks:
