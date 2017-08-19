@@ -35,7 +35,7 @@ else
   NOLOGS=0
 fi
 
-ALLPROJECTS="auth map mediator player proxy room webapp"
+ALLPROJECTS="proxy auth map mediator player room webapp"
 if [ $# -lt 1 ]
 then
   PROJECTS=$ALLPROJECTS
@@ -48,12 +48,20 @@ fi
 
 up_log() {
   ensure_keystore
+  verify_amalgam8
+
   if [ $NOLOGS -eq 0 ]
   then
-    echo "${COMPOSE} up -d $PROJECTS, logs will continue in the foreground."
+    echo "Starting containers [$PROJECTS], logs will continue in the foreground."
+    echo "Start command: "
+    echo "    ${COMPOSE} up -d $PROJECTS"
   else
-    echo "${COMPOSE} up -d $PROJECTS, logs are viewable using go-run.sh logs $PROJECTS"
+    echo "Starting containers [$PROJECTS], logs will be viewable using: "
+    echo "    ./docker/go-run.sh logs $PROJECTS"
+    echo "Start command: "
+    echo "    ${COMPOSE} up -d $PROJECTS"
   fi
+
   ${COMPOSE} up -d $@
   if [ $NOLOGS -eq 0 ]
   then
@@ -62,14 +70,18 @@ up_log() {
 }
 
 down_rm() {
-    echo "${COMPOSE} stop $@"
-    ${COMPOSE} stop $@
-    ${COMPOSE} rm $@
+  echo "Stopping containers [$PROJECTS]"
+  echo "    ${COMPOSE} stop $@"
+  ${COMPOSE} stop $@
+  echo "Cleaning up containers [$PROJECTS]"
+  echo "    ${COMPOSE} rm $@"
+  ${COMPOSE} rm $@
 }
 
 re_pull() {
   ## Refresh base images (betas)
-  echo "${COMPOSE}  build --pull $PROJECTS"
+  echo "Pulling fresh images [$PROJECTS]"
+  echo "   ${COMPOSE}  build --pull $PROJECTS"
   ${COMPOSE} build --pull $PROJECTS
   if [ $? != 0 ]
   then
@@ -78,10 +90,10 @@ re_pull() {
   fi
 }
 
-gradle_build() {
+rebuild() {
+  echo "Building projects [$PROJECTS]"
   for project in $@
   do
-    echo -n "Building ${project} :: "
     if [ -d "${project}" ] && [ -e "${project}/build.gradle" ]
     then
       echo "Building project ${project} with gradle"
@@ -96,27 +108,31 @@ gradle_build() {
       fi
 
       # Build Docker image
+      echo "Building docker image for ${project}"
       ${COMPOSE} build ${project}
 
       cd ..
     elif [ "${project}" == "webapp" ]
     then
-      echo "Docker-based build for webapp using ${COMPOSE} run webapp-build"
       build_webapp
     else
-      echo "No need to gradle build project ${project}"
+      echo "${project} is not a gradle project. No other build instructions. Re-building docker image"
+      ${COMPOSE} build ${project}
     fi
   done
 }
 
 usage() {
-  echo "Actions: start|stop|restart|build|rebuild|rm|logs"
+  echo "Actions: start|stop|restart|wait|build|rebuild|rebuild_only|rm|logs|reset_kafka|env"
   echo "Use optional arguments to select one or more specific image"
 }
 
 case "$ACTION" in
   logs)
     ${COMPOSE} logs -f $PROJECTS
+  ;;
+  env)
+    echo "export COMPOSE=\"${COMPOSE}\""
   ;;
   start|up)
     up_log $PROJECTS
@@ -133,33 +149,49 @@ case "$ACTION" in
     down_rm $PROJECTS
     ${COMPOSE} build $PROJECTS
   ;;
+  reset_kafka)
+    echo "Stop kafka and dependent services"
+    ${COMPOSE} stop kafka ${PROJECTS}
+    ${COMPOSE} kill kafka ${PROJECTS}
+    ${COMPOSE} rm -f kafka ${PROJECTS}
+    echo "Resetting kafka takes some time (quiescing, making sure things are dead and that there are no zombies)"
+    echo "Sleep 30"
+    sleep 30
+    echo "Start Kafka"
+    ${COMPOSE} up -d kafka
+    echo "Sleep 60"
+    sleep 60
+    ${COMPOSE} logs --tail="5" kafka
+    echo "Rebuild projects"
+    ${COMPOSE} build  ${PROJECTS}
+    ${COMPOSE} up -d  ${PROJECTS}
+    ${COMPOSE} logs --tail="5" -f  ${PROJECTS}
+  ;;
   rebuild_only)
-    echo "rebuilding $PROJECTS"
-    gradle_build $PROJECTS
+    rebuild $PROJECTS
   ;;
   rebuild)
     down_rm $PROJECTS
-    echo "rebuilding $PROJECTS"
-    re_pull
-    gradle_build $PROJECTS
+    re_pull $PROJECTS
+    rebuild $PROJECTS
     up_log $PROJECTS
   ;;
   rm)
-    echo "${COMPOSE}  rm $PROJECTS"
+    echo "${COMPOSE} rm $PROJECTS"
     ${COMPOSE} rm $PROJECTS
   ;;
   wait)
-    echo "Waiting until http://${IP}/site_alive returns OK."
+    echo "Waiting until http://${HTTP_HOSTPORT}/site_alive returns OK."
     echo "This may take awhile, as it is starting a number of containers at the same time."
     echo "If you're curious, cancel this, and use './docker/go-run.sh logs' to watch what is happening"
 
-    until $(curl --output /dev/null --silent --head --fail http://${IP}/site_alive)
+    until $(curl --output /dev/null --silent --head --fail http://${IP}/site_alive 2>/dev/null)
     do
       printf '.'
       sleep 5
     done
     echo ""
-    echo "Game On! You're ready to play: https://${IP}/"
+    echo "Game On! You're ready to play: https://${HTTPS_HOSTPORT}/"
   ;;
   *)
   usage

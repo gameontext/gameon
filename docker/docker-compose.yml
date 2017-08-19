@@ -1,16 +1,20 @@
-##Game on Services..
-## Any service registering as an a8 service should have
-## external_links:
-##  - kafka
-##  - registry
-##  - logstash
-##  - controller
-## as part of it's docker compose config. This allows the a8
-## sidecar to communicate with the a8 registry etc.
-## (urls for a8 are set within the gameon.env file, assuming
-##  these external links are present)
+# Copyright 2016 IBM Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
 
-version: '2'
+##Game on Services..
+
+version: '2.1'
 
 services:
 
@@ -18,106 +22,162 @@ services:
     image: gameontext/gameon-auth
     volumes:
       - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
-    external_links:
-      - kafka
-      - registry
-      - logstash
-      - controller
+    depends_on:
+      kafka:
+        condition: service_healthy
+      a8admin:
+        condition: service_healthy
     ports:
       - "9089:9080"
       - "9449:9443"
+    healthcheck:
+      test: wget -q -O /dev/null --no-check-certificate https://localhost:9443/auth/health
+      timeout: 10s
+      retries: 3
     env_file: ../gameon.${DOCKER_MACHINE_NAME}env
+    container_name: auth
+    networks:
+      - gameontext
 
   player:
     image: gameontext/gameon-player
     volumes:
       - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
-    external_links:
-      - couchdb
-      - kafka
-      - registry
-      - logstash
-      - controller
+    depends_on:
+      couchdb:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      a8admin:
+        condition: service_healthy
     ports:
       - "4201:4201"
       - "9082:9080"
       - "9443:9443"
+    healthcheck:
+      test: wget -q -O /dev/null --no-check-certificate https://localhost:9443/players/v1/health
+      timeout: 10s
+      retries: 3
     env_file: ../gameon.${DOCKER_MACHINE_NAME}env
+    container_name: player
+    networks:
+      - gameontext
 
   map:
     image: gameontext/gameon-map
     volumes:
       - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
-    external_links:
-      - couchdb
-      - kafka
-      - registry
-      - logstash
-      - controller
+    depends_on:
+      couchdb:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      a8admin:
+        condition: service_healthy
     ports:
       - "9099:9080"
       - "9447:9443"
+    healthcheck:
+      test: wget -q -O /dev/null --no-check-certificate https://localhost:9443/map/v1/health
+      timeout: 10s
+      retries: 3
     env_file: ../gameon.${DOCKER_MACHINE_NAME}env
+    container_name: map
+    networks:
+      - gameontext
 
   mediator:
     image: gameontext/gameon-mediator
     volumes:
       - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
+    depends_on:
+      couchdb:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      a8admin:
+        condition: service_healthy
     ports:
       - "9086:9080"
       - "9446:9443"
-    links:
-      - room
-    external_links:
-      - kafka
-      - registry
-      - logstash
-      - controller
+    healthcheck:
+      test: wget -q -O /dev/null --no-check-certificate https://localhost:9443/mediator/
+      timeout: 10s
+      retries: 3
     env_file: ../gameon.${DOCKER_MACHINE_NAME}env
+    container_name: mediator
+    networks:
+      - gameontext
 
   proxy:
     image: gameontext/gameon-proxy
     volumes:
       - 'keystore:/keystore'
     env_file: ../gameon.${DOCKER_MACHINE_NAME}env
-    links:
-      - webapp
-      - room
-    external_links:
-      - kafka
-      - registry
-      - logstash
-      - controller
+    depends_on:
+      a8admin:
+        condition: service_healthy
+      room:
+        condition: service_healthy
     ports:
       - "80:80"
       - "443:443"
       - "1936:1936"
+    container_name: proxy
+    networks:
+      - gameontext
 
   webapp:
     image: gameontext/gameon-webapp
+    depends_on:
+      a8admin:
+        condition: service_healthy
     ports:
       - "8080:8080"
+    healthcheck:
+      test: wget -q -O /dev/null http://localhost:8080/
+      timeout: 10s
+      retries: 3
     env_file: ../gameon.${DOCKER_MACHINE_NAME}env
+    container_name: webapp
+    networks:
+      - gameontext
 
   room:
     image: gameontext/gameon-room
     volumes:
       - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
-    links:
-      - map
-    external_links:
-      - kafka
+    depends_on:
+      map:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
     ports:
       - "9080:9080"
       - "9445:9443"
+    healthcheck:
+      test: wget -q -O /dev/null http://localhost:9080/
+      timeout: 10s
+      retries: 3
     env_file: ../gameon.${DOCKER_MACHINE_NAME}env
+    container_name: room
+    networks:
+      - gameontext
 
   swagger:
     image: gameontext/gameon-swagger
+    depends_on:
+      a8admin:
+        condition: service_healthy
     ports:
       - "8081:8080"
     env_file: ../gameon.${DOCKER_MACHINE_NAME}env
+    container_name: swagger
+    networks:
+      - gameontext
 
+networks:
+  gameontext:
 
 volumes:
   keystore:

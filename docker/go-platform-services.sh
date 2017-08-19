@@ -22,15 +22,16 @@ source $SCRIPTDIR/go-common
 # Ensure we're executing from project root directory
 cd "${SCRIPTDIR}"/..
 
+PLATFORM="kafka redis couchdb controller gateway registry a8admin"
 if [ "$1" == "start" ]; then
+    ensure_keystore
 
     if [ "$2" != "--force" ]; then
       echo "Testing for running platform.. "
 
-      EXPECTED="controller couchdb elasticsearch gateway kafka kibana logstash registry redis"
-      FOUND=`docker ps --format="{{.Names}}"`
+      FOUND=$(${DOCKER_CMD} ps --format="{{.Names}}")
       OK=1
-      for svc in $EXPECTED; do
+      for svc in $PLATFORM; do
         echo -n "Checking for Service $svc"
         echo $FOUND | grep -qs $svc
         if [ $? == 0 ]; then
@@ -47,59 +48,25 @@ if [ "$1" == "start" ]; then
       fi
     fi
 
-    echo "Starting platform services (kafka, ELK stack, couchdb, a8-controller, a8-registry, redis, gateway)"
+    echo "Starting platform services ${PLATFORM}"
 
-    docker-compose -f $SCRIPTDIR/platformservices.yml up -d
+    # Scrap any that were left running from before
+    ${COMPOSE} kill ${PLATFORM}
+    ${COMPOSE} rm -f ${PLATFORM}
+
+    # Start new ones
+    ${COMPOSE} up -d ${PLATFORM}
 
     echo "Waiting 1 minute for the platform to initialize.."
-    sleep 60
+    sleep 10
     echo "Platform considered initialized, proceeding.."
-
-    REGISTRY_URL=http://$IP:31300
-    CONTROLLER_URL=http://$IP:31200
-
-    # Wait for controller route to set up
-    echo "Waiting for controller route to set up"
-    attempt=0
-    while true; do
-        code=$(curl -w "%{http_code}" "${CONTROLLER_URL}/health" -o /dev/null)
-        if [ "$code" = "200" ]; then
-            echo "Controller route is set to '$CONTROLLER_URL'"
-            break
-        fi
-
-        attempt=$((attempt + 1))
-        if [ "$attempt" -gt 10 ]; then
-            echo "Timeout waiting for controller route: /health returned HTTP ${code}"
-            echo "Deploying the controlplane has failed"
-            exit 1
-        fi
-        sleep 10s
-    done
-
-    # Wait for registry route to set up
-    echo "Waiting for registry route to set up"
-    attempt=0
-    while true; do
-        code=$(curl -w "%{http_code}" "${REGISTRY_URL}/uptime" -o /dev/null)
-        if [ "$code" = "200" ]; then
-            echo "Registry route is set to '$REGISTRY_URL'"
-            break
-        fi
-
-        attempt=$((attempt + 1))
-        if [ "$attempt" -gt 10 ]; then
-            echo "Timeout waiting for registry route: /uptime returned HTTP ${code}"
-            echo "Deploying the controlplane has failed"
-            exit 1
-        fi
-        sleep 10s
-    done
+    verify_amalgam8
 
 elif [ "$1" == "stop" ]; then
     echo "Stopping control plane services..."
-    docker-compose -f $SCRIPTDIR/platformservices.yml kill
-    docker-compose -f $SCRIPTDIR/platformservices.yml rm -f
+    ${COMPOSE} kill  ${PLATFORM}
+    ${COMPOSE} rm -f ${PLATFORM}
+    docker volume rm -q $(docker volume list -f 'dangling=true' -q)
 else
     echo "usage: $0 start|stop (--force)"
     exit 1

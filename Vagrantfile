@@ -6,8 +6,9 @@ Vagrant.configure("2") do |config|
   config.vm.provider "virtualbox" do |v|
     v.memory = 3072
     v.cpus = 2
+    v.name = "gameontext"
   end
- 
+
   #fix 'stdin is not a tty' output.
   config.vm.provision :shell, inline: "(grep -q -E '^mesg n$' /root/.profile && sed -i 's/^mesg n$/tty -s \\&\\& mesg n/g' /root/.profile && echo 'Ignore the previous error about stdin not being a tty. Fixing it now...') || exit 0;"
 
@@ -15,23 +16,26 @@ Vagrant.configure("2") do |config|
   config.vm.network(:forwarded_port, guest: 80, host: 9980)
   config.vm.network(:forwarded_port, guest: 443, host: 9943)
 
-
   # Run as Root -- install git, latest docker, bx cli
   config.vm.provision :shell, :inline => <<-EOT
     apt-get purge docker docker-engine docker.io
 
-    apt-get update 
-    apt-get upgrade -y
+    apt-get update
+    DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade
 
     echo 'Installing Git & Curl'
-    apt-get install -y git curl
+    apt-get install -y \
+      git \
+      curl \
+      openjdk-8-jdk
 
     echo 'Set up HTTPS repository'
-    apt-get install \
+    apt-get install -y \
         apt-transport-https \
         ca-certificates \
-        curl \
         software-properties-common
+
+
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
 
     add-apt-repository \
@@ -44,26 +48,39 @@ Vagrant.configure("2") do |config|
     apt-get install -y docker-ce
 
     DOCKER_COMPOSE_VERSION=1.15.0
-    curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+    curl -sSL https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
     chmod +x /usr/local/bin/docker-compose
 
+    echo 'Add vagrant to docker group'
+    usermod -aG docker vagrant
 
-    apt-get install -y openjdk-8-jdk
+    ls -al /var/run/docker.sock
+    chgrp docker /var/run/docker.sock
+    chmod 775 /var/run/docker.sock
 
-    
     if /usr/local/bin/bx > /dev/null
     then
       echo 'Updating Bluemix CLI'
       /usr/local/bin/bx update
     else
       echo 'Installing Bluemix CLI'
-      sh <(curl -fsSL https://clis.ng.bluemix.net/install/linux)
+      sh <(curl -fssSL https://clis.ng.bluemix.net/install/linux 2>/dev/null)
     fi
-
   EOT
 
+  # Set environment variable to influence provisioning (if specified for create)
+  deployment_cmd = ""
+  if ENV['GO_DEPLOYMENT']
+    value = ENV['GO_DEPLOYMENT']
+    deployment_cmd = <<CMD
+echo "export GO_DEPLOYMENT=#{value}" | tee -a /home/vagrant/.profile
+CMD
+  end
+  config.vm.provision :shell, :inline => <<-SCRIPT
+#{deployment_cmd}
+SCRIPT
 
-  # Run as vagrant user: bx plugins, profile script
+  # Run as vagrant user (not yet in docker group): bx plugins, profile script
   config.vm.provision :shell, privileged: false, :inline => <<-EOT
     PLUGINS=$(bx plugin list)
     if echo $PLUGINS | grep dev
@@ -80,7 +97,7 @@ Vagrant.configure("2") do |config|
       echo 'Installing Bluemix container-service plugin'
       /usr/local/bin/bx plugin install container-service -r Bluemix
     fi
-    
+
     if echo $PLUGINS | grep container-registry
     then
       /usr/local/bin/bx plugin update container-registry -r Bluemix
@@ -88,30 +105,36 @@ Vagrant.configure("2") do |config|
       echo 'Installing Bluemix container-registry plugin'
       /usr/local/bin/bx plugin install container-registry -r Bluemix
     fi
-    
-    
-    # By default this directory is mapped to /vagrant
-    # set up shell script.. 
 
-    echo 'cd /vagrant' >> /home/vagrant/.bash_profile
-    echo 'export DOCKER_MACHINE_NAME=vagrant' >>  /home/vagrant/.bash_profile
+    # Enable Gradle Daemon
+    mkdir -p /home/vagrant/.gradle
+    touch /home/vagrant/.gradle/gradle.properties
+    echo "org.gradle.daemon=true" >> /home/vagrant/.gradle/gradle.properties
+
+    # Indicate this is a vagrant VM
+    echo 'export DOCKER_MACHINE_NAME=vagrant' | tee -a /home/vagrant/.profile
+
+    # By default this working directory is mapped to /vagrant,
+    # automatically change directories on login
+    echo 'cd /vagrant' | tee -a /home/vagrant/.profile
 
     cd /vagrant
-    chmod +x go*.sh
-     ./go-setup.sh
+    chmod +x go*.sh docker/go*.sh
+
+    ./go-admin.sh setup
   EOT
 
   # Run as vagrant user: Always start things
   config.vm.provision :shell, privileged: false, run: "always", :inline => <<-EOT
-    cd /vagrant
-
-    ./go-platform-services.sh start
-    
-    echo 'Running rebuild... '
-    ./go-run.sh rebuild --nologs all && echo 'Done.'
-
-    
-    echo 'OK, GameOn should now be running inside the vagrant vm.. try https://127.0.0.1:9943/ to see if its running.. SSH is also available on port 2222'
+    echo 'To start Game On! :'
+    echo '> ssh vagrant'
+    echo '> ./go-admin.sh up'
+    echo ""
+    echo 'To test for readiness: http://127.0.0.1:9980/site_alive'
+    echo 'To wait for readiness:'
+    echo '> ./docker/go-run.sh wait'
+    echo 'To watch :popcorn: : '
+    echo '> ./docker/go-run.sh logs'
   EOT
 
 end

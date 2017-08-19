@@ -9,17 +9,25 @@ fi
 
 #configure docker compose command
 COMPOSE="docker-compose -f $SCRIPTDIR/docker-compose.yml ${OVERRIDE} -f $SCRIPTDIR/platformservices.yml"
+DOCKER_CMD="docker"
 if [ "$(uname)" != "Darwin" ] && [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]
 then
     COMPOSE="sudo ${COMPOSE}"
+    DOCKER_CMD="sudo docker"
 fi
 
-echo "# Compose command w/ file sources: $COMPOSE"
-
 #setup docker NAME / IP.
-NAME=${DOCKER_MACHINE_NAME-empty}
 IP=127.0.0.1
-if [ "$NAME" != "empty" ] && [ "$NAME" != "vagrant" ] && [ "$NAME" != "" ]
+HTTP_HOSTPORT=${IP}
+HTTPS_HOSTPORT=${IP}
+
+NAME=${DOCKER_MACHINE_NAME-empty}
+if [ "$NAME" == "vagrant" ]
+then
+  # Defined in Vagrantfile
+  HTTP_HOSTPORT=${IP}:9980
+  HTTPS_HOSTPORT=${IP}:9943
+elif [ "$NAME" != "empty" ] && [ "$NAME" != "" ]
 then
   IP=$(docker-machine ip $NAME)
   rc=$?
@@ -27,8 +35,9 @@ then
   then
     exit 1
   fi
+  HTTP_HOSTPORT=${IP}
+  HTTPS_HOSTPORT=${IP}
 fi
-
 
 build_webapp() {
   if [ -d ${GO_DIR}/webapp/app ]
@@ -62,10 +71,11 @@ build_webapp() {
 }
 
 ensure_keystore() {
+
   ## Creating Keystores
   # Docker volume operations need absolute paths
   DOCKERPATHPREFIX=
-  docker version -f '{{.Client.Os}}' | grep windows
+  ${DOCKER_CMD} version -f '{{.Client.Os}}' | grep windows
   rc=$?
   if [ $rc -eq 0 ]
   then
@@ -75,20 +85,45 @@ ensure_keystore() {
 
   # If the keystore volume doesn't exist, then we should generate
   # the keystores we need for local signed JWTs to work
-  docker volume inspect keystore &> /dev/null
+  ${DOCKER_CMD} volume inspect keystore &> /dev/null
   rc=$?
   if [ $rc -ne 0 ]
   then
-    docker volume create --name keystore
+    ${DOCKER_CMD} volume create --name keystore
     # Dump cmd..
-    echo docker run \
+    echo ${DOCKER_CMD} run \
       -v keystore:/tmp/keystore \
       -v ${DOCKERPATHPREFIX}${BIN_DIR}/gen-keystore.sh:/tmp/gen-keystore.sh \
       -w /tmp --rm ibmjava bash ./gen-keystore.sh ${IP}
     # Generate keystore
-    docker run \
+    ${DOCKER_CMD} run \
       -v keystore:/tmp/keystore \
       -v ${DOCKERPATHPREFIX}${BIN_DIR}/gen-keystore.sh:/tmp/gen-keystore.sh \
       -w /tmp --rm ibmjava bash ./gen-keystore.sh ${IP}
   fi
+}
+
+REGISTRY_URL=http://$IP:31300
+CONTROLLER_URL=http://$IP:31200
+
+verify_amalgam8() {
+  i=1
+  echo "Checking amalgam8 controller and registry: $i"
+  ${COMPOSE} exec a8admin /usr/local/bin/a8sanity.sh
+  while [ $? -ne 0 -a $i -lt 11 ]
+  do
+      echo "retrying in 2s"
+      sleep 2s
+      i=$(($i+1))
+      echo "Checking amalgam8 controller and registry: $i"
+      ${COMPOSE} exec a8admin /usr/local/bin/a8sanity.sh
+  done
+
+  if [ $i -eq 11 ]
+  then
+    echo "Unable to verify that Amalgam8 control plane"
+    return 1
+  fi
+
+  return 0
 }

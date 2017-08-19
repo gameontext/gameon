@@ -51,8 +51,6 @@ When the docker containers are up, use https://$IP/ to connect to the game."
   cat gameon.env | sed  -e "s#127\.0\.0\.1\:6379#A8LOCALHOSTPRESERVE#g" | sed -e "s#127\.0\.0\.1#${IP}#g" | sed -e "s#A8LOCALHOSTPRESERVE#127\.0\.0\.1\:6379#" > gameon.${NAME}env
 fi
 
-ensure_keystore
-
 ${COMPOSE} pull
 rc=$?
 if [ $rc -ne 0 ]
@@ -65,17 +63,21 @@ ${SCRIPTDIR}/go-run.sh rebuild_only
 
 echo "
 
-Start the Game On! platform using:
+Start the Game On! platform:
   ./go-admin.sh up
+OR:
+  ./docker/go-platform-services.sh start
+  ./docker/go-run.sh start --no-logs
 
-Alternately (more detailed):
+Check for all services being ready:
+  https://${HTTP_HOSTPORT}/site_alive
 
-  1. Start platform services:
-    ./docker/go-platform-services.sh start
-  2. Launch core game services using:
-    ./docker/go-run.sh start all
+Wait for all game services to finish starting:
+  ./docker/go-run.sh wait
 
 If you are editing/updating core game services, rebuild and launch using:
   ./docker/go-run.sh rebuild all
 
-The game will be running at https://${IP}/ when you're all done."
+The game will be running at https://${HTTPS_HOSTPORT}/ when you're all done.
+
+"
