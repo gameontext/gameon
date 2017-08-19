@@ -62,6 +62,9 @@ up_log() {
     echo "    ${COMPOSE} up -d $PROJECTS"
   fi
 
+  echo
+  echo "Launching containers will take some time, as dependencies are coordinated."
+  echo
   ${COMPOSE} up -d $@
   if [ $NOLOGS -eq 0 ]
   then
@@ -188,7 +191,7 @@ case "$ACTION" in
     until $(curl --output /dev/null --silent --head --fail http://${IP}/site_alive 2>/dev/null)
     do
       printf '.'
-      sleep 5
+      sleep 5s
     done
     echo ""
     echo "Game On! You're ready to play: https://${HTTPS_HOSTPORT}/"
