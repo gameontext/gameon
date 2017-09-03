@@ -127,6 +127,8 @@ rebuild() {
 usage() {
   echo "
   Actions:
+    up
+    down
     start
     stop
     restart
@@ -154,6 +156,11 @@ case "$ACTION" in
   build)
     down_rm $PROJECTS
     ${COMPOSE} build $PROJECTS
+  ;;
+  down)
+    echo "${COMPOSE} stop $PROJECTS"
+    ${COMPOSE} stop $PROJECTS
+    platform_down
   ;;
   env)
     echo "export COMPOSE=\"${COMPOSE}\""
@@ -192,14 +199,17 @@ case "$ACTION" in
     echo "${COMPOSE} rm $PROJECTS"
     ${COMPOSE} rm $PROJECTS
   ;;
-  start|up)
-    platform_up
+  start)
     up_log $PROJECTS
   ;;
-  stop|down)
+  stop)
     echo "${COMPOSE} stop $PROJECTS"
     ${COMPOSE} stop $PROJECTS
-    platform_down
+  ;;
+  up)
+    NOLOGS=1
+    platform_up
+    up_log $PROJECTS
   ;;
   wait)
     echo "Waiting until http://${HTTP_HOSTPORT}/site_alive returns OK."
