@@ -68,8 +68,7 @@ echo "
 Start the Game On! platform:
   ./go-admin.sh up
 OR:
-  ./docker/go-platform-services.sh start
-  ./docker/go-run.sh start --no-logs
+  ./docker/go-run.sh up
 
 Check for all services being ready:
   https://${HTTP_HOSTPORT}/site_alive

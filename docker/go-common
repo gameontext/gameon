@@ -1,6 +1,9 @@
 BIN_DIR=$( cd "$SCRIPTDIR/../bin" && pwd )
 GO_DIR=$( cd "$SCRIPTDIR/.." && pwd )
 
+PLATFORM="kafka redis couchdb"
+COREPROJECTS="proxy auth map mediator player room webapp"
+
 OVERRIDE=
 if [ -f $SCRIPTDIR/docker-compose.override.yml ]
 then
@@ -8,7 +11,7 @@ then
 fi
 
 #configure docker compose command
-COMPOSE="docker-compose -f $SCRIPTDIR/docker-compose.yml ${OVERRIDE} -f $SCRIPTDIR/platformservices.yml"
+COMPOSE="docker-compose -f $SCRIPTDIR/docker-compose.yml ${OVERRIDE}"
 DOCKER_CMD="docker"
 if [ "$(uname)" != "Darwin" ] && [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]
 then
@@ -103,27 +106,54 @@ ensure_keystore() {
   fi
 }
 
-REGISTRY_URL=http://$IP:31300
-CONTROLLER_URL=http://$IP:31200
+platform_up() {
+  ensure_keystore
 
-verify_amalgam8() {
-  i=1
-  echo "- Check amalgam8 control plane ($i)"
-  ${COMPOSE} exec a8admin /usr/local/bin/a8sanity.sh
-  while [ $? -ne 0 -a $i -lt 11 ]
-  do
-      echo "retrying in 2s"
-      sleep 2s
-      i=$(($i+1))
-      echo "- Check amalgam8 control plane ($i)"
-      ${COMPOSE} exec a8admin /usr/local/bin/a8sanity.sh
-  done
+  FOUND=$(${DOCKER_CMD} ps --format="{{.Names}}")
+  if [ "$FOUND" != "" ]; then
 
-  if [ $i -eq 11 ]
-  then
-    echo "Unable to verify that Amalgam8 control plane"
-    return 1
+    if [ "$2" != "--force" ]; then
+      OK=1
+      for svc in $PLATFORM; do
+        echo $FOUND | grep -qs $svc
+        if [ $? != 0 ]; then
+          OK=0
+        fi
+      done
+
+      if [ $OK == 1 ]; then
+        return 0
+      fi
+    fi
   fi
 
-  return 0
+  echo "Starting platform services ${PLATFORM}"
+
+  # Start new ones
+  ${COMPOSE} up -d ${PLATFORM}
+}
+
+platform_down() {
+  echo "Stopping control plane services..."
+  ${COMPOSE} kill  ${PLATFORM}
+  ${COMPOSE} rm -f ${PLATFORM}
+}
+
+reset_kafka() {
+  echo "Stop kafka and dependent services"
+  ${COMPOSE} stop kafka ${PROJECTS}
+  ${COMPOSE} kill kafka ${PROJECTS}
+  ${COMPOSE} rm -f kafka ${PROJECTS}
+  echo "Resetting kafka takes some time (quiescing, making sure things are dead and that there are no zombies)"
+  echo "Sleep 30"
+  sleep 30
+  echo "Start Kafka"
+  ${COMPOSE} up -d kafka
+  echo "Sleep 60"
+  sleep 60
+  ${COMPOSE} logs --tail="5" kafka
+  echo "Rebuild projects"
+  ${COMPOSE} build  ${PROJECTS}
+  ${COMPOSE} up -d  ${PROJECTS}
+  ${COMPOSE} logs --tail="5" -f  ${PROJECTS}
 }

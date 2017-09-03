@@ -28,7 +28,6 @@ RUN pip install virtualenv \
   && rm -rf /tmp/etcd-v$__ETCD_VERSION-linux-amd64
 
 COPY bin/etcdConfig.sh /usr/local/bin
-COPY bin/a8sanity.sh /usr/local/bin
 COPY bin/adminEnv.sh /etc/profile.d/
 
 CMD [ "/usr/local/bin/etcdConfig.sh" ]
