@@ -35,20 +35,18 @@ else
   NOLOGS=0
 fi
 
-ALLPROJECTS="proxy auth map mediator player room webapp"
 if [ $# -lt 1 ]
 then
-  PROJECTS=$ALLPROJECTS
+  PROJECTS=$COREPROJECTS
 elif [ $1 == "all" ]
 then
-  PROJECTS=$ALLPROJECTS
+  PROJECTS=$COREPROJECTS
 else
   PROJECTS=$@
 fi
 
 up_log() {
   ensure_keystore
-  verify_amalgam8
 
   if [ $NOLOGS -eq 0 ]
   then
@@ -68,6 +66,7 @@ up_log() {
   ${COMPOSE} up -d $@
   if [ $NOLOGS -eq 0 ]
   then
+    sleep 2
     ${COMPOSE} logs --tail="5" -f $@
   fi
 }
@@ -81,7 +80,7 @@ down_rm() {
   ${COMPOSE} rm $@
 }
 
-re_pull() {
+refresh() {
   ## Refresh base images (betas)
   echo "Pulling fresh images [$PROJECTS]"
   echo "   ${COMPOSE}  build --pull $PROJECTS"
@@ -126,62 +125,81 @@ rebuild() {
 }
 
 usage() {
-  echo "Actions: start|stop|restart|wait|build|rebuild|rebuild_only|rm|logs|reset_kafka|env"
-  echo "Use optional arguments to select one or more specific image"
+  echo "
+  Actions:
+    start
+    stop
+    restart
+    wait
+
+    build
+    rebuild
+    rebuild_only
+    refresh_images
+    rm
+
+    logs
+    env
+
+    platform_up
+    platform_down
+
+    reload_proxy
+    reset_kafka
+
+  Use optional arguments to select specific image(s) by name"
 }
 
 case "$ACTION" in
-  logs)
-    ${COMPOSE} logs -f $PROJECTS
+  build)
+    down_rm $PROJECTS
+    ${COMPOSE} build $PROJECTS
   ;;
   env)
     echo "export COMPOSE=\"${COMPOSE}\""
   ;;
-  start|up)
+  logs)
+    ${COMPOSE} logs -f $PROJECTS
+  ;;
+  platform_up)
+    platform_up $@
+  ;;
+  platform_down)
+    platform_down
+  ;;
+  rebuild)
+    down_rm $PROJECTS
+    rebuild $PROJECTS
     up_log $PROJECTS
   ;;
-  stop|down)
-    echo "${COMPOSE}  stop $PROJECTS"
-    ${COMPOSE} stop $PROJECTS
+  rebuild_only)
+    rebuild $PROJECTS
+  ;;
+  refresh_images)
+    refresh $PROJECTS
+  ;;
+  reload_proxy)
+    ${COMPOSE} kill -s HUP proxy
+  ;;
+  reset_kafka)
+    reset_kafka
   ;;
   restart)
     down_rm $PROJECTS
     up_log $PROJECTS
   ;;
-  build)
-    down_rm $PROJECTS
-    ${COMPOSE} build $PROJECTS
-  ;;
-  reset_kafka)
-    echo "Stop kafka and dependent services"
-    ${COMPOSE} stop kafka ${PROJECTS}
-    ${COMPOSE} kill kafka ${PROJECTS}
-    ${COMPOSE} rm -f kafka ${PROJECTS}
-    echo "Resetting kafka takes some time (quiescing, making sure things are dead and that there are no zombies)"
-    echo "Sleep 30"
-    sleep 30
-    echo "Start Kafka"
-    ${COMPOSE} up -d kafka
-    echo "Sleep 60"
-    sleep 60
-    ${COMPOSE} logs --tail="5" kafka
-    echo "Rebuild projects"
-    ${COMPOSE} build  ${PROJECTS}
-    ${COMPOSE} up -d  ${PROJECTS}
-    ${COMPOSE} logs --tail="5" -f  ${PROJECTS}
-  ;;
-  rebuild_only)
-    rebuild $PROJECTS
-  ;;
-  rebuild)
-    down_rm $PROJECTS
-    re_pull $PROJECTS
-    rebuild $PROJECTS
-    up_log $PROJECTS
-  ;;
   rm)
     echo "${COMPOSE} rm $PROJECTS"
     ${COMPOSE} rm $PROJECTS
+  ;;
+  start|up)
+    platform_up
+    up_log $PROJECTS
+  ;;
+  stop|down)
+    echo "${COMPOSE} stop $PROJECTS"
+    ${COMPOSE} stop $PROJECTS
+    platform_down
   ;;
   wait)
     echo "Waiting until http://${HTTP_HOSTPORT}/site_alive returns OK."

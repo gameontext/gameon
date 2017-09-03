@@ -4,7 +4,7 @@ ACTION=$1
 CONTAINER_NAME=go-admin-$USER
 
 function get_status {
-  PS=$(cf ic ps -a --format '{{.Names}}\t{{.ID}}\t{{.Status}}' | awk '$1 ~ '"/${CONTAINER_NAME}/"' { print }')
+  PS=$(bx ic ps -a --format '{{.Names}}\t{{.ID}}\t{{.Status}}' | awk '$1 ~ '"/${CONTAINER_NAME}/"' { print }')
   CONTAINER=$( echo $PS | cut -d " " -f 2 )
   STATUS=$( echo $PS | cut -d " " -f 3 )
   echo $PS
@@ -13,15 +13,15 @@ function get_status {
 function stop_clean {
   case "$STATUS" in
     Running)
-      cf ic stop $CONTAINER
+      bx ic stop $CONTAINER
       while [ "Running" == "${STATUS}" ]; do
         sleep 2
         get_status
       done
-      cf ic rm $CONTAINER
+      bx ic rm $CONTAINER
     ;;
     Shutdown)
-      cf ic rm $CONTAINER
+      bx ic rm $CONTAINER
     ;;
     *)
     ;;
@@ -30,15 +30,15 @@ function stop_clean {
 
 case "$ACTION" in
   build)
-    cf ic build -t registry.ng.bluemix.net/gameon/gameon-admin .
+    bx ic build -t registry.ng.bluemix.net/gameon/gameon-admin .
   ;;
 
   start)
     echo "Checking for a container named ${CONTAINER_NAME}"
     get_status
     if [ -z "$CONTAINER" ]; then
-      VOLUME=$(cf ic volume list | grep prim)
-      IMAGE=$(cf ic images | awk '$1 ~ /gameon-admin/ { print $3 }')
+      VOLUME=$(bx ic volumes | grep prim)
+      IMAGE=$(bx ic images | awk '$1 ~ /gameon-admin/ { print $3 }')
 
       # Configure our link to etcd based on shared volume with secret
       if [ -z "$ETCD_SECRET" ]; then
@@ -51,7 +51,7 @@ case "$ACTION" in
         ETCD_SECRET=${secret}
       fi
 
-      cf ic run --name "${CONTAINER_NAME}" -e "ETCD_SECRET=${ETCD_SECRET}" \
+      bx ic run --name "${CONTAINER_NAME}" -e "ETCD_SECRET=${ETCD_SECRET}" \
                 --volume ${VOLUME}:/data --rm ${IMAGE}
 
       get_status
@@ -76,7 +76,7 @@ case "$ACTION" in
     fi
 
 
-    cf ic exec -it ${CONTAINER} /bin/bash -l
+    bx ic exec -it ${CONTAINER} /bin/bash -l
   ;;
 
   stop)

@@ -25,8 +25,6 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
-      a8admin:
-        condition: service_healthy
     ports:
       - "9089:9080"
       - "9449:9443"
@@ -43,8 +41,6 @@ services:
       couchdb:
         condition: service_healthy
       kafka:
-        condition: service_healthy
-      a8admin:
         condition: service_healthy
     ports:
       - "4201:4201"
@@ -64,8 +60,6 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
-      a8admin:
-        condition: service_healthy
     ports:
       - "9099:9080"
       - "9447:9443"
@@ -83,8 +77,6 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
-      a8admin:
-        condition: service_healthy
     ports:
       - "9086:9080"
       - "9446:9443"
@@ -98,11 +90,9 @@ services:
     volumes:
       - 'keystore:/keystore'
     env_file: ../gameon.${DOCKER_MACHINE_NAME}env
-    depends_on:
-      a8admin:
-        condition: service_healthy
-      room:
-        condition: service_healthy
+    environment:
+      - DNS_TCP_ADDR=127.0.0.11
+      - DNS_TCP_PORT=53
     ports:
       - "80:80"
       - "443:443"
@@ -113,9 +103,6 @@ services:
 
   webapp:
     image: gameontext/gameon-webapp
-    depends_on:
-      a8admin:
-        condition: service_healthy
     ports:
       - "8080:8080"
     env_file: ../gameon.${DOCKER_MACHINE_NAME}env
@@ -142,15 +129,57 @@ services:
 
   swagger:
     image: gameontext/gameon-swagger
-    depends_on:
-      a8admin:
-        condition: service_healthy
     ports:
       - "8081:8080"
     env_file: ../gameon.${DOCKER_MACHINE_NAME}env
     container_name: swagger
     networks:
       - gameontext
+
+#### Local Kafka Backend #########
+  kafka:
+    image: gameontext/docker-kafka
+    environment:
+      - ADVERTISED_HOST=localhost
+      - ADVERTISED_PORT=9092
+      - AUTO_CREATE_TOPICS=true
+    ports:
+      - "9092:9092"
+      - "2181:2181"
+    container_name: kafka
+    healthcheck:
+      test: /opt/kafka_2.11-0.10.1.0/bin/kafka-topics.sh --list --zookeeper localhost:2181
+      timeout: 10s
+      retries: 3
+    networks:
+      - gameontext
+
+#### Local Redis Backend #########
+  redis:
+    image: redis:alpine
+    ports:
+      - "31400:6379"
+    container_name: redis
+    healthcheck:
+      test: redis-cli ping | grep PONG
+      timeout: 10s
+      retries: 3
+    networks:
+      - gameontext
+
+#### Local CouchDb Backend #########
+  couchdb:
+    image: klaemo/couchdb:1.6.1
+    ports:
+      - "5984:5984"
+    container_name: couchdb
+    healthcheck:
+      test: curl http://localhost:5984/
+      timeout: 10s
+      retries: 3
+    networks:
+      - gameontext
+
 
 networks:
   gameontext:
