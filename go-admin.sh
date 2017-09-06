@@ -13,6 +13,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+source bin/go-common
 
 #set the action, default to help if none passed.
 if [ $# -lt 1 ]
@@ -46,8 +47,8 @@ case "$ACTION" in
     if [ "$GO_DEPLOYMENT" = "docker-compose" ]
     then
       ./docker/go-run.sh up
-      echo "For logs and other actions, use scripts in the docker directory"
-      echo 'To test for readiness: http://127.0.0.1:9980/site_alive'
+      echo "For logs and other actions, use scripts in the docker/ directory"
+      echo "To test for readiness: http://${HTTP_HOSTPORT}/site_alive"
       echo 'To wait for readiness: ./docker/go-run.sh wait'
       echo 'To watch progress :popcorn: ./docker/go-run.sh logs'
     else

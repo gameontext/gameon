@@ -1,0 +1,22 @@
+#setup docker NAME / IP.
+IP=127.0.0.1
+HTTP_HOSTPORT=${IP}
+HTTPS_HOSTPORT=${IP}
+
+NAME=${DOCKER_MACHINE_NAME-empty}
+if [ "$NAME" == "vagrant" ]
+then
+  # Defined in Vagrantfile
+  HTTP_HOSTPORT=${IP}:9980
+  HTTPS_HOSTPORT=${IP}:9943
+elif [ "$NAME" != "empty" ] && [ "$NAME" != "" ]
+then
+  IP=$(docker-machine ip $NAME)
+  rc=$?
+  if [ $rc != 0 ] || [ -z ${DOCKER_HOST} ]
+  then
+    exit 1
+  fi
+  HTTP_HOSTPORT=${IP}
+  HTTPS_HOSTPORT=${IP}
+fi
