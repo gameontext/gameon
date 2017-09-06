@@ -14,10 +14,10 @@
 
 COMMIT="${TRAVIS_COMMIT::8}"
 IMAGE="${DOCKER_REPO}/${DOCKER_IMAGE}"
-BUILD_TAG="${IMAGE}:0.1.${TRAVIS_BUILD_NUMBER}"
+BUILD_TAG="${IMAGE}:${TRAVIS_BRANCH}-${TRAVIS_BUILD_NUMBER}"
 LATEST_TAG="${IMAGE}:latest"
 
-echo "Creating docker image for ${TRAVIS_COMMIT} on branch ${TRAVIS_BRANCH} as ${GIT_TAG}"
+echo "Creating docker image for ${TRAVIS_COMMIT} on branch ${TRAVIS_BRANCH}"
 docker build -t ${BUILD_TAG} ${DOCKER_BUILDDIR}
 echo "Build complete ${DOCKER_IMAGE}"
 
