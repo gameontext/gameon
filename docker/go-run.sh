@@ -210,6 +210,9 @@ case "$ACTION" in
     NOLOGS=1
     platform_up
     up_log $PROJECTS
+    echo "To test for readiness: http://${HTTP_HOSTPORT}/site_alive"
+    echo 'To wait for readiness: ./docker/go-run.sh wait'
+    echo 'To watch progress :popcorn: ./docker/go-run.sh logs'
   ;;
   wait)
     echo "Waiting until http://${HTTP_HOSTPORT}/site_alive returns OK."

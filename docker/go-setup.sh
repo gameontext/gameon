@@ -12,7 +12,7 @@
 #
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-source $SCRIPTDIR/go-common
+source $SCRIPTDIR/docker-functions
 
 # Ensure we're executing from project root directory
 cd "${SCRIPTDIR}"/..

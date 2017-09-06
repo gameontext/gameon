@@ -46,11 +46,8 @@ case "$ACTION" in
     echo "This may take awhile. Be patient."
     if [ "$GO_DEPLOYMENT" = "docker-compose" ]
     then
-      ./docker/go-run.sh up
       echo "For logs and other actions, use scripts in the docker/ directory"
-      echo "To test for readiness: http://${HTTP_HOSTPORT}/site_alive"
-      echo 'To wait for readiness: ./docker/go-run.sh wait'
-      echo 'To watch progress :popcorn: ./docker/go-run.sh logs'
+      ./docker/go-run.sh up
     else
       echo "else k8s"
     fi
