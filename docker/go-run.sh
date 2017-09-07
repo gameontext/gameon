@@ -47,6 +47,7 @@ fi
 
 up_log() {
   ensure_keystore
+  ensure_etcd
 
   if [ $NOLOGS -eq 0 ]
   then
