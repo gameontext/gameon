@@ -51,7 +51,7 @@ else
   #  HTTPS="-p $HTTPS:9443"
   #fi
 
-  #${DOCKER} run -d $HTTP $HTTPS $PORT_MAPPINGS --restart=always --link etcd -e LICENSE=accept -e ETCDCTL_ENDPOINT=http://etcd:4001 --name=$TARGET_CONTAINER $TARGET_CONTAINER
+  #${DOCKER} run -d $HTTP $HTTPS $PORT_MAPPINGS --restart=always -e LICENSE=accept -e ETCDCTL_ENDPOINT=http://etcd:4001 --name=$TARGET_CONTAINER $TARGET_CONTAINER
   #if [ $? != 0 ]
   #then
   #  echo "Docker run failed.. it's too late.. the damage is done already."
