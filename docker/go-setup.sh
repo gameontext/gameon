@@ -52,7 +52,6 @@ When the docker containers are up, use https://$IP/ to connect to the game."
 fi
 
 ensure_keystore
-
 ${COMPOSE} pull
 rc=$?
 if [ $rc -ne 0 ]
@@ -60,7 +59,7 @@ then
   echo "Trouble pulling core images, we need to sort that first"
   exit 1
 fi
-
+ensure_etcd
 ${SCRIPTDIR}/go-run.sh rebuild_only
 
 echo "

@@ -5,10 +5,20 @@ services:
 #  auth:
 #    build:
 #      context: ../auth/auth-wlpcfg
+#    ports:
+#      - "9089:9080"
+#      - "9449:9443"
+#    volumes:
+#      - '$HOME:$HOME'
+#      - '../auth/auth-wlpcfg/servers/gameon-auth:/opt/ibm/wlp/usr/servers/defaultServer'
+#      - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
 
 #  map:
 #    build:
 #      context: ../map/map-wlpcfg
+#    ports:
+#      - "9099:9080"
+#      - "9447:9443"
 #    volumes:
 #      - '$HOME:$HOME'
 #      - '../map/map-wlpcfg/servers/gameon-map:/opt/ibm/wlp/usr/servers/defaultServer'
@@ -17,6 +27,9 @@ services:
 #  mediator:
 #    build:
 #      context: ../mediator/mediator-wlpcfg
+#    ports:
+#      - "9086:9080"
+#      - "9446:9443"
 #    volumes:
 #      - '$HOME:$HOME'
 #      - '../mediator/mediator-wlpcfg/servers/gameon-mediator:/opt/ibm/wlp/usr/servers/defaultServer'
@@ -25,6 +38,9 @@ services:
 #  player:
 #    build:
 #      context: ../player/player-wlpcfg
+#    ports:
+#      - "9082:9080"
+#      - "9443:9443"
 #    volumes:
 #      - '$HOME:$HOME'
 #      - '../player/player-wlpcfg/servers/gameon-player:/opt/ibm/wlp/usr/servers/defaultServer'
@@ -33,15 +49,25 @@ services:
 #  proxy:
 #    build:
 #      context: ../proxy
+#    ports:
+#      - "1936:1936"
 
 #  room:
 #    build:
 #      context: ../room/room-wlpcfg
+#    ports:
+#      - "9080:9080"
+#      - "9445:9443"
 #    volumes:
 #      - '$HOME:$HOME'
 #      - '../room/room-wlpcfg/servers/gameon-room:/opt/ibm/wlp/usr/servers/defaultServer'
 #      - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
 
+#  swagger:
+#    build:
+#      context: ../swagger
+#    ports:
+#      - "8081:8080"
 
 #  webapp-build:
 #    build:
@@ -54,6 +80,8 @@ services:
 #  webapp:
 #    build:
 #      context: ../webapp
+#    ports:
+#      - "8080:8080"
 #    volumes:
 #      - '../webapp/app:/opt/www'
 
