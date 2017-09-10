@@ -59,7 +59,6 @@ then
   echo "Trouble pulling core images, we need to sort that first"
   exit 1
 fi
-ensure_etcd
 ${SCRIPTDIR}/go-run.sh rebuild_only
 
 echo "
