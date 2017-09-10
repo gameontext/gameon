@@ -84,18 +84,8 @@ ensure_keystore() {
   fi
 }
 
-ensure_etcd() {
-  ${DOCKER_CMD} volume inspect etcd-data &> /dev/null
-  rc=$?
-  if [ $rc -ne 0 ]
-  then
-    ${DOCKER_CMD} volume create --name etcd-data
-  fi
-}
-
 platform_up() {
   ensure_keystore
-  ensure_etcd
 
   FOUND=$(${DOCKER_CMD} ps --format="{{.Names}}")
   if [ "$FOUND" != "" ]; then

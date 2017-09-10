@@ -62,7 +62,9 @@ up_log() {
   fi
 
   echo
-  echo "Launching containers will take some time, as dependencies are coordinated."
+  echo "*****"
+  echo "Launching containers will take some time as dependencies are coordinated."
+  echo "*****"
   echo
   ${COMPOSE} up -d $@
   if [ $NOLOGS -eq 0 ]
