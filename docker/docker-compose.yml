@@ -111,6 +111,15 @@ services:
     networks:
       - gameontext
 
+### Utility image: not started. Has tools, network, env ###
+  util:
+    build:
+      context: ../images/util
+    env_file: ../gameon.${DOCKER_MACHINE_NAME}env
+    container_name: util
+    networks:
+      - gameontext
+
 #### Local Kafka Backend #########
   kafka:
     image: gameontext/docker-kafka
