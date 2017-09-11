@@ -3,7 +3,7 @@ GO_DIR=$( cd "$SCRIPTDIR/.." && pwd )
 source $BIN_DIR/go-common
 
 
-PLATFORM="kafka redis couchdb etcd"
+PLATFORM="kafka redis couchdb"
 COREPROJECTS="auth map mediator player proxy room swagger webapp"
 
 OVERRIDE=
