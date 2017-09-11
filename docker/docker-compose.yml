@@ -123,7 +123,7 @@ services:
       - "2181:2181"
     container_name: kafka
     healthcheck:
-      test: /opt/kafka_2.11-0.10.1.0/bin/kafka-topics.sh --list --zookeeper localhost:2181
+      test: /opt/kafka_2.12-0.11.0.0/bin/kafka-topics.sh --list --zookeeper localhost:2181
       timeout: 10s
       retries: 3
     networks:
@@ -155,24 +155,9 @@ services:
     networks:
       - gameontext
 
-  ########Etcd######################
-  etcd:
-    image: quay.io/coreos/etcd:v2.2.2
-    command: >
-      -listen-client-urls http://0.0.0.0:2379
-      -advertise-client-urls http://etcd:2379
-      --data-dir=/etcd-data
-    volumes:
-      - etcd-data:/etcd-data
-    container_name: etcd
-    networks:
-      - gameontext
-
 networks:
   gameontext:
 
 volumes:
   keystore:
-    external: true
-  etcd-data:
     external: true
