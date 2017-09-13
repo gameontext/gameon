@@ -120,14 +120,13 @@ SCRIPT
 
     cd /vagrant
     chmod +x go*.sh docker/go*.sh
-
-    ./go-admin.sh setup
   EOT
 
   # Run as vagrant user: Always start things
   config.vm.provision :shell, privileged: false, run: "always", :inline => <<-EOT
     echo 'To start Game On! :'
     echo '> vagrant ssh'
+    echo '> ./go-admin.sh setup'
     echo '> ./go-admin.sh up'
     echo ""
     echo 'To test for readiness: http://127.0.0.1:9980/site_alive'
