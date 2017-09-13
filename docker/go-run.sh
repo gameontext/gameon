@@ -47,7 +47,6 @@ fi
 
 up_log() {
   ensure_keystore
-  ensure_etcd
 
   if [ $NOLOGS -eq 0 ]
   then
@@ -69,7 +68,7 @@ up_log() {
   ${COMPOSE} up -d $@
   if [ $NOLOGS -eq 0 ]
   then
-    sleep 2
+    sleep 3
     ${COMPOSE} logs --tail="5" -f $@
   fi
 }
