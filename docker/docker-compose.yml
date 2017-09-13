@@ -104,14 +104,6 @@ services:
     networks:
       - gameontext
 
-  util:
-    build:
-      context: ../images/gameon-util
-    env_file: ../gameon.${DOCKER_MACHINE_NAME}env
-    container_name: util
-    networks:
-      - gameontext
-
   webapp:
     image: gameontext/gameon-webapp
     env_file: ../gameon.${DOCKER_MACHINE_NAME}env
@@ -123,6 +115,8 @@ services:
   util:
     build:
       context: ../images/util
+    volumes:
+      - 'keystore:/keystore'
     env_file: ../gameon.${DOCKER_MACHINE_NAME}env
     container_name: util
     networks:
