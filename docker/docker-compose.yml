@@ -19,7 +19,7 @@ version: '2.1'
 services:
 
   auth:
-    image: gameontext/gameon-auth
+    image: gameontext/gameon-auth:compose
     volumes:
       - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
     depends_on:
@@ -31,7 +31,7 @@ services:
       - gameontext
 
   map:
-    image: gameontext/gameon-map
+    image: gameontext/gameon-map:compose
     volumes:
       - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
     depends_on:
@@ -45,7 +45,7 @@ services:
       - gameontext
 
   mediator:
-    image: gameontext/gameon-mediator
+    image: gameontext/gameon-mediator:compose
     volumes:
       - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
     depends_on:
@@ -57,7 +57,7 @@ services:
       - gameontext
 
   player:
-    image: gameontext/gameon-player
+    image: gameontext/gameon-player:compose
     volumes:
       - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
     depends_on:
@@ -71,7 +71,7 @@ services:
       - gameontext
 
   proxy:
-    image: gameontext/gameon-proxy
+    image: gameontext/gameon-proxy:compose
     volumes:
       - 'keystore:/keystore'
     env_file: ../gameon.${DOCKER_MACHINE_NAME}env
@@ -86,7 +86,7 @@ services:
       - gameontext
 
   room:
-    image: gameontext/gameon-room
+    image: gameontext/gameon-room:compose
     volumes:
       - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
     depends_on:
@@ -98,14 +98,14 @@ services:
       - gameontext
 
   swagger:
-    image: gameontext/gameon-swagger
+    image: gameontext/gameon-swagger:compose
     env_file: ../gameon.${DOCKER_MACHINE_NAME}env
     container_name: swagger
     networks:
       - gameontext
 
   webapp:
-    image: gameontext/gameon-webapp
+    image: gameontext/gameon-webapp:compose
     env_file: ../gameon.${DOCKER_MACHINE_NAME}env
     container_name: webapp
     networks:
@@ -124,7 +124,7 @@ services:
 
 #### Local Kafka Backend #########
   kafka:
-    image: gameontext/docker-kafka
+    image: gameontext/docker-kafka:compose
     environment:
       - ADVERTISED_HOST=localhost
       - ADVERTISED_PORT=9092
