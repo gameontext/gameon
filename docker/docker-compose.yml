@@ -111,10 +111,11 @@ services:
     networks:
       - gameontext
 
-### Utility image: not started. Has tools, network, env ###
+### Utility image: has tools, network, env. Holds onto volumes ###
   util:
     build:
       context: ../images/util
+    command: tail -f /dev/null
     volumes:
       - 'keystore:/keystore'
     env_file: ../gameon.${DOCKER_MACHINE_NAME}env
@@ -134,7 +135,7 @@ services:
       - "2181:2181"
     container_name: kafka
     healthcheck:
-      test: /opt/kafka_2.12-0.11.0.0/bin/kafka-topics.sh --list --zookeeper localhost:2181
+      test: /test.sh
       timeout: 10s
       retries: 3
     networks:

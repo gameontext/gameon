@@ -103,7 +103,7 @@ rebuild() {
       echo "Building project ${project} with gradle"
 
       cd "$project"
-      ./gradlew build
+      ./gradlew build --rerun-tasks
       rc=$?
       if [ $rc != 0 ]
       then

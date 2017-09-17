@@ -3,7 +3,7 @@ GO_DIR=$( cd "$SCRIPTDIR/.." && pwd )
 source $BIN_DIR/go-common
 
 
-PLATFORM="kafka redis couchdb"
+PLATFORM="kafka redis couchdb util"
 COREPROJECTS="auth map mediator player proxy room swagger webapp"
 
 OVERRIDE=
@@ -81,6 +81,14 @@ ensure_keystore() {
       -v keystore:/tmp/keystore \
       -v ${DOCKERPATHPREFIX}${BIN_DIR}/gen-keystore.sh:/tmp/gen-keystore.sh \
       -w /tmp --rm ibmjava bash ./gen-keystore.sh ${IP}
+  fi
+
+  ## Ensure volume exists for node modules (avoid putting in filesystem because of OS differences)
+  ${DOCKER_CMD} volume inspect webapp-node-modules &> /dev/null
+  rc=$?
+  if [ $rc -ne 0 ]
+  then
+    ${DOCKER_CMD} volume create --name webapp-node-modules
   fi
 }
 
