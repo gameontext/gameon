@@ -2,7 +2,6 @@ BIN_DIR=$( cd "$SCRIPTDIR/../bin" && pwd )
 GO_DIR=$( cd "$SCRIPTDIR/.." && pwd )
 source $BIN_DIR/go-common
 
-
 PLATFORM="kafka redis couchdb util"
 COREPROJECTS="auth map mediator player proxy room swagger webapp"
 
@@ -20,6 +19,30 @@ then
     COMPOSE="sudo ${COMPOSE}"
     DOCKER_CMD="sudo docker"
 fi
+
+docker_versions() {
+  echo ""
+  echo " ***********  "
+  echo " Game On! Text requires:"
+  DOCKER_VERSION=$(docker -v)
+  echo "  * Docker CE version 17.06 or greater"
+  if check_version "${DOCKER_VERSION}" 17.06.0
+  then
+    echo -e "    --> \e[32mOK\e[39m: ${DOCKER_VERSION}"
+  else
+    echo -e "    --> \e[31mBACKLEVEL\e[39m: ${DOCKER_VERSION}"
+  fi
+  DOCKER_COMPOSE_VERSION=$(docker-compose -v)
+  echo "  * Docker Compose version 1.15.0 or greater"
+  if check_version "${DOCKER_COMPOSE_VERSION}" 1.15.0
+  then
+    echo -e "    --> \e[32mOK\e[39m: ${DOCKER_COMPOSE_VERSION}"
+  else
+    echo -e "    --> \e[31mBACKLEVEL\e[39m: ${DOCKER_COMPOSE_VERSION}"
+  fi
+  echo " ***********  "
+  echo ""
+}
 
 build_webapp() {
   if [ -d ${GO_DIR}/webapp/app ]
@@ -130,7 +153,7 @@ reset_kafka() {
   ${COMPOSE} stop kafka ${PROJECTS}
   ${COMPOSE} kill kafka ${PROJECTS}
   ${COMPOSE} rm -f kafka ${PROJECTS}
-  echo "Resetting kafka takes some time (quiescing, making sure things are dead and that there are no zombies)"
+  echo "Resetting kafka takes some time ... "
   echo "Sleep 30"
   sleep 30
   echo "Start Kafka"
