@@ -165,7 +165,8 @@ case "$ACTION" in
     platform_down
   ;;
   env)
-    echo "export COMPOSE=\"${COMPOSE}\""
+    echo "alias go-compose='${COMPOSE}';"
+    echo "alias go-run='${SCRIPTDIR}/go-run.sh'"
   ;;
   logs)
     ${COMPOSE} logs -f $PROJECTS
