@@ -7,3 +7,4 @@
 gameon.?*env
 docker-compose.override.yml
 slackin
+.gameontext

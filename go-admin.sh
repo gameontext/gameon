@@ -40,8 +40,13 @@ case "$ACTION" in
     else
       echo "else k8s"
     fi
+    echo $GO_DEPLOYMENT > .gameontext
   ;;
   up)
+    if ! [ -f .gameontext ] || [ "$GO_DEPLOYMENT" != "$(< .gameontext)" ]
+    then
+      $0 setup
+    fi
     echo "Game On! Starting game services with $GO_DEPLOYMENT"
     echo "This may take awhile. Be patient."
     if [ "$GO_DEPLOYMENT" = "docker-compose" ]
