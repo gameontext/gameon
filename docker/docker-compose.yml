@@ -127,6 +127,7 @@ services:
   kafka:
     image: gameontext/docker-kafka
     environment:
+      - ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
       - ADVERTISED_HOST=localhost
       - ADVERTISED_PORT=9092
       - AUTO_CREATE_TOPICS=true
