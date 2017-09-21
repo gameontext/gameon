@@ -1,4 +1,5 @@
 BIN_DIR=$( cd "$SCRIPTDIR/../bin" && pwd )
+IMG_DIR=$( cd "$SCRIPTDIR/../images" && pwd )
 GO_DIR=$( cd "$SCRIPTDIR/.." && pwd )
 source $BIN_DIR/go-common
 
@@ -140,6 +141,16 @@ ensure_keystore() {
       -v keystore:/tmp/keystore \
       -v ${DOCKERPATHPREFIX}${BIN_DIR}/gen-keystore.sh:/tmp/gen-keystore.sh \
       -w /tmp --rm ibmjava bash ./gen-keystore.sh ${IP}
+    # Copy ltpa.keys
+    echo ${DOCKER_CMD} run \
+      -v keystore:/tmp/keystore \
+      -v ${DOCKERPATHPREFIX}${IMG_DIR}/ltpa.keys:/tmp/ltpa.keys \
+      -w /tmp --rm ibmjava cp ltpa.keys keystore/ltpa.keys
+    # Generate keystore
+    ${DOCKER_CMD} run \
+      -v keystore:/tmp/keystore \
+      -v ${DOCKERPATHPREFIX}${IMG_DIR}/ltpa.keys:/tmp/ltpa.keys \
+      -w /tmp --rm ibmjava cp ltpa.keys keystore/ltpa.keys
   fi
 
   ## Ensure volume exists for node modules (avoid putting in filesystem because of OS differences)
