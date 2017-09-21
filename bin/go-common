@@ -21,6 +21,28 @@ then
   HTTPS_HOSTPORT=${IP}
 fi
 
+if [ -x /usr/bin/tput ] && [[ `tput colors` != "0" ]]; then
+    color_prompt="yes"
+elif [ -x /ffp/bin/tput ] && [[ `tput colors` != "0" ]]; then
+    color_prompt="yes"
+else
+    color_prompt=
+fi
+
+if [[ "$color_prompt" == "yes" ]]; then
+           BLUE="\033[0;34m"
+          GREEN="\033[0;32m"
+          WHITE="\033[1;37m"
+            RED="\033[0;31m"
+       NO_COLOR="\033[0m"
+else
+           BLUE=""
+          GREEN=""
+          WHITE=""
+            RED=""
+      NO_COLOUR=""
+fi
+
 # return 0 if version (parsed from string ' dd?.dd?.dd?') is equal or greater than
 # the other provided version
 check_version()
