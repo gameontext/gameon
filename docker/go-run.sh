@@ -126,9 +126,51 @@ rebuild() {
   done
 }
 
+setup() {
+  docker_versions
+  ensure_keystore
+  ${COMPOSE} pull
+  rc=$?
+  if [ $rc -ne 0 ]
+  then
+    echo "Trouble pulling core images, we need to sort that first"
+    exit 1
+  fi
+  rebuild $PROJECTS
+
+  echo "
+
+  Start the Game On! platform:
+    ./go-admin.sh up
+  OR:
+    ./docker/go-run.sh up
+
+  Set up operational aliases:
+    eval \$(./docker/go-run.sh env)
+
+  Check for all services being ready:
+    https://${HTTP_HOSTPORT}/site_alive
+
+  Wait for all game services to finish starting:
+    ./docker/go-run.sh wait
+  OR (with alias):
+    go-run wait
+
+  If you are editing/updating core game services, rebuild and launch using:
+    ./docker/go-run.sh rebuild
+  OR (with alias):
+    go-run rebuild
+
+  The game will be running at https://${HTTPS_HOSTPORT}/ when you're all done.
+
+  "
+}
+
 usage() {
   echo "
   Actions:
+    setup
+
     up
     down
     start
@@ -167,6 +209,8 @@ case "$ACTION" in
   env)
     echo "alias go-compose='${COMPOSE}';"
     echo "alias go-run='${SCRIPTDIR}/go-run.sh'"
+    # global setup | up | down
+    echo "alias go-admin='${GO_DIR}/go-admin.sh'"
   ;;
   logs)
     ${COMPOSE} logs -f $PROJECTS
@@ -201,6 +245,9 @@ case "$ACTION" in
   rm)
     echo "${COMPOSE} rm $PROJECTS"
     ${COMPOSE} rm $PROJECTS
+  ;;
+  setup)
+    setup
   ;;
   start)
     up_log $PROJECTS

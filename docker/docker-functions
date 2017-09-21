@@ -28,20 +28,56 @@ docker_versions() {
   echo "  * Docker CE version 17.06 or greater"
   if check_version "${DOCKER_VERSION}" 17.06.0
   then
-    echo -e "    --> \e[32mOK\e[39m: ${DOCKER_VERSION}"
+    echo -e "    --> ${GREEN}OK${NO_COLOR}: ${DOCKER_VERSION}"
   else
-    echo -e "    --> \e[31mBACKLEVEL\e[39m: ${DOCKER_VERSION}"
+    echo -e "    --> ${RED}BACKLEVEL${NO_COLOR}: ${DOCKER_VERSION}"
   fi
   DOCKER_COMPOSE_VERSION=$(docker-compose -v)
   echo "  * Docker Compose version 1.15.0 or greater"
   if check_version "${DOCKER_COMPOSE_VERSION}" 1.15.0
   then
-    echo -e "    --> \e[32mOK\e[39m: ${DOCKER_COMPOSE_VERSION}"
+    echo -e "    --> ${GREEN}OK${NO_COLOR}: ${DOCKER_COMPOSE_VERSION}"
   else
-    echo -e "    --> \e[31mBACKLEVEL\e[39m: ${DOCKER_COMPOSE_VERSION}"
+    echo -e "    --> ${RED}BACKLEVEL${NO_COLOR}: ${DOCKER_COMPOSE_VERSION}"
   fi
   echo " ***********  "
   echo ""
+}
+
+create_env() {
+  NAME=${DOCKER_MACHINE_NAME-empty}
+  IP=127.0.0.1
+  if [ "$NAME" = "empty" ]
+  then
+    echo "DOCKER_MACHINE_NAME is not set. If you don't use docker-machine, you can ignore this, or
+    export DOCKER_MACHINE_NAME=''"
+  elif [ "$NAME" == "vagrant" ]
+  then
+    if [ ! -f gameon.${NAME}env ]
+    then
+      echo "Creating new environment file gameon.${NAME}env to contain environment variable overrides.
+            This file will use the docker host ip address ($IP), but will re-map ports for forwarding from the VM."
+      cat gameon.env | sed -e 's/FRONT_END_\\(.*\\)127.0.0.1\\(.*\\)/FRONT_END_\\1127.0.0.1:9943\\2/g' > gameon.${NAME}env
+    fi
+  elif [ "$NAME" != "" ]
+  then
+    IP=$(docker-machine ip $NAME)
+    rc=$?
+    if [ $rc -ne 0 ] || [ -z ${DOCKER_HOST} ]
+    then
+      echo "Is your docker host running? Did you start docker-machine, e.g.
+    docker-machine start default
+    eval \$(docker-machine env default)"
+      exit 1
+    fi
+    if [ ! -f gameon.${NAME}env ]
+    then
+      echo "Creating new environment file gameon.${NAME}env to contain environment variable overrides.
+  This file will use the docker host ip address ($IP).
+  When the docker containers are up, use https://$IP/ to connect to the game."
+    fi
+    cat gameon.env | sed  -e "s#127\.0\.0\.1\:6379#A8LOCALHOSTPRESERVE#g" | sed -e "s#127\.0\.0\.1#${IP}#g" | sed -e "s#A8LOCALHOSTPRESERVE#127\.0\.0\.1\:6379#" > gameon.${NAME}env
+  fi
 }
 
 build_webapp() {
