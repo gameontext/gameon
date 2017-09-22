@@ -23,14 +23,14 @@ This is the TL;DR version.
     ```
 
 3. (Optional) Use Vagrant for your development environment
-  1. Install Vagrant
-  2. `vagrant up` (likley with `--provider=virtualbox`)
-  3. `vagrant ssh`
-  4. use `pwd` to ensure you're in the `/vagrant` directory.
-
-  * Notes:
-    * the Vagrantfile updates the .bashrc for the vagrant user to set `DOCKER_MACHINE_NAME=vagrant` to tweak script behavior for use with vagrant.
-    * VM provisioning will perform the next two steps on your behalf. 
+   1. Install Vagrant
+   2. `vagrant up` (likley with `--provider=virtualbox`)
+   3. `vagrant ssh`
+   4. use `pwd` to ensure you're in the `/vagrant` directory.  
+    
+   * Notes:
+      * the Vagrantfile updates the .bashrc for the vagrant user to set `DOCKER_MACHINE_NAME=vagrant` to tweak script behavior for use with vagrant.
+      * VM provisioning will perform the next two steps on your behalf. 
 
 4. Set up required keystores and environment variables. This step also pulls the initial images required for running the system. (This action only needs to be run once).
     ```

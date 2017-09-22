@@ -1,9 +1,9 @@
 BIN_DIR=$( cd "$SCRIPTDIR/../bin" && pwd )
+IMG_DIR=$( cd "$SCRIPTDIR/../images" && pwd )
 GO_DIR=$( cd "$SCRIPTDIR/.." && pwd )
 source $BIN_DIR/go-common
 
-
-PLATFORM="kafka redis couchdb"
+PLATFORM="kafka redis couchdb util"
 COREPROJECTS="auth map mediator player proxy room swagger webapp"
 
 OVERRIDE=
@@ -20,6 +20,66 @@ then
     COMPOSE="sudo ${COMPOSE}"
     DOCKER_CMD="sudo docker"
 fi
+
+docker_versions() {
+  echo ""
+  echo " ***********  "
+  echo " Game On! Text requires:"
+  DOCKER_VERSION=$(docker -v)
+  echo "  * Docker CE version 17.06 or greater"
+  if check_version "${DOCKER_VERSION}" 17.06.0
+  then
+    echo -e "    --> ${GREEN}OK${NO_COLOR}: ${DOCKER_VERSION}"
+  else
+    echo -e "    --> ${RED}BACKLEVEL${NO_COLOR}: ${DOCKER_VERSION}"
+  fi
+  DOCKER_COMPOSE_VERSION=$(docker-compose -v)
+  echo "  * Docker Compose version 1.15.0 or greater"
+  if check_version "${DOCKER_COMPOSE_VERSION}" 1.15.0
+  then
+    echo -e "    --> ${GREEN}OK${NO_COLOR}: ${DOCKER_COMPOSE_VERSION}"
+  else
+    echo -e "    --> ${RED}BACKLEVEL${NO_COLOR}: ${DOCKER_COMPOSE_VERSION}"
+  fi
+  echo " ***********  "
+  echo ""
+}
+
+create_env() {
+  NAME=${DOCKER_MACHINE_NAME-empty}
+  IP=127.0.0.1
+  if [ "$NAME" = "empty" ]
+  then
+    echo "DOCKER_MACHINE_NAME is not set. If you don't use docker-machine, you can ignore this, or
+    export DOCKER_MACHINE_NAME=''"
+  elif [ "$NAME" == "vagrant" ]
+  then
+    if [ ! -f gameon.${NAME}env ]
+    then
+      echo "Creating new environment file gameon.${NAME}env to contain environment variable overrides.
+            This file will use the docker host ip address ($IP), but will re-map ports for forwarding from the VM."
+      cat gameon.env | sed -e 's/FRONT_END_\\(.*\\)127.0.0.1\\(.*\\)/FRONT_END_\\1127.0.0.1:9943\\2/g' > gameon.${NAME}env
+    fi
+  elif [ "$NAME" != "" ]
+  then
+    IP=$(docker-machine ip $NAME)
+    rc=$?
+    if [ $rc -ne 0 ] || [ -z ${DOCKER_HOST} ]
+    then
+      echo "Is your docker host running? Did you start docker-machine, e.g.
+    docker-machine start default
+    eval \$(docker-machine env default)"
+      exit 1
+    fi
+    if [ ! -f gameon.${NAME}env ]
+    then
+      echo "Creating new environment file gameon.${NAME}env to contain environment variable overrides.
+  This file will use the docker host ip address ($IP).
+  When the docker containers are up, use https://$IP/ to connect to the game."
+    fi
+    cat gameon.env | sed  -e "s#127\.0\.0\.1\:6379#A8LOCALHOSTPRESERVE#g" | sed -e "s#127\.0\.0\.1#${IP}#g" | sed -e "s#A8LOCALHOSTPRESERVE#127\.0\.0\.1\:6379#" > gameon.${NAME}env
+  fi
+}
 
 build_webapp() {
   if [ -d ${GO_DIR}/webapp/app ]
@@ -81,6 +141,24 @@ ensure_keystore() {
       -v keystore:/tmp/keystore \
       -v ${DOCKERPATHPREFIX}${BIN_DIR}/gen-keystore.sh:/tmp/gen-keystore.sh \
       -w /tmp --rm ibmjava bash ./gen-keystore.sh ${IP}
+    # Copy ltpa.keys
+    echo ${DOCKER_CMD} run \
+      -v keystore:/tmp/keystore \
+      -v ${DOCKERPATHPREFIX}${IMG_DIR}/ltpa.keys:/tmp/ltpa.keys \
+      -w /tmp --rm ibmjava cp ltpa.keys keystore/ltpa.keys
+    # Generate keystore
+    ${DOCKER_CMD} run \
+      -v keystore:/tmp/keystore \
+      -v ${DOCKERPATHPREFIX}${IMG_DIR}/ltpa.keys:/tmp/ltpa.keys \
+      -w /tmp --rm ibmjava cp ltpa.keys keystore/ltpa.keys
+  fi
+
+  ## Ensure volume exists for node modules (avoid putting in filesystem because of OS differences)
+  ${DOCKER_CMD} volume inspect webapp-node-modules &> /dev/null
+  rc=$?
+  if [ $rc -ne 0 ]
+  then
+    ${DOCKER_CMD} volume create --name webapp-node-modules
   fi
 }
 
@@ -122,7 +200,7 @@ reset_kafka() {
   ${COMPOSE} stop kafka ${PROJECTS}
   ${COMPOSE} kill kafka ${PROJECTS}
   ${COMPOSE} rm -f kafka ${PROJECTS}
-  echo "Resetting kafka takes some time (quiescing, making sure things are dead and that there are no zombies)"
+  echo "Resetting kafka takes some time ... "
   echo "Sleep 30"
   sleep 30
   echo "Start Kafka"

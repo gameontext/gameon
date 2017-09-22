@@ -28,6 +28,7 @@ if [ "$TRAVIS_BRANCH" == "master" ]; then
   echo "Publishing image"
   docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
   docker push ${IMAGE}
+  docker logout
   echo "Push complete"
 else
   echo "Not master branch, skipping docker"

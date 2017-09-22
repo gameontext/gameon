@@ -13,7 +13,11 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-source bin/go-common
+BASEDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+source ${BASEDIR}/bin/go-common
+
+# Ensure we're executing from project root directory
+cd "${BASEDIR}"
 
 #set the action, default to help if none passed.
 if [ $# -lt 1 ]
@@ -28,7 +32,6 @@ GO_DEPLOYMENT=${GO_DEPLOYMENT-docker-compose}
 
 usage() {
   echo "Actions: setup|up|down"
-  echo "Use optional arguments to select one or more specific image"
 }
 
 case "$ACTION" in
@@ -36,12 +39,17 @@ case "$ACTION" in
     echo "Game On! Setting things up with $GO_DEPLOYMENT"
     if [ "$GO_DEPLOYMENT" = "docker-compose" ]
     then
-      ./docker/go-setup.sh
+      ./docker/go-run.sh setup
     else
       echo "else k8s"
     fi
+    echo $GO_DEPLOYMENT > .gameontext
   ;;
   up)
+    if ! [ -f .gameontext ] || [ "$GO_DEPLOYMENT" != "$(< .gameontext)" ]
+    then
+      $0 setup
+    fi
     echo "Game On! Starting game services with $GO_DEPLOYMENT"
     echo "This may take awhile. Be patient."
     if [ "$GO_DEPLOYMENT" = "docker-compose" ]

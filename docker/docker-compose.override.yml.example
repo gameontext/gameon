@@ -11,7 +11,6 @@ services:
 #    volumes:
 #      - '$HOME:$HOME'
 #      - '../auth/auth-wlpcfg/servers/gameon-auth:/opt/ibm/wlp/usr/servers/defaultServer'
-#      - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
 
 #  map:
 #    build:
@@ -22,7 +21,6 @@ services:
 #    volumes:
 #      - '$HOME:$HOME'
 #      - '../map/map-wlpcfg/servers/gameon-map:/opt/ibm/wlp/usr/servers/defaultServer'
-#      - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
 
 #  mediator:
 #    build:
@@ -33,7 +31,6 @@ services:
 #    volumes:
 #      - '$HOME:$HOME'
 #      - '../mediator/mediator-wlpcfg/servers/gameon-mediator:/opt/ibm/wlp/usr/servers/defaultServer'
-#      - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
 
 #  player:
 #    build:
@@ -44,7 +41,6 @@ services:
 #    volumes:
 #      - '$HOME:$HOME'
 #      - '../player/player-wlpcfg/servers/gameon-player:/opt/ibm/wlp/usr/servers/defaultServer'
-#      - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
 
 #  proxy:
 #    build:
@@ -61,7 +57,6 @@ services:
 #    volumes:
 #      - '$HOME:$HOME'
 #      - '../room/room-wlpcfg/servers/gameon-room:/opt/ibm/wlp/usr/servers/defaultServer'
-#      - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
 
 #  swagger:
 #    build:

@@ -3,6 +3,8 @@
 .DS_Store
 .vagrant
 *.log
+.gameontext
 gameon.?*env
 docker-compose.override.yml
 slackin
+.gameontext
