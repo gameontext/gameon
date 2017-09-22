@@ -16,10 +16,16 @@
 
 version: '2.1'
 
+## 
+# For gameontext images: 
+#  * use :lastgood for most recent set of services that have been tested together
+#  * Use :latest for the bleeding edge
+#  * Use :compose for the compose branch snapshot
+
 services:
 
   auth:
-    image: gameontext/gameon-auth
+    image: gameontext/gameon-auth:lastgood
     volumes:
       - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
     depends_on:
@@ -31,7 +37,7 @@ services:
       - gameontext
 
   map:
-    image: gameontext/gameon-map
+    image: gameontext/gameon-map:lastgood
     volumes:
       - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
     depends_on:
@@ -45,7 +51,7 @@ services:
       - gameontext
 
   mediator:
-    image: gameontext/gameon-mediator
+    image: gameontext/gameon-mediator:lastgood
     volumes:
       - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
     depends_on:
@@ -57,7 +63,7 @@ services:
       - gameontext
 
   player:
-    image: gameontext/gameon-player
+    image: gameontext/gameon-player:lastgood
     volumes:
       - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
     depends_on:
@@ -71,7 +77,7 @@ services:
       - gameontext
 
   proxy:
-    image: gameontext/gameon-proxy
+    image: gameontext/gameon-proxy:lastgood
     volumes:
       - 'keystore:/keystore'
     env_file: ../gameon.${DOCKER_MACHINE_NAME}env
@@ -86,7 +92,7 @@ services:
       - gameontext
 
   room:
-    image: gameontext/gameon-room
+    image: gameontext/gameon-room:lastgood
     volumes:
       - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
     depends_on:
@@ -98,14 +104,14 @@ services:
       - gameontext
 
   swagger:
-    image: gameontext/gameon-swagger
+    image: gameontext/gameon-swagger:lastgood
     env_file: ../gameon.${DOCKER_MACHINE_NAME}env
     container_name: swagger
     networks:
       - gameontext
 
   webapp:
-    image: gameontext/gameon-webapp
+    image: gameontext/gameon-webapp:lastgood
     env_file: ../gameon.${DOCKER_MACHINE_NAME}env
     container_name: webapp
     networks:
@@ -125,7 +131,7 @@ services:
 
 #### Local Kafka Backend #########
   kafka:
-    image: gameontext/docker-kafka
+    image: gameontext/docker-kafka:lastgood
     environment:
       - ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
       - ADVERTISED_HOST=localhost
