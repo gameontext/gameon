@@ -208,7 +208,7 @@ case "$ACTION" in
   ;;
   env)
     echo "alias go-compose='${COMPOSE}';"
-    echo "alias go-run='${SCRIPTDIR}/go-run.sh'"
+    echo "alias go-run='${SCRIPTDIR}/go-run.sh';"
     # global setup | up | down
     echo "alias go-admin='${GO_DIR}/go-admin.sh'"
   ;;
