@@ -65,6 +65,12 @@ If you want to contribute to the game's core services, no worries! Assuming you'
     cd gameon
     ```
 
+2. Set some aliases to save typing: 
+    ```
+    eval $(./docker/go-run.sh env)
+    go-run
+    ```
+
 2. Obtain the source for the project that you want to change. The easiest way is to take advantage of [git submodules](https://gameontext.gitbooks.io/gameon-gitbook/content/walkthroughs/git.html).
     ```
     git submodule init map
@@ -84,27 +90,27 @@ If you want to contribute to the game's core services, no worries! Assuming you'
 
 4. Build the project(s) (includes building wars and creating keystores required for local development) to be deployed. You may have different requirements per service (e.g. most require Java 8):
     ```
-    ./docker/go-run.sh rebuild map
+    go-run rebuild map
     ```
 
 5. Iterate!
   * For subsequent code changes to the same project:
     ```
-    ./docker/go-run.sh rebuild map
+    go-run rebuild map
     ```
   
   * To rebuild multiple projects, specify multiple projects as arguments, e.g.
     ```
-    ./docker/go-run.sh rebuild map player auth
+    go-run rebuild map player auth
     ```
 
   * To rebuild all projects, use either:
     ```
-    ./docker/go-run.sh rebuild
+    go-run rebuild
     ```
     or
     ```
-    ./docker/go-run.sh rebuild all
+    go-run rebuild all
     ```
 
 ----
