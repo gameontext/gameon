@@ -1,0 +1,7 @@
+#default all text to auto convert linefeeds.
+* text=auto
+
+#keep .sh as unix
+*.sh text eol=lf
+docker-functions text eol=lf
+
