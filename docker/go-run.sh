@@ -18,56 +18,57 @@ source $SCRIPTDIR/docker-functions
 cd "${SCRIPTDIR}"/..
 
 #set the action, default to help if none passed.
-if [ $# -lt 1 ]
-then
-  ACTION=help
-else
+ACTION=help
+if [ $# -ge 1 ]; then
   ACTION=$1
   shift
 fi
 
-#for when running from scripts..
-if [ $# -gt 0 ] && [ $1 == "--nologs" ]
-then
-  NOLOGS=1
+PROJECTS=
+NOLOGS=0
+#-- Parse args
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+  "--nologs")
+    NOLOGS=1
+  ;;
+  all)
+    PROJECTS="$COREPROJECTS $PROJECTS"
+  ;;
+  *) PROJECTS="$1 $PROJECTS"
+  ;;
+  esac
   shift
-else
-  NOLOGS=0
-fi
+done
 
-if [ $# -lt 1 ]
-then
+if [ -z "${PROJECTS}" ]; then
   PROJECTS=$COREPROJECTS
-elif [ $1 == "all" ]
-then
-  PROJECTS=$COREPROJECTS
-else
-  PROJECTS=$@
 fi
 
 up_log() {
   ensure_keystore
 
-  if [ $NOLOGS -eq 0 ]
-  then
-    echo "Starting containers [$PROJECTS], logs will continue in the foreground."
+  echo
+  echo "*****"
+  if [ $NOLOGS -eq 0 ]; then
+    echo "Starting containers (detached) [$PROJECTS]"
+    echo "Logs will continue in the foreground."
     echo "Start command: "
     echo "    ${COMPOSE} up -d $PROJECTS"
   else
-    echo "Starting containers [$PROJECTS], logs will be viewable using: "
+    echo "Starting containers (detached) [$PROJECTS]"
+    echo "View logs: "
     echo "    ./docker/go-run.sh logs $PROJECTS"
     echo "Start command: "
     echo "    ${COMPOSE} up -d $PROJECTS"
   fi
-
   echo
-  echo "*****"
   echo "Launching containers will take some time as dependencies are coordinated."
   echo "*****"
   echo
+
   ${COMPOSE} up -d $@
-  if [ $NOLOGS -eq 0 ]
-  then
+  if [ $NOLOGS -eq 0 ]; then
     sleep 3
     ${COMPOSE} logs --tail="5" -f $@
   fi
@@ -77,6 +78,8 @@ down_rm() {
   echo "Stopping containers [$PROJECTS]"
   echo "    ${COMPOSE} stop $@"
   ${COMPOSE} stop $@
+  echo
+  echo "*****"
   echo "Cleaning up containers [$PROJECTS]"
   echo "    ${COMPOSE} rm $@"
   ${COMPOSE} rm $@
@@ -87,8 +90,7 @@ refresh() {
   echo "Pulling fresh images [$PROJECTS]"
   echo "   ${COMPOSE}  build --pull $PROJECTS"
   ${COMPOSE} build --pull $PROJECTS
-  if [ $? != 0 ]
-  then
+  if [ $? != 0 ]; then
     echo Docker build of $PROJECTS failed.. please examine logs and retry as appropriate.
     exit 2
   fi
@@ -98,15 +100,15 @@ rebuild() {
   echo "Building projects [$PROJECTS]"
   for project in $@
   do
-    if [ -d "${project}" ] && [ -e "${project}/build.gradle" ]
-    then
+    echo
+    echo "*****"
+    if [ -d "${project}" ] && [ -e "${project}/build.gradle" ]; then
       echo "Building project ${project} with gradle"
 
       cd "$project"
       ./gradlew build --rerun-tasks
       rc=$?
-      if [ $rc != 0 ]
-      then
+      if [ $rc != 0 ]; then
         echo Gradle build failed. Please investigate, Game On! is unlikely to work until the issue is resolved.
         exit 1
       fi
@@ -116,8 +118,7 @@ rebuild() {
       ${COMPOSE} build ${project}
 
       cd ..
-    elif [ "${project}" == "webapp" ]
-    then
+    elif [ "${project}" == "webapp" ]; then
       build_webapp
     else
       echo "${project} is not a gradle project. No other build instructions. Re-building docker image"
@@ -131,8 +132,7 @@ setup() {
   ensure_keystore
   ${COMPOSE} pull
   rc=$?
-  if [ $rc -ne 0 ]
-  then
+  if [ $rc -ne 0 ]; then
     echo "Trouble pulling core images, we need to sort that first"
     exit 1
   fi

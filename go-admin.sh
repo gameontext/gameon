@@ -20,10 +20,8 @@ source ${BASEDIR}/bin/go-common
 cd "${BASEDIR}"
 
 #set the action, default to help if none passed.
-if [ $# -lt 1 ]
-then
-  ACTION=help
-else
+ACTION="help"
+if [ $# -ge 1 ]; then
   ACTION=$1
   shift
 fi
@@ -37,8 +35,7 @@ usage() {
 case "$ACTION" in
   setup)
     echo "Game On! Setting things up with $GO_DEPLOYMENT"
-    if [ "$GO_DEPLOYMENT" = "docker-compose" ]
-    then
+    if [ "$GO_DEPLOYMENT" = "docker-compose" ]; then
       ./docker/go-run.sh setup
     else
       echo "else k8s"
@@ -46,14 +43,12 @@ case "$ACTION" in
     echo $GO_DEPLOYMENT > .gameontext
   ;;
   up)
-    if ! [ -f .gameontext ] || [ "$GO_DEPLOYMENT" != "$(< .gameontext)" ]
-    then
+    if ! [ -f .gameontext ] || [ "$GO_DEPLOYMENT" != "$(< .gameontext)" ]; then
       $0 setup
     fi
     echo "Game On! Starting game services with $GO_DEPLOYMENT"
     echo "This may take awhile. Be patient."
-    if [ "$GO_DEPLOYMENT" = "docker-compose" ]
-    then
+    if [ "$GO_DEPLOYMENT" = "docker-compose" ]; then
       echo "For logs and other actions, use scripts in the docker/ directory"
       ./docker/go-run.sh up
     else
@@ -62,8 +57,7 @@ case "$ACTION" in
   ;;
   down)
     echo "Game On! Stopping game services with $GO_DEPLOYMENT"
-    if [ "$GO_DEPLOYMENT" = "docker-compose" ]
-    then
+    if [ "$GO_DEPLOYMENT" = "docker-compose" ]; then
       ./docker/go-run.sh down
     else
       echo "else k8s"
