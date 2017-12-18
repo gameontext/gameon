@@ -64,21 +64,13 @@ services:
 #    ports:
 #      - "8081:8080"
 
-#  webapp-build:
-#    build:
-#       context: ../webapp
-#       dockerfile: Dockerfile-node
-#    command: /usr/local/bin/docker-build.sh
-#    volumes:
-#      - '../webapp/app:/app'
-
 #  webapp:
 #    build:
 #      context: ../webapp
 #    ports:
 #      - "8080:8080"
 #    volumes:
-#      - '../webapp/app:/opt/www'
+#      - '../webapp/app/dist:/opt/www/public'
 
 volumes:
   keystore:
