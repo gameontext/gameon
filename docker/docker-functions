@@ -82,33 +82,25 @@ create_env() {
 }
 
 build_webapp() {
-  if [ -d ${GO_DIR}/webapp/app ]
+  echo "webapp source present:  $(ls -d ${GO_DIR}/webapp/app)"
+  if [ -f ${GO_DIR}/webapp/build.sh ]
   then
     echo "** webapp source exists. **"
-    if [ "${OVERRIDE}" == "" ]
+    echo "Building using ${GO_DIR}/webapp/build.sh"
+    ${GO_DIR}/webapp/build.sh
+    rc=$?
+    if [ $rc != 0 ]
     then
-      echo "Copy the `docker/docker-compose.override.yml.example` file to `docker/docker-compose.override.yml`,
- and uncomment the section for the service you want to change. For webapp, that includes webapp-build."
-    elif grep -q webapp-build $SCRIPTDIR/docker-compose.override.yml
-    then
-      echo "Building using ${COMPOSE} run webapp-build"
-      ${COMPOSE} run --rm webapp-build
-      rc=$?
-      if [ $rc != 0 ]
-      then
-        echo Node build failed. Please investigate, Game On! is unlikely to work until the issue is resolved.
-        exit 1
-      fi
-
-      # Build the final Docker image
-      ${COMPOSE} build webapp
-    else
-      echo "The web front-end is compiled and run in two different containers."
-      echo "******"
-      echo "Ensure that both webapp and webapp-build exist in docker-compose.override.yml"
-      echo "as shown in docker-compose.override.yml.example"
-      echo "******"
+      echo Node build failed. Please investigate, Game On! is unlikely to work until the issue is resolved.
+      exit 1
     fi
+
+    # Build the final Docker image
+    ${COMPOSE} build webapp
+  else
+    echo "******"
+    echo "No webapp source, using image"
+    echo "******"
   fi
 }
 
