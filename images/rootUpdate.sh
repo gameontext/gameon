@@ -5,7 +5,9 @@
 # after a successful build.
 #
 
-echo $TRAVIS_BRANCH
+echo TRAVIS_BRANCH=$TRAVIS_BRANCH
+echo SUBMODULE=${SUBMODULE}
+echo SUBMODULE_COMMIT=${SUBMODULE_COMMIT}
 
 if [ -z ${SUBMODULE} ]; then
   echo SUBMODULE not set
@@ -38,18 +40,16 @@ git submodule update --init --remote --no-fetch ${SUBMODULE}
 cd ${SUBMODULE}
 if [ -n ${SUBMODULE_COMMIT} ]; then
   echo "Checking out submodule ${SUBMODULE} commit ${SUBMODULE_COMMIT}"
-  git checkout ${SUBMODULE_COMMIT}
-else
-  git checkout master
 fi
+git checkout ${SUBMODULE_COMMIT}
 
-# Now that we're all set up, we can push the altered submodule to master
 cd ..
 if git diff --quiet; then
     echo "No changes to the output on this push; exiting."
     exit 0
 fi
 
+# Now that we're all set up, we can push the altered submodule to master
 git commit -a -m ":arrow_up: Updating to latest version of ${SUBMODULE}..." || true
 
 echo git push $SSH_REPO $TRAVIS_BRANCH
