@@ -1,0 +1,7 @@
+language: generic
+
+git:
+  submodules: false
+
+script:
+- images/rootUpdate.sh
