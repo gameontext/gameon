@@ -38,7 +38,11 @@ case "$ACTION" in
     if [ "$GO_DEPLOYMENT" = "docker-compose" ]; then
       ./docker/go-run.sh setup
     else
-      echo "else k8s"
+      if [ "$GO_DEPLOYMENT" = "kubernetes" ]; then
+        ./kubernetes/go-run.sh setup
+      else
+        echo "Unknown deployment type $GO_DEPLOYMENT"
+      fi
     fi
     echo $GO_DEPLOYMENT > .gameontext
   ;;
@@ -52,7 +56,11 @@ case "$ACTION" in
       echo "For logs and other actions, use scripts in the docker/ directory"
       ./docker/go-run.sh up
     else
-      echo "else k8s"
+      if [ "$GO_DEPLOYMENT" = "kubernetes" ]; then
+        ./kubernetes/go-run.sh up
+      else
+        echo "Unknown deployment type $GO_DEPLOYMENT"
+      fi
     fi
   ;;
   down)
@@ -60,7 +68,11 @@ case "$ACTION" in
     if [ "$GO_DEPLOYMENT" = "docker-compose" ]; then
       ./docker/go-run.sh down
     else
-      echo "else k8s"
+      if [ "$GO_DEPLOYMENT" = "kubernetes" ]; then
+        ./kubernetes/go-run.sh down 
+      else
+        echo "Unknown deployment type $GO_DEPLOYMENT"
+      fi
     fi
   ;;
   *)

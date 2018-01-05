@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: webapp
+  namespace: gameon-system
+  labels:
+    app: gameon-webapp
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+  selector:
+    app: gameon-webapp
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: webapp
+  namespace: gameon-system
+  labels:
+    app: gameon-webapp
+spec:
+  template:
+    metadata:
+      labels:
+        app: gameon-webapp
+    spec:
+      containers:
+      - image: mycluster.icp:8500/gameon-system/gameon-webapp:latest
+        imagePullPolicy: Always
+        name: webapp
+        ports:
+        - containerPort: 80

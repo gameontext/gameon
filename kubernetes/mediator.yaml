@@ -1,0 +1,105 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mediator
+  namespace: gameon-system
+  labels:
+    app: gameon-mediator
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9080
+  selector:
+    app: gameon-mediator
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: mediator
+  namespace: gameon-system
+  labels:
+    app: gameon-mediator
+spec:
+  template:
+    metadata:
+      labels:
+        app: gameon-mediator
+    spec:
+      volumes:
+      - name: certificate
+        configMap:
+          name: global-cert
+          items:
+          - key: cert.pem
+            path: cert.pem
+      containers:
+      - image: mycluster.icp:8500/gameon-system/gameon-mediator:latest
+        imagePullPolicy: Always
+        name: mediator
+        ports:
+        - containerPort: 9080
+          name: mediator
+        volumeMounts:
+        - name: certificate
+          mountPath: /etc/cert
+        env:
+          - name: PLAYER_SERVICE_URL
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: PLAYER_SERVICE_URL
+          - name: MAP_SERVICE_URL
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: MAP_SERVICE_URL
+          - name: KAFKA_SERVICE_URL
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: KAFKA_SERVICE_URL
+          - name: GAMEON_MODE
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: GAMEON_MODE
+          - name: TARGET_PLATFORM
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: TARGET_PLATFORM
+          - name: SYSTEM_ID
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: SYSTEM_ID
+          - name: LICENSE
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: LICENSE
+          - name: ADMIN_PASSWORD
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: ADMIN_PASSWORD
+          - name: WLP_SKIP_MAXPERMSIZE
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: WLP_SKIP_MAXPERMSIZE
+          - name: WLP_OUTPUT_DIR
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: WLP_OUTPUT_DIR
+          - name: LOG_DIR
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: LOG_DIR
+          - name: MAP_KEY
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: MAP_KEY
