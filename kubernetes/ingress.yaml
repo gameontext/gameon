@@ -1,0 +1,33 @@
+kind: Ingress
+apiVersion: extensions/v1beta1
+metadata:
+  name: gameon-ingress
+  namespace: gameon-system
+spec:
+  tls:
+    - hosts:
+      - gameon.192.168.9.100.xip.io
+  rules:
+  - host: gameon.192.168.9.100.xip.io
+    http:
+      paths:
+      - path: /auth
+        backend:
+          serviceName: auth
+          servicePort: 9080
+      - path: /players
+        backend:
+          serviceName: player
+          servicePort: 9080
+      - path: /mediator
+        backend:
+          serviceName: mediator 
+          servicePort: 9080
+      - path: /map
+        backend:
+          serviceName: map 
+          servicePort: 9080
+      - path: /
+        backend:
+          serviceName: webapp
+          servicePort: 8080
