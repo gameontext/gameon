@@ -68,17 +68,45 @@ platform_down() {
 
 setup() {
   echo "Checking for kubectl connection.."
-  kubectl cluster-info
-  echo $?
+  kubectl cluster-info > /dev/null 2>&1
+  if [ ! $? -eq 0 ]; then
+    echo "kubectl cluster-info did not return a zero rc, are you setup correctly to talk to your cluster?"
+    exit
+  else
+    echo "..ok"
+  fi
   echo "Checking for gameon host env var"
-  echo $GAMEON_HOST
+  if [ -z ${GAMEON_HOST+x} ]; then
+    echo "GAMEON_HOST env var is not set, please set to the ip of your cluster, eg 192.168.99.100"
+    exit
+  else
+    echo "..ok"
+  fi
+  echo "Checking for gameon-system namespace"
+  kubectl get namespace gameon-system > /dev/null 2>&1
+  if [ ! $? -eq 0 ]; then
+    kubectl create namespace gameon-system
+    echo "..created"
+  else
+    echo "..ok"
+  fi
   echo "Configuring ingress and config map with gameon host"
-  echo "doing sed magic.. (todo)"
-  echo "Ok.. so the sed magic isn't done yet, please edit kubernetes/gameon-configmap.yaml and kubernetes/ingress.yaml and alter 192.168.9.100 to match your target IP address for your kubernetes cluster"
-  echo "Creating JWT certificate"
-  openssl req -x509 -newkey rsa:4096 -keyout onlykey.pem -out onlycert.pem -days 365 -nodes
-  cat onlycert.pem onlykey.pem cert.pem
-  kubectl create configmap --namespace=gameon-system --from-file=cert.pem global-cert
+  sed -i'' -e "s/gameon\.[.0-9]*\.xip\.io/gameon.${GAMEON_HOST}.xip.io/" kubernetes/ingress.yaml
+  sed -i'' -e "s/gameon\.[.0-9]*\.xip\.io/gameon.${GAMEON_HOST}.xip.io/" kubernetes/gameon-configmap.yaml
+  sed -i'' -e "s/PROXY_DOCKER_HOST: .*/PROXY_DOCKER_HOST: '${GAMEON_HOST}'/" kubernetes/gameon-configmap.yaml
+  echo "..done"
+ 
+  echo "Checking for cert config map"
+  kubectl get configmap --namespace=gameon-system global-cert > /dev/null 2>&1
+  if [ ! $? -eq 0 ]; then
+    echo "..creating"
+    openssl req -x509 -newkey rsa:4096 -keyout ./onlykey.pem -out ./onlycert.pem -days 365 -nodes
+    cat ./onlycert.pem ./onlykey.pem > ./cert.pem
+    rm ./onlycert.pem ./onlykey.pem
+    kubectl create configmap --namespace=gameon-system --from-file=./cert.pem global-cert
+  else
+    echo "..ok"
+  fi
   touch .setup
   echo "Setup complete."
 }
