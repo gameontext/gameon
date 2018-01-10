@@ -3,17 +3,24 @@
 #
 # Travis builds: Used by submodule builds to kick off a build of the
 # root repository  (eventual target is rootUpdate.sh)
-# This script should only run  if this is not a Pull request
+#
+# This script should only run when code is pushed (not for PRs, not for
+# cron builds or for API-driven builds)
 #
 
+echo TRAVIS_EVENT_TYPE=${TRAVIS_EVENT_TYPE}
 echo TRAVIS_BRANCH=${TRAVIS_BRANCH}
 echo TRAVIS_COMMIT=${TRAVIS_COMMIT}
 echo SUBMODULE=${SUBMODULE}
 
-if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
-  echo "No submodule updates for pull requests"
-  exit
-fi
+case "${TRAVIS_EVENT_TYPE}" in
+  "push")
+    echo "Launch submodule build for push"
+    ;;
+  *)
+    echo "No submodule build for ${TRAVIS_EVENT_TYPE} builds"
+    ;;
+esac
 
 if [ -z ${SUBMODULE} ]; then
   echo "SUBMODULE not set"
@@ -22,14 +29,15 @@ fi
 
 # If the root repository has the same branch as the child repository,
 # this will update the commit level of the submodule in that branch.
-if git ls-remote --exit-code --heads git@github.com:gameontext/gameon.git ${TRAVIS_BRANCH}
+if git ls-remote --exit-code --heads https://github.com/gameontext/gameon.git ${TRAVIS_BRANCH}
+then
   body='{
   "request": {
-    "branch":"${TRAVIS_BRANCH}",
+    "branch":"'${TRAVIS_BRANCH}'",
     "config": {
       "env": {
-        "SUBMODULE": "${SUBMODULE}",
-        "SUBMODULE_COMMIT": "${TRAVIS_COMMIT}"
+        "SUBMODULE": "'${SUBMODULE}'",
+        "SUBMODULE_COMMIT": "'${TRAVIS_COMMIT}'"
       }
     }
   }}'
