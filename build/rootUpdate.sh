@@ -3,6 +3,7 @@
 #
 # Travis builds: Update the submodule version in the root repository
 # after a successful build.
+# Invoked by .travis.yml
 #
 
 echo TRAVIS_BRANCH=$TRAVIS_BRANCH
@@ -10,7 +11,7 @@ echo SUBMODULE=${SUBMODULE}
 echo SUBMODULE_COMMIT=${SUBMODULE_COMMIT}
 
 if [ -z ${SUBMODULE} ]; then
-  echo SUBMODULE not set
+  echo "SUBMODULE not set"
   exit
 fi
 
@@ -23,11 +24,11 @@ if [ -n "$ENCRYPTION_LABEL" ]; then
   ENCRYPTED_IV_VAR="encrypted_${ENCRYPTION_LABEL}_iv"
   ENCRYPTED_KEY=${!ENCRYPTED_KEY_VAR}
   ENCRYPTED_IV=${!ENCRYPTED_IV_VAR}
-  openssl aes-256-cbc -K $ENCRYPTED_KEY -iv $ENCRYPTED_IV -in images/go-travis.id_rsa.enc -out images/go-travis.id_rsa -d
+  openssl aes-256-cbc -K $ENCRYPTED_KEY -iv $ENCRYPTED_IV -in build/go-travis.id_rsa.enc -out build/go-travis.id_rsa -d
 
-  chmod 600 images/go-travis.id_rsa
+  chmod 600 build/go-travis.id_rsa
   eval `ssh-agent -s`
-  ssh-add images/go-travis.id_rsa
+  ssh-add build/go-travis.id_rsa
 fi
 
 git config user.email "${GITHUB_EMAIL}"
@@ -53,4 +54,4 @@ fi
 git commit -a -m ":arrow_up: Updating to latest version of ${SUBMODULE}..." || true
 
 echo git push $SSH_REPO $TRAVIS_BRANCH
-#git push $SSH_REPO master || true
+#git push $SSH_REPO $TRAVIS_BRANCH || true

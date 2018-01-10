@@ -4,4 +4,4 @@ git:
   submodules: false
 
 script:
-- images/rootUpdate.sh
+- build/rootUpdate.sh
