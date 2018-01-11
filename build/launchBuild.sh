@@ -20,6 +20,7 @@ case "${TRAVIS_EVENT_TYPE}" in
     ;;
   *)
     echo "No submodule build for ${TRAVIS_EVENT_TYPE} builds"
+    exit 0
     ;;
 esac
 
