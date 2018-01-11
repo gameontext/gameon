@@ -11,6 +11,7 @@
 echo TRAVIS_EVENT_TYPE=${TRAVIS_EVENT_TYPE}
 echo TRAVIS_BRANCH=${TRAVIS_BRANCH}
 echo TRAVIS_COMMIT=${TRAVIS_COMMIT}
+echo TRAVIS_BUILD_NUMBER=${TRAVIS_BUILD_NUMBER}
 echo SUBMODULE=${SUBMODULE}
 
 case "${TRAVIS_EVENT_TYPE}" in
@@ -37,7 +38,8 @@ then
     "config": {
       "env": {
         "SUBMODULE": "'${SUBMODULE}'",
-        "SUBMODULE_COMMIT": "'${TRAVIS_COMMIT}'"
+        "SUBMODULE_COMMIT": "'${TRAVIS_COMMIT}'",
+        "SUBMODULE_BUILD": "'${TRAVIS_BUILD_NUMBER}'"
       }
     }
   }}'

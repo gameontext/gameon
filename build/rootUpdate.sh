@@ -6,8 +6,8 @@
 # Invoked by .travis.yml
 #
 
-echo TRAVIS_BRANCH=$TRAVIS_BRANCH
-echo SUBMODULE=${SUBMODULE}
+echo TRAVIS_EVENT_TYPE=${TRAVIS_EVENT_TYPE}
+echo TRAVIS_BRANCH=${TRAVIS_BRANCH}
 
 case "${TRAVIS_EVENT_TYPE}" in
   "api")
@@ -17,6 +17,10 @@ case "${TRAVIS_EVENT_TYPE}" in
     echo "No submodule build for ${TRAVIS_EVENT_TYPE} builds"
     ;;
 esac
+
+echo SUBMODULE=${SUBMODULE}
+echo SUBMODULE_COMMIT=${SUBMODULE_COMMIT}
+echo SUBMODULE_BUILD=${SUBMODULE_BUILD}
 
 if [ -z ${SUBMODULE} ]; then
   echo "SUBMODULE not set"
@@ -51,19 +55,24 @@ git config user.name "Travis CI"
 git submodule init ${SUBMODULE}
 git submodule update --init --remote --no-fetch ${SUBMODULE}
 
-# Change to the submodule directory, and check out the specified version
+# Change to the submodule directory, and check out the specified branch
 cd ${SUBMODULE}
 git checkout ${TRAVIS_BRANCH}
 
 cd ..
+echo "-- Git status --"
+git status
 git diff
 if git diff --quiet; then
+  echo "-- No changes -- "
   echo "No changes to the output on this push; exiting."
   exit 0
 fi
 
 # Now that we're all set up, we can push the altered submodule to master
+echo "-- Git commit -- "
 git commit -a -m ":arrow_up: Updating to latest version of ${SUBMODULE}..." || true
 
+echo "-- Git push -- "
 echo git push origin ${TRAVIS_BRANCH}
 git push origin ${TRAVIS_BRANCH} || true
