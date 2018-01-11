@@ -1,5 +1,7 @@
 #!/bin/sh
-# build and publish image to dockerhub
+
+#
+# Travis builds: Used by submodule builds to build and publish images to dockerhub
 #
 # environment variables:
 #
@@ -31,5 +33,5 @@ if [ "$TRAVIS_BRANCH" == "master" ]; then
   docker logout
   echo "Push complete"
 else
-  echo "Not master branch, skipping docker"
+  echo "Not master branch, skipping docker publish"
 fi
