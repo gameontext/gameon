@@ -72,7 +72,7 @@ fi
 
 # Now that we're all set up, we can push the altered submodule to master
 echo "-- Git commit -- "
-git commit -a -m ":arrow_up: Updating to latest version of ${SUBMODULE}..." || true
+git commit -a -m ":arrow_up: Updating ${SUBMODULE}..." || true
 
 echo "-- Git push -- "
 echo git push origin ${TRAVIS_BRANCH}
