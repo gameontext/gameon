@@ -26,8 +26,8 @@ spec:
         app: gameon-webapp
     spec:
       containers:
-      - image: mycluster.icp:8500/gameon-system/gameon-webapp:latest
-        imagePullPolicy: Always
-        name: webapp
-        ports:
-        - containerPort: 80
+        - image: gameontext/gameon-webapp:latest
+          imagePullPolicy: Always
+          name: webapp
+          ports:
+            - containerPort: 80

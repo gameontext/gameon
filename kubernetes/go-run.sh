@@ -47,6 +47,7 @@ platform_up() {
   kubectl create -f kubernetes/mediator.yaml
   kubectl create -f kubernetes/map.yaml
   kubectl create -f kubernetes/player.yaml
+  kubectl create -f kubernetes/room.yaml
   kubectl create -f kubernetes/webapp.yaml
 }
 
@@ -58,6 +59,7 @@ platform_down() {
   kubectl delete -f kubernetes/mediator.yaml
   kubectl delete -f kubernetes/map.yaml
   kubectl delete -f kubernetes/player.yaml
+  kubectl delete -f kubernetes/room.yaml
   kubectl delete -f kubernetes/webapp.yaml
 
   kubectl delete -f kubernetes/ingress.yaml
@@ -97,13 +99,13 @@ setup() {
   echo "..done"
  
   echo "Checking for cert config map"
-  kubectl get configmap --namespace=gameon-system global-cert > /dev/null 2>&1
+  kubectl get secret --namespace=gameon-system global-cert > /dev/null 2>&1
   if [ ! $? -eq 0 ]; then
     echo "..creating"
     openssl req -x509 -newkey rsa:4096 -keyout ./onlykey.pem -out ./onlycert.pem -days 365 -nodes
     cat ./onlycert.pem ./onlykey.pem > ./cert.pem
     rm ./onlycert.pem ./onlykey.pem
-    kubectl create configmap --namespace=gameon-system --from-file=./cert.pem global-cert
+    kubectl create secret generic --namespace=gameon-system --from-file=./cert.pem global-cert
   else
     echo "..ok"
   fi
