@@ -1,41 +1,41 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: map
+  name: room
   namespace: gameon-system
   labels:
-    app: gameon-map
+    app: gameon-room
 spec:
   type: ClusterIP
   ports:
     - port: 9080
   selector:
-    app: gameon-map
+    app: gameon-room
 ---
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: map
+  name: room
   namespace: gameon-system
   labels:
-    app: gameon-map
+    app: gameon-room
 spec:
   template:
     metadata:
       labels:
-        app: gameon-map
+        app: gameon-room
     spec:
       volumes:
         - name: certificate
           secret:
             secretName: global-cert
       containers:
-      - image: gameontext/gameon-map:latest
+      - image: gameontext/gameon-room:latest
         imagePullPolicy: Always
-        name: map
+        name: room
         ports:
           - containerPort: 9080
-            name: map
+            name: room
         volumeMounts:
           - name: certificate
             mountPath: /etc/cert

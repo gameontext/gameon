@@ -26,90 +26,19 @@ spec:
         app: gameon-player
     spec:
       volumes:
-      - name: certificate
-        configMap:
-          name: global-cert
-          items:
-          - key: cert.pem
-            path: cert.pem
-      containers:
-      - image: mycluster.icp:8500/gameon-system/gameon-player:latest
-        imagePullPolicy: Always
-        name: player
-        ports:
-        - containerPort: 9080
-          name: player
-        volumeMounts:
         - name: certificate
-          mountPath: /etc/cert
-        env:
-          - name: COUCHDB_SERVICE_URL
-            valueFrom:
-              configMapKeyRef:
+          secret:
+            secretName: global-cert
+      containers:
+        - image: gameontext/gameon-player:latest
+          imagePullPolicy: Always
+          name: player
+          ports:
+            - containerPort: 9080
+              name: player
+          volumeMounts:
+            - name: certificate
+              mountPath: /etc/cert
+          envFrom:
+            - configMapRef:
                 name: global-config
-                key: COUCHDB_SERVICE_URL
-          - name: COUCHDB_HOST_AND_PORT
-            valueFrom:
-              configMapKeyRef:
-                name: global-config
-                key: COUCHDB_HOST_AND_PORT
-          - name: KAFKA_SERVICE_URL
-            valueFrom:
-              configMapKeyRef:
-                name: global-config
-                key: KAFKA_SERVICE_URL
-          - name: GAMEON_MODE
-            valueFrom:
-              configMapKeyRef:
-                name: global-config
-                key: GAMEON_MODE
-          - name: TARGET_PLATFORM
-            valueFrom:
-              configMapKeyRef:
-                name: global-config
-                key: TARGET_PLATFORM
-          - name: SYSTEM_ID
-            valueFrom:
-              configMapKeyRef:
-                name: global-config
-                key: SYSTEM_ID
-          - name: LICENSE
-            valueFrom:
-              configMapKeyRef:
-                name: global-config
-                key: LICENSE
-          - name: ADMIN_PASSWORD
-            valueFrom:
-              configMapKeyRef:
-                name: global-config
-                key: ADMIN_PASSWORD
-          - name: WLP_SKIP_MAXPERMSIZE
-            valueFrom:
-              configMapKeyRef:
-                name: global-config
-                key: WLP_SKIP_MAXPERMSIZE
-          - name: WLP_OUTPUT_DIR
-            valueFrom:
-              configMapKeyRef:
-                name: global-config
-                key: WLP_OUTPUT_DIR
-          - name: LOG_DIR
-            valueFrom:
-              configMapKeyRef:
-                name: global-config
-                key: LOG_DIR
-          - name: MAP_KEY
-            valueFrom:
-              configMapKeyRef:
-                name: global-config
-                key: MAP_KEY
-          - name: COUCHDB_USER
-            valueFrom:
-              configMapKeyRef:
-                name: global-config
-                key: COUCHDB_USER
-          - name: COUCHDB_PASSWORD
-            valueFrom:
-              configMapKeyRef:
-                name: global-config
-                key: COUCHDB_PASSWORD
