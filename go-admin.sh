@@ -26,25 +26,39 @@ if [ $# -ge 1 ]; then
   shift
 fi
 
-GO_DEPLOYMENT=${GO_DEPLOYMENT-docker-compose}
-
 usage() {
-  echo "Actions: setup|up|down"
+  echo "Actions: choose|setup|up|down|env"
 }
 
+# get deployment type (go_common)
+get_deployment
+
 case "$ACTION" in
-  setup)
-    echo "Game On! Setting things up with $GO_DEPLOYMENT"
-    if [ "$GO_DEPLOYMENT" = "docker-compose" ]; then
-      ./docker/go-run.sh setup
-    else
-      if [ "$GO_DEPLOYMENT" = "kubernetes" ]; then
-        ./kubernetes/go-run.sh setup
-      else
-        echo "Unknown deployment type $GO_DEPLOYMENT"
-      fi
+  choose)
+    if [[ ! $1 =~  [12] ]]; then
+      echo "Which do you want to use?
+  [1] Docker Compose
+  [2] Kubernetes"
     fi
+    answer=$1
+    while [ "$answer" != 1 ] && [ "$answer" != 2 ]; do
+      read -p '[1 or 2]: ' answer
+    done
+    if [ $answer == 2 ]; then
+      GO_DEPLOYMENT="kubernetes"
+    else
+      GO_DEPLOYMENT="docker"
+    fi
+    ok "Selected $GO_DEPLOYMENT"
     echo $GO_DEPLOYMENT > .gameontext
+  ;;
+  setup)
+    echo "Game On! Setting things up with $GO_DEPLOYMENT (Use '$0 choose' to change)"
+    if [[ $GO_DEPLOYMENT =~ (docker|kubernetes) ]]; then
+      ./${GO_DEPLOYMENT}/go-run.sh setup
+    else
+      echo "Unknown deployment type $GO_DEPLOYMENT"
+    fi
   ;;
   up)
     if ! [ -f .gameontext ] || [ "$GO_DEPLOYMENT" != "$(< .gameontext)" ]; then
@@ -52,27 +66,26 @@ case "$ACTION" in
     fi
     echo "Game On! Starting game services with $GO_DEPLOYMENT"
     echo "This may take awhile. Be patient."
-    if [ "$GO_DEPLOYMENT" = "docker-compose" ]; then
-      echo "For logs and other actions, use scripts in the docker/ directory"
-      ./docker/go-run.sh up
+    if [[ $GO_DEPLOYMENT =~ (docker|kubernetes) ]]; then
+      echo "For other actions, use scripts in the ${GO_DEPLOYMENT}/ directory"
+      ./${GO_DEPLOYMENT}/go-run.sh up
     else
-      if [ "$GO_DEPLOYMENT" = "kubernetes" ]; then
-        ./kubernetes/go-run.sh up
-      else
-        echo "Unknown deployment type $GO_DEPLOYMENT"
-      fi
+      echo "Unknown deployment type $GO_DEPLOYMENT"
     fi
   ;;
   down)
     echo "Game On! Stopping game services with $GO_DEPLOYMENT"
-    if [ "$GO_DEPLOYMENT" = "docker-compose" ]; then
-      ./docker/go-run.sh down
+    if [[ $GO_DEPLOYMENT =~ (docker|kubernetes) ]]; then
+      ./${GO_DEPLOYMENT}/go-run.sh down
     else
-      if [ "$GO_DEPLOYMENT" = "kubernetes" ]; then
-        ./kubernetes/go-run.sh down 
-      else
-        echo "Unknown deployment type $GO_DEPLOYMENT"
-      fi
+      echo "Unknown deployment type $GO_DEPLOYMENT"
+    fi
+  ;;
+  env)
+    if [[ $GO_DEPLOYMENT =~ (docker|kubernetes) ]]; then
+      ./${GO_DEPLOYMENT}/go-run.sh env
+    else
+      echo "Unknown deployment type $GO_DEPLOYMENT"
     fi
   ;;
   *)

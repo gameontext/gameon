@@ -1,25 +1,3 @@
-#setup docker NAME / IP.
-IP=127.0.0.1
-HTTP_HOSTPORT=${IP}
-HTTPS_HOSTPORT=${IP}
-
-NAME=${DOCKER_MACHINE_NAME-empty}
-if [ "$NAME" == "vagrant" ]
-then
-  # Defined in Vagrantfile
-  HTTP_HOSTPORT=${IP}:9980
-  HTTPS_HOSTPORT=${IP}:9943
-elif [ "$NAME" != "empty" ] && [ "$NAME" != "" ]
-then
-  IP=$(docker-machine ip $NAME)
-  rc=$?
-  if [ $rc != 0 ] || [ -z ${DOCKER_HOST} ]
-  then
-    exit 1
-  fi
-  HTTP_HOSTPORT=${IP}
-  HTTPS_HOSTPORT=${IP}
-fi
 
 if [ -x /usr/bin/tput ] && [[ `tput colors` != "0" ]]; then
     color_prompt="yes"
@@ -43,13 +21,33 @@ else
       NO_COLOUR=""
 fi
 
+ok() {
+  echo -e "${GREEN}OK:${NO_COLOR} $1"
+}
+fixme() {
+  echo -e "${RED}FIXME:${NO_COLOR} $1"
+}
+
 # return 0 if version (parsed from string ' dd?.dd?.dd?') is equal or greater than
 # the other provided version
 check_version()
 {
-  version=$(echo $1 | sed -n 's/^.* \([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*$/\1/p' )
+  version=$(echo $1 | sed -n 's/^.* v\?\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*$/\1/p' )
   minimum=$2
   winner=$(echo -e "$version\n$minimum" | sed '/^$/d' | sort -t. -k1,1nr -k2,2nr -k3,3nr | head -1)
+
+  if [ "$winner" = "$version" ]; then
+    echo -e "  ${GREEN}OK${NO_COLOR}: $1"
+  else
+    echo -e "  ${RED}BACKLEVEL${NO_COLOR}: $1"
+  fi
   [[ "$winner" = "$version" ]] && return 0
   return 1
+}
+
+get_deployment() {
+  if [ -z ${GO_DEPLOYMENT+x} ] && [ -f .gameontext ]; then
+    GO_DEPLOYMENT=$(cat .gameontext)
+  fi
+  GO_DEPLOYMENT=${GO_DEPLOYMENT-docker-compose}
 }

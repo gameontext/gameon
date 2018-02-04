@@ -1,18 +1,19 @@
 #!/bin/bash
 
-# Support environments with docker-machine
-# For base linux users, 127.0.0.1 is fine, but w/ docker-machine we need to
-# use the host ip instead. So we'll generate an over-ridden env file that
-# will get passed/copied properly into the target servers
+# This will help start/stop Game On services using docker-compose.
+# Note the example docker-compose overlay file to facilitate single
+# service iterative development while running other/unmodified core
+# game services locally.
 #
-# Use this script when you're developing rooms, or a subset of
-# Game On services
-#
-# This will help start/stop Game On services
+# `eval $(docker/go-run.sh env)` will set aliases to more easily invoke
+# this script's actions from the command line.
 #
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 source $SCRIPTDIR/docker-functions
+
+GO_DEPLOYMENT=docker-compose
+get_gameontext_hostip
 
 # Ensure we're executing from project root directory
 cd "${SCRIPTDIR}"/..
@@ -130,6 +131,15 @@ rebuild() {
 setup() {
   docker_versions
   ensure_keystore
+
+  SOURCE=$SCRIPTDIR/gameon.env
+  TARGET=$SCRIPTDIR/gameon.${DOCKER_MACHINE_NAME}env
+  if [ ! -f $TARGET ]; then
+    cat $SOURCE | sed -e 's/FRONT_END_\\(.*\\)127.0.0.1\\(.*\\)/FRONT_END_\\1'${HTTPS_HOSTPORT}'\\2/g' > $TARGET
+    ok "Created gameon.${DOCKER_MACHINE_NAME}env to contain environment variable overrides"
+    echo "This file will use the docker host ip address ($GAMEON_HOST), but will re-map ports for forwarding from the VM."
+  fi
+
   ${COMPOSE} pull
   rc=$?
   if [ $rc -ne 0 ]; then
@@ -263,13 +273,14 @@ case "$ACTION" in
     echo "To test for readiness: http://${HTTP_HOSTPORT}/site_alive"
     echo 'To wait for readiness: ./docker/go-run.sh wait'
     echo 'To watch progress :popcorn: ./docker/go-run.sh logs'
+    echo 'To type less: eval $(./docker/go-run.sh env)'
   ;;
   wait)
     echo "Waiting until http://${HTTP_HOSTPORT}/site_alive returns OK."
     echo "This may take awhile, as it is starting a number of containers at the same time."
     echo "If you're curious, cancel this, and use './docker/go-run.sh logs' to watch what is happening"
 
-    until $(curl --output /dev/null --silent --head --fail http://${IP}/site_alive 2>/dev/null)
+    until $(curl --output /dev/null --silent --head --fail http://${GAMEON_HOST}/site_alive 2>/dev/null)
     do
       printf '.'
       sleep 5s
@@ -278,6 +289,6 @@ case "$ACTION" in
     echo "Game On! You're ready to play: https://${HTTPS_HOSTPORT}/"
   ;;
   *)
-  usage
+    usage
   ;;
 esac
