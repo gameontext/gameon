@@ -21,7 +21,8 @@ LATEST_TAG="${IMAGE}:latest"
 
 echo "Creating docker image for ${TRAVIS_COMMIT} on branch ${TRAVIS_BRANCH}"
 docker build \
-     --build-arg GIT_COMMIT=${TRAVIS_COMMIT}  \
+      --label "gameontext.commit=${TRAVIS_COMMIT}"  \
+      --label "gameontext.build=${BUILD_TAG}"  \
      -t ${BUILD_TAG} ${DOCKER_BUILDDIR}
 echo "Build complete ${DOCKER_IMAGE}"
 
