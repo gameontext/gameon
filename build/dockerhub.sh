@@ -20,7 +20,9 @@ BUILD_TAG="${IMAGE}:${TRAVIS_BRANCH}-${TRAVIS_BUILD_NUMBER}"
 LATEST_TAG="${IMAGE}:latest"
 
 echo "Creating docker image for ${TRAVIS_COMMIT} on branch ${TRAVIS_BRANCH}"
-docker build -t ${BUILD_TAG} ${DOCKER_BUILDDIR}
+docker build \
+     --build-arg GIT_COMMIT=${TRAVIS_COMMIT}  \
+     -t ${BUILD_TAG} ${DOCKER_BUILDDIR}
 echo "Build complete ${DOCKER_IMAGE}"
 
 if [ "$TRAVIS_BRANCH" == "master" ]; then
