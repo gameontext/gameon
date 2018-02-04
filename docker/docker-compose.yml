@@ -16,11 +16,10 @@
 
 version: '2.1'
 
-## 
-# For gameontext images: 
+##
+# For gameontext images:
 #  * use :lastgood for most recent set of services that have been tested together
 #  * Use :latest for the bleeding edge
-#  * Use :compose for the compose branch snapshot
 
 services:
 
@@ -31,7 +30,7 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
-    env_file: ../gameon.${DOCKER_MACHINE_NAME}env
+    env_file: gameon.${DOCKER_MACHINE_NAME}env
     container_name: auth
     networks:
       - gameontext
@@ -45,7 +44,7 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
-    env_file: ../gameon.${DOCKER_MACHINE_NAME}env
+    env_file: gameon.${DOCKER_MACHINE_NAME}env
     container_name: map
     networks:
       - gameontext
@@ -57,7 +56,7 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
-    env_file: ../gameon.${DOCKER_MACHINE_NAME}env
+    env_file: gameon.${DOCKER_MACHINE_NAME}env
     container_name: mediator
     networks:
       - gameontext
@@ -71,7 +70,7 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
-    env_file: ../gameon.${DOCKER_MACHINE_NAME}env
+    env_file: gameon.${DOCKER_MACHINE_NAME}env
     container_name: player
     networks:
       - gameontext
@@ -80,7 +79,7 @@ services:
     image: gameontext/gameon-proxy:lastgood
     volumes:
       - 'keystore:/keystore'
-    env_file: ../gameon.${DOCKER_MACHINE_NAME}env
+    env_file: gameon.${DOCKER_MACHINE_NAME}env
     environment:
       - DNS_TCP_ADDR=127.0.0.11
       - DNS_TCP_PORT=53
@@ -98,21 +97,21 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
-    env_file: ../gameon.${DOCKER_MACHINE_NAME}env
+    env_file: gameon.${DOCKER_MACHINE_NAME}env
     container_name: room
     networks:
       - gameontext
 
   swagger:
     image: gameontext/gameon-swagger:lastgood
-    env_file: ../gameon.${DOCKER_MACHINE_NAME}env
+    env_file: gameon.${DOCKER_MACHINE_NAME}env
     container_name: swagger
     networks:
       - gameontext
 
   webapp:
     image: gameontext/gameon-webapp:lastgood
-    env_file: ../gameon.${DOCKER_MACHINE_NAME}env
+    env_file: gameon.${DOCKER_MACHINE_NAME}env
     container_name: webapp
     networks:
       - gameontext
@@ -124,7 +123,7 @@ services:
     command: tail -f /dev/null
     volumes:
       - 'keystore:/keystore'
-    env_file: ../gameon.${DOCKER_MACHINE_NAME}env
+    env_file: gameon.${DOCKER_MACHINE_NAME}env
     container_name: util
     networks:
       - gameontext
