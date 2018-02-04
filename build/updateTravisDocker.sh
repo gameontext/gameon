@@ -1,10 +1,10 @@
 #!/bin/bash
-# https://gist.github.com/marcbachmann/16574ba8c614bb3b78614a351f324b86
 
 ## Update Docker
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 sudo apt-get update
-sudo apt-get install -o Dpkg::Options::="--force-confold" --force-yes -y docker-ce
-sudo rm /usr/local/bin/docker-compose
+sudo apt-get -y install docker-ce
 
 ## Update Docker Compose
 GHRELEASES=`curl -w "%{url_effective}\n" -I -L -s -S https://github.com/docker/compose/releases/latest -o /dev/null | sed 's/\/tag\//\/download\//'`
@@ -15,3 +15,4 @@ sudo mv docker-compose /usr/local/bin
 ## Echo versions
 docker --version
 docker-compose --version
+
