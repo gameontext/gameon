@@ -43,7 +43,8 @@ if [ "$TRAVIS_BRANCH" == "master" ]; then
 
   echo "Publishing image"
   docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
-  docker push ${IMAGE}
+  docker push ${BUILD_TAG}
+  docker push ${LATEST_TAG}
   docker logout
   echo "Push complete"
 else
