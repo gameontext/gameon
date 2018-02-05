@@ -29,15 +29,8 @@ spec:
         app: gameon-kafka
     spec:
       containers:
-      - image: spotify/kafka
+      - image: gameontext/go-reactive-sandbox:latest
         name: kafka
-        env:
-        - name: ADVERTISED_HOST
-          value: kafka.gameon-system.svc.cluster.local
-        - name: ADVERTISED_PORT
-          value: '9092'
-        - name: AUTO_CREATE_TOPICS
-          value: "true"
         ports:
         - containerPort: 9092
           name: kafka

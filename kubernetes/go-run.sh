@@ -1,20 +1,18 @@
 #!/bin/bash
 
-# Support environments with docker-machine
-# For base linux users, 127.0.0.1 is fine, but w/ docker-machine we need to
-# use the host ip instead. So we'll generate an over-ridden env file that
-# will get passed/copied properly into the target servers
+# This will help start/stop Game On services using in a Kubernetes cluster.
 #
-# Use this script when you're developing rooms, or a subset of
-# Game On services
-#
-# This will help start/stop Game On services
+# `eval $(kubernetes/go-run.sh env)` will set aliases to more easily invoke
+# this script's actions from the command line.
 #
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+source $SCRIPTDIR/k8s-functions
 
 # Ensure we're executing from project root directory
-cd "${SCRIPTDIR}"/..
+cd "${GO_DIR}"
+
+GO_DEPLOYMENT=kubernetes
 
 #set the action, default to help if none passed.
 ACTION=help
@@ -23,109 +21,66 @@ if [ $# -ge 1 ]; then
   shift
 fi
 
-NOLOGS=0
-#-- Parse args
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-  "--nologs")
-    NOLOGS=1
-  ;;
-  esac
-  shift
-done
+BASE="ingress configmap couchdb kafka"
+CORE="auth player map mediator room webapp"
 
 platform_up() {
-  if [ ! -f .setup ]; then
+  if [ ! -f .gameontext.kubernetes ] || [ ! -f .gameontext.cert.pem ]; then
     setup
+  else
+    check_cluster
+    get_cluster_ip
+    check_global_cert
   fi
-  kubectl create -f kubernetes/ingress.yaml
-  kubectl create -f kubernetes/gameon-configmap.yaml
-  kubectl create -f kubernetes/couchdb.yaml
-  kubectl create -f kubernetes/kafka.yaml
 
-  kubectl create -f kubernetes/auth.yaml
-  kubectl create -f kubernetes/mediator.yaml
-  kubectl create -f kubernetes/map.yaml
-  kubectl create -f kubernetes/player.yaml
-  kubectl create -f kubernetes/room.yaml
-  kubectl create -f kubernetes/webapp.yaml
+  for x in $BASE; do
+    echo "> kubectl apply -f kubernetes/${x}.yaml"
+    kubectl apply -f kubernetes/${x}.yaml
+  done
+
+  for x in $CORE; do
+    echo "> kubectl apply -f kubernetes/${x}.yaml"
+    kubectl apply -f kubernetes/${x}.yaml
+  done
+
+  echo "To test for readiness: http://${GAMEON_INGRESS}/site_alive"
+  echo 'To wait for readiness: ./kubernetes/go-run.sh wait'
+  echo 'To type less: eval $(./kubernetes/go-run.sh env)'
 }
 
 platform_down() {
-  if [ ! -f .setup ]; then
-    setup
-  fi
-  kubectl delete -f kubernetes/auth.yaml
-  kubectl delete -f kubernetes/mediator.yaml
-  kubectl delete -f kubernetes/map.yaml
-  kubectl delete -f kubernetes/player.yaml
-  kubectl delete -f kubernetes/room.yaml
-  kubectl delete -f kubernetes/webapp.yaml
+  check_cluster
 
-  kubectl delete -f kubernetes/ingress.yaml
-  kubectl delete -f kubernetes/gameon-configmap.yaml
-  kubectl delete -f kubernetes/couchdb.yaml
-  kubectl delete -f kubernetes/kafka.yaml
-}
+  for x in $CORE; do
+    echo "> kubectl delete -f kubernetes/${x}.yaml"
+    kubectl apply -f kubernetes/${x}.yaml
+  done
 
-setup() {
-  echo "Checking for kubectl connection.."
-  kubectl cluster-info > /dev/null 2>&1
-  if [ ! $? -eq 0 ]; then
-    echo "kubectl cluster-info did not return a zero rc, are you setup correctly to talk to your cluster?"
-    exit
-  else
-    echo "..ok"
-  fi
-  echo "Checking for gameon host env var"
-  if [ -z ${GAMEON_HOST+x} ]; then
-    echo "GAMEON_HOST env var is not set, please set to the ip of your cluster, eg 192.168.99.100"
-    exit
-  else
-    echo "..ok"
-  fi
-  echo "Checking for gameon-system namespace"
-  kubectl get namespace gameon-system > /dev/null 2>&1
-  if [ ! $? -eq 0 ]; then
-    kubectl create namespace gameon-system
-    echo "..created"
-  else
-    echo "..ok"
-  fi
-  echo "Configuring ingress and config map with gameon host"
-  sed -i'' -e "s/gameon\.[.0-9]*\.xip\.io/gameon.${GAMEON_HOST}.xip.io/" kubernetes/ingress.yaml
-  sed -i'' -e "s/gameon\.[.0-9]*\.xip\.io/gameon.${GAMEON_HOST}.xip.io/" kubernetes/gameon-configmap.yaml
-  sed -i'' -e "s/PROXY_DOCKER_HOST: .*/PROXY_DOCKER_HOST: '${GAMEON_HOST}'/" kubernetes/gameon-configmap.yaml
-  echo "..done"
- 
-  echo "Checking for cert config map"
-  kubectl get secret --namespace=gameon-system global-cert > /dev/null 2>&1
-  if [ ! $? -eq 0 ]; then
-    echo "..creating"
-    openssl req -x509 -newkey rsa:4096 -keyout ./onlykey.pem -out ./onlycert.pem -days 365 -nodes
-    cat ./onlycert.pem ./onlykey.pem > ./cert.pem
-    rm ./onlycert.pem ./onlykey.pem
-    kubectl create secret generic --namespace=gameon-system --from-file=./cert.pem global-cert
-  else
-    echo "..ok"
-  fi
-  touch .setup
-  echo "Setup complete."
+  for x in $BASE; do
+    echo "> kubectl delete -f kubernetes/${x}.yaml"
+    kubectl apply -f kubernetes/${x}.yaml
+  done
+
+  kubectl delete namespace gameon-system
 }
 
 usage() {
   echo "
   Actions:
     setup
+    env
+    host
 
     up
     down
+    wait
   "
 }
 
 case "$ACTION" in
   setup)
-    setup 
+    reset
+    setup
   ;;
   up)
     platform_up
@@ -133,10 +88,27 @@ case "$ACTION" in
   down)
     platform_down
   ;;
-  reset_kafka)
-    reset_kafka
+  host)
+    ingress_host
+  ;;
+  env)
+    echo "alias go-run='${SCRIPTDIR}/go-run.sh';"
+    echo "alias go-admin='${GO_DIR}/go-admin.sh'"
+  ;;
+  wait)
+    get_cluster_ip
+    echo "Waiting until http://${GAMEON_INGRESS}/site_alive returns OK."
+    echo "This may take awhile, as it is starting a number of containers at the same time."
+
+    until $(curl --output /dev/null --silent --head --fail http://${GAMEON_INGRESS}/site_alive 2>/dev/null)
+    do
+      printf '.'
+      sleep 5s
+    done
+    echo ""
+    echo "Game On! You're ready to play: https://${GAMEON_INGRESS}/"
   ;;
   *)
-  usage
+    usage
   ;;
 esac
