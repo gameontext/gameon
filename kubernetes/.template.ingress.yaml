@@ -6,9 +6,10 @@ metadata:
 spec:
   tls:
     - hosts:
-      - gameon.192.168.9.100.xip.io
+      - GAMEON_INGRESS
+    secretName: GAMEON_INGRESS_SECRET
   rules:
-  - host: gameon.192.168.9.100.xip.io
+  - host: GAMEON_INGRESS
     http:
       paths:
       - path: /auth
@@ -21,11 +22,11 @@ spec:
           servicePort: 9080
       - path: /mediator
         backend:
-          serviceName: mediator 
+          serviceName: mediator
           servicePort: 9080
       - path: /map
         backend:
-          serviceName: map 
+          serviceName: map
           servicePort: 9080
       - path: /rooms
         backend:

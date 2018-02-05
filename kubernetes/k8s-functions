@@ -1,0 +1,162 @@
+BIN_DIR=$( cd "$SCRIPTDIR/../bin" && pwd )
+GO_DIR=$( cd "$SCRIPTDIR/.." && pwd )
+source $BIN_DIR/go-common
+
+check_versions() {
+  QUIT=0
+  echo ""
+  echo "***********  "
+  echo "Game On! Text requires:"
+
+  echo "* Docker CE version 17.06 or greater"
+  DOCKER_VERSION=$(docker -v)
+  check_version "${DOCKER_VERSION}" 17.06.0
+
+  echo "* kubectl version 1.9.2 or greater"
+  if ! which kubectl > /dev/null; then
+    echo -e "  ${RED}MISSING${NO_COLOR}: kubectl not found"
+    echo "    kubectl either isn't installed, or isn't available on your PATH"
+    echo "    Set up kubectl using the following instructions:"
+    echo "        https://kubernetes.io/docs/tasks/tools/install-kubectl/"
+    echo "    Make sure kubectl is executable by you, and on your path"
+    echo "        PATH=$PATH"
+    QUIT=1
+  else
+    KUBECTL_VERSION=$(kubectl version --client --short)
+    check_version "${KUBECTL_VERSION}" 1.9.2
+  fi
+
+  echo "* helm version 2.8.0 or greater"
+  if ! which helm > /dev/null; then
+    echo -e "  ${RED}MISSING${NO_COLOR}: helm not found"
+    echo "    helm either isn't installed, or isn't available on your PATH"
+    echo "    Set up the helm client using the following instructions:"
+    echo "        https://docs.helm.sh/using_helm/#installing-helm"
+    echo "    Make sure helm is executable by you, and on your path"
+    echo "        PATH=$PATH"
+    QUIT=1
+  else
+    HELM_VERSION=$(helm version --client --short)
+    check_version "${HELM_VERSION}" 2.8.0
+  fi
+
+  echo "***********  "
+  echo ""
+}
+
+check_cluster() {
+  if ! kubectl cluster-info > /dev/null 2>&1; then
+    fixme "No configured Kubernetes cluster"
+    echo ""
+    echo "You need to set up a Kubernetes cluster and provide its configuration
+to kubectl. Verify that the Kubernetes cluster configuration is correct
+using 'kubectl cluster-info'.
+
+If using virtual machine(s), ensure you have at least 4GB (preferably 8GB)
+of RAM to run the entire system, e.g. 'minikube start --memory 8192'
+"
+    exit 1
+  fi
+  ok "configured Kubernetes cluster found"
+
+  if ! kubectl get namespace gameon-system > /dev/null 2>&1; then
+    RESULT=$(kubectl create namespace gameon-system)
+    if [ $? -eq 0 ]; then
+      ok "${RESULT}"
+    else
+      fixme "${RESULT}"
+    fi
+  else
+    ok "gameon-system namespace found"
+  fi
+}
+
+get_cluster_ip() {
+  if [ -f .gameontext.kubernetes ]; then
+    source .gameontext.kubernetes
+  fi
+
+  kubectx=$(kubectl config current-context)
+  if [ -n "${GAMEON_KUBECTL_CONTEXT}" ] && [ "${GAMEON_KUBECTL_CONTEXT}" != "${kubectx}" ]; then
+    echo "You were using kubectl context '${GAMEON_KUBECTL_CONTEXT}'"
+    echo "Your current kubectl context is '${kubectx}'"
+    read -p "Do you want to re-run setup against the current kube context? [y] " answer
+    if [[ $answer =~ [Yy] ]]; then
+      $0 setup
+    fi
+    exit 1
+  fi
+
+  if [ -z ${GAMEON_INGRESS+x} ]; then
+    certauth=$(kubectl config view -o jsonpath='{.clusters[?(@.name == "'${kubectx}'")].cluster.certificate-authority}')
+    if [[ $certauth =~ minikube ]]; then
+      ok "Detected minikube, using 'minikube ip'"
+      GAMEON_MINIKUBE=1
+      GAMEON_INGRESS=gameon.$(minikube ip).xip.io
+      echo "
+export GAMEON_INGRESS=${GAMEON_INGRESS}
+export GAMEON_KUBECTL_CONTEXT=${kubectx}" > .gameontext.kubernetes
+    fi
+    # still empty? ew.
+    if [ -z ${GAMEON_INGRESS+x} ]; then
+      fixme "Please us '$0 host' to set host information"
+      exit 1
+    fi
+  fi
+}
+
+ingress_host() {
+  rm -f .gameontext.cert.pem
+
+  read -p 'Enter ingress hostname (or subdomain): ' GAMEON_INGRESS
+  read -p 'Enter ingress secret (or enter if none): ' GAMEON_INGRESS_SECRET
+
+  #  PROMPT FOR HOST
+  echo "
+export GAMEON_INGRESS=${GAMEON_INGRESS}
+export GAMEON_INGRESS_SECRET=${GAMEON_INGRESS_SECRET}
+export GAMEON_KUBECTL_CONTEXT=$(kubectl config current-context)" > .gameontext.kubernetes
+}
+
+check_global_cert() {
+  if ! kubectl get secret --namespace=gameon-system global-cert > /dev/null 2>&1; then
+    ok "$(kubectl create secret generic global-cert --namespace=gameon-system --from-file=cert.pem=.gameontext.cert.pem)"
+  else
+    ok "Found global-cert secret in gameon-system namespace"
+  fi
+}
+
+setup() {
+  check_versions
+  check_cluster
+  get_cluster_ip
+
+  # Create certificate (for signing JWTs)
+  SUBJECT=${GAMEON_SUBJECT-"/CN=${GAMEON_INGRESS}/OU=GameOn Application/O=The Ficticious GameOn Company/L=Earth/ST=Happy/C=CA"}
+  openssl req -x509 -days 365 -nodes -newkey rsa:4096 \
+     -keyout .gameontext.onlykey.pem \
+     -out .gameontext.onlycert.pem \
+     -subj "${SUBJECT}"
+  cat .gameontext.onlycert.pem .gameontext.onlykey.pem > .gameontext.cert.pem
+  rm .gameontext.onlycert.pem .gameontext.onlykey.pem
+  ok "Created a new certificate (.gameontext.cert.pem)"
+
+  check_global_cert
+
+  # replace cluster values in well-known strings
+  cp kubernetes/.template.ingress.yaml kubernetes/ingress.yaml
+  cp kubernetes/.template.configmap.yaml kubernetes/configmap.yaml
+  if [ -z  ${GAMEON_INGRESS_SECRET+z} ]; then
+    sed -i'' -e "/secretName: GAMEON_INGRESS_SECRET/d" kubernetes/ingress.yaml
+  else
+    sed -i'' -e "s/GAMEON_INGRESS_SECRET/${GAMEON_INGRESS_SECRET}/" kubernetes/ingress.yaml
+  fi
+  sed -i'' -e "s/GAMEON_INGRESS/${GAMEON_INGRESS}/" kubernetes/ingress.yaml
+  sed -i'' -e "s/GAMEON_INGRESS/${GAMEON_INGRESS}/" kubernetes/configmap.yaml
+
+  ok "Updated ingress and config map with ingress address: ${GAMEON_INGRESS}"
+
+  if [ -n ${GAMEON_MINIKUBE} ]; then
+    ok "`minikube addons enable ingress`"
+  fi
+}
