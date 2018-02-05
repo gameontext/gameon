@@ -36,7 +36,7 @@ then
   body='{
   "request": {
     "branch":"'${TRAVIS_BRANCH}'",
-    "message":":shipit: Update '${SUBMODULE}' from #'${TRAVIS_BUILD_NUMBER}'",
+    "message":":up: Update from '${SUBMODULE}'#'${TRAVIS_BUILD_NUMBER}'",
     "config": {
       "env": {
         "SUBMODULE": "'${SUBMODULE}'",
