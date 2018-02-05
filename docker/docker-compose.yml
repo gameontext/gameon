@@ -27,6 +27,7 @@ services:
     image: gameontext/gameon-auth:lastgood
     volumes:
       - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
+      - 'keystore:/opt/ol/wlp/usr/servers/defaultServer/resources/security'
     depends_on:
       kafka:
         condition: service_healthy
@@ -39,6 +40,7 @@ services:
     image: gameontext/gameon-map:lastgood
     volumes:
       - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
+      - 'keystore:/opt/ol/wlp/usr/servers/defaultServer/resources/security'
     depends_on:
       couchdb:
         condition: service_healthy
@@ -53,6 +55,7 @@ services:
     image: gameontext/gameon-mediator:lastgood
     volumes:
       - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
+      - 'keystore:/opt/ol/wlp/usr/servers/defaultServer/resources/security'
     depends_on:
       kafka:
         condition: service_healthy
@@ -65,6 +68,7 @@ services:
     image: gameontext/gameon-player:lastgood
     volumes:
       - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
+      - 'keystore:/opt/ol/wlp/usr/servers/defaultServer/resources/security'
     depends_on:
       couchdb:
         condition: service_healthy
@@ -94,6 +98,7 @@ services:
     image: gameontext/gameon-room:lastgood
     volumes:
       - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
+      - 'keystore:/opt/ol/wlp/usr/servers/defaultServer/resources/security'
     depends_on:
       kafka:
         condition: service_healthy
@@ -130,12 +135,7 @@ services:
 
 #### Local Kafka Backend #########
   kafka:
-    image: gameontext/docker-kafka:lastgood
-    environment:
-      - ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
-      - ADVERTISED_HOST=localhost
-      - ADVERTISED_PORT=9092
-      - AUTO_CREATE_TOPICS=true
+    image: gameontext/go-reactive-sandbox:latest
     ports:
       - "9092:9092"
       - "2181:2181"
