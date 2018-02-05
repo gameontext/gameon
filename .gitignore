@@ -3,11 +3,10 @@
 .DS_Store
 .vagrant
 *.log
-.gameontext
+.gameontext*
 gameon.?*env
 docker-compose.override.yml
+kubernetes/configmap.yaml
+kubernetes/ingress.yaml
 slackin
-.gameontext
-go-travis.id_rsa
-go-travis.id_rsa.pub
 scratch

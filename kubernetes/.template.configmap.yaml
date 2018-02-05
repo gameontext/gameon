@@ -1,35 +1,39 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: global-config 
+  name: global-config
   namespace: gameon-system
 data:
-  GITHUB_APP_ID: ''
-  GITHUB_APP_SECRET: ''
-  TWITTER_CONSUMER_KEY: ''
-  TWITTER_CONSUMER_SECRET: ''
+# Global: interservice communication
   MAP_SERVICE_URL: http://map.gameon-system.svc.cluster.local:9080/map/v1/sites
   MAP_HEALTH_SERVICE_URL: http://map.gameon-system.svc.cluster.local:9080/map/v1/health
   PLAYER_SERVICE_URL: http://player.gameon-system.svc.cluster.local:9080/players/v1/accounts
   RECROOM_SERVICE_URL: ws://room.gameon-system.svc.cluster.local:9080/rooms
+# Global: Common backing services
+  COUCHDB_USER: mapUser
+  COUCHDB_PASSWORD: myCouchDBSecret
   COUCHDB_SERVICE_URL: http://couchdb.gameon-system.svc.cluster.local:5984
   COUCHDB_HOST_AND_PORT: couchdb.gameon-system.svc.cluster.local:5984
   KAFKA_SERVICE_URL: kafka.gameon-system.svc.cluster.local:9092
-  FRONT_END_PLAYER_URL: http://gameon.192.168.9.100.xip.io/players/v1/accounts
-  FRONT_END_SUCCESS_CALLBACK: http://gameon.192.168.9.100.xip.io/#/login/callback
-  FRONT_END_FAIL_CALLBACK: http://gameon.192.168.9.100.xip.io/#/game
-  FRONT_END_AUTH_URL: http://gameon.192.168.9.100.xip.io/auth
+  MESSAGEHUB_USER: ''
+  MESSAGEHUB_PASSWORD: ''
+# Global configuration vars for running locally
   GAMEON_MODE: development
   TARGET_PLATFORM: local
   SYSTEM_ID: game-on.org
-  LICENSE: accept
-  PROXY_DOCKER_HOST: 'gameon.192.168.9.100.xip.io'
   ADMIN_PASSWORD: admin
-  WLP_SKIP_MAXPERMSIZE: 'true'
-  WLP_OUTPUT_DIR: /opt/ibm/wlp/usr/servers/
-  LOG_DIR: /opt/ibm/wlp/usr/servers/defaultServer/logs
   MAP_KEY: fish
-  COUCHDB_USER: mapUser
-  COUCHDB_PASSWORD: myCouchDBSecret
   SWEEP_ID: sweep
   SWEEP_SECRET: sweepSecret
+# Auth service environment variables
+  FACEBOOK_APP_ID: ''
+  FACEBOOK_APP_SECRET: ''
+  GITHUB_APP_ID: ''
+  GITHUB_APP_SECRET: ''
+  GOOGLE_APP_ID: ''
+  GOOGLE_APP_SECRET: ''
+  TWITTER_CONSUMER_KEY: ''
+  TWITTER_CONSUMER_SECRET: ''
+  FRONT_END_SUCCESS_CALLBACK: http://GAMEON_INGRESS/#/login/callback
+  FRONT_END_FAIL_CALLBACK: http://GAMEON_INGRESS/#/login?login_failed
+  FRONT_END_AUTH_URL: http://GAMEON_INGRESS/auth

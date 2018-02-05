@@ -29,7 +29,7 @@ spec:
         app: gameon-couchdb
     spec:
       containers:
-      - image: couchdb:1.6.1
+      - image: klaemo/couchdb:1.6.1
         name: couchdb
         ports:
         - containerPort: 5984

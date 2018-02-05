@@ -37,7 +37,7 @@ spec:
             - containerPort: 9080
               name: auth
           volumeMounts:
-            - name: certificate 
+            - name: certificate
               mountPath: /etc/cert
           envFrom:
             - configMapRef:
