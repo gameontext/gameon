@@ -21,7 +21,7 @@ IMAGE="${DOCKER_REPO}/${DOCKER_IMAGE}"
 BUILD_TAG="${IMAGE}:${TRAVIS_BRANCH}-${TRAVIS_BUILD_NUMBER}"
 LATEST_TAG="${IMAGE}:latest"
 
-BUILD_DATE=`date -u +?%Y-%m-%dT%H:%M:%SZ?`
+BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"`
 URL=${URL-https://gameontext.org}
 GITHUB_URL=${GITHUB_URL-https://github.com/${IMAGE}}
 
