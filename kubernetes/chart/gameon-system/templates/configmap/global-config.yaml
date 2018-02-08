@@ -1,0 +1,13 @@
+{{- $mode := .Values.global.mode -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-global-config
+  namespace: gameon-system
+  labels:
+    {{- include "gameon-system.labels" . }}
+data:
+  GAMEON_MODE: {{ $mode | quote }}
+  {{- range  $key, $val := .Values.global.data }}
+  {{ $key }}: {{ $val | quote }}
+  {{- end }}

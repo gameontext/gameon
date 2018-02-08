@@ -1,0 +1,40 @@
+{{- if eq .Values.global.mode "development" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: couchdb-service
+  namespace: gameon-system
+  labels:
+    app: {{ .Chart.Name }}-couchdb
+    {{- include "gameon-system.labels" . }}
+spec:
+  ports:
+    - port: 5984
+      protocol: TCP
+      targetPort: 5984
+  selector:
+    app: {{ .Chart.Name}}-couchdb
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: couchdb-deploy
+  namespace: gameon-system
+  labels:
+    app: {{ .Chart.Name}}-couchdb
+    {{- include "gameon-system.labels" . }}
+spec:
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name}}-couchdb
+    spec:
+      containers:
+      - image: klaemo/couchdb:1.6.1
+        name: couchdb
+        ports:
+        - containerPort: 5984
+          name: couchdb
+{{ end }}

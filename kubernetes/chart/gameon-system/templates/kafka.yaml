@@ -1,0 +1,40 @@
+{{- if eq .Values.global.mode "development" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-service
+  namespace: gameon-system
+  labels:
+    app: {{ .Chart.Name }}-kafka
+    {{- include "gameon-system.labels" . }}
+spec:
+  ports:
+    - port: 9092
+      protocol: TCP
+      targetPort: 9092
+  selector:
+    app: {{ .Chart.Name }}-kafka
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: kafka-deploy
+  namespace: gameon-system
+  labels:
+    app: {{ .Chart.Name }}-kafka
+    {{- include "gameon-system.labels" . }}
+spec:
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name}}-kafka
+    spec:
+      containers:
+      - image: gameontext/go-reactive-sandbox:latest
+        name: kafka
+        ports:
+        - containerPort: 9092
+          name: kafka
+{{ end }}
