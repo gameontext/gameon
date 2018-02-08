@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-auth-config
+  namespace: gameon-system
+  labels:
+    {{- include "gameon-system.labels" . }}
+data:
+# Auth service environment variables
+  {{- range  $key, $val := .Values.auth.data }}
+  {{ $key }}: {{ $val | quote }}
+  {{- end }}
+  FRONT_END_SUCCESS_CALLBACK: https://{{ .Values.global.frontDoor }}/#/login/callback
+  FRONT_END_FAIL_CALLBACK: https://{{ .Values.global.frontDoor }}/#/login?login_failed
+  FRONT_END_AUTH_URL: https://{{ .Values.global.frontDoor }}/auth

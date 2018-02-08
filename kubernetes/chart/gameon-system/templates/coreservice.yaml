@@ -1,0 +1,17 @@
+{{- range .Values.coreServices }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .serviceName }}-service
+  namespace: gameon-system
+  labels:
+    app: {{ $.Chart.Name }}-{{ .serviceName }}
+    {{- include "gameon-system.labels" $ }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .servicePort }}
+  selector:
+    app: {{ $.Chart.Name }}-{{ .serviceName }}
+---
+{{- end }}
