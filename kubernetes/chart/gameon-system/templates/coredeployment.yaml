@@ -1,0 +1,42 @@
+{{- range .Values.coreServices }}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name:  {{ .serviceName }}-deploy
+  namespace: gameon-system
+  labels:
+    app: {{ $.Chart.Name }}-{{ .serviceName }}
+    {{- include "gameon-system.labels" $ }}
+spec:
+  template:
+    metadata:
+      labels:
+        app: {{ $.Chart.Name }}-{{ .serviceName }}
+    spec:
+      volumes:
+        - name: certificate
+          secret:
+            secretName: global-cert
+      containers:
+        - image: {{ .image }}
+          {{- if .imagePullPolicy }}
+          imagePullPolicy:  {{ .imagePullPolicy }}
+          {{- end }}
+          name: {{ .serviceName }}
+          ports:
+            - containerPort: {{ .servicePort }}
+              name: {{ .serviceName }}
+          volumeMounts:
+            - name: certificate
+              mountPath: /etc/cert
+          envFrom:
+            - configMapRef:
+                name: gameon-system-global-config
+          {{- if .configMapRef }}
+          {{- range .configMapRef }}
+            - configMapRef:
+                name: {{ . }}
+          {{- end }}
+          {{- end }}
+---
+{{- end }}

@@ -32,13 +32,31 @@ The `go-run.sh` script encapsulates the operations needed to deploy core game se
     This will ensure you have the right versions of applications we use, create a `gameon-system` name space, create a cerficate for signing JWTs, and create a generic kubernetes secret containing that certificate.
 
 3. Bring up your cluster
+    * With kubectl
 
-        $ go-run up
+            $ go-run up
+
+    * With helm
+
+            $ helm init
+            $ helm install --name go-system ./kubernetes/chart/gameon-system/
 
 4. Wait for services to be available
 
         $ go-run wait
 
+4. Visit your external cluster IP address
+
+5. Bring down your clusters
+
+    * With kubectl
+
+            $ go-run down
+
+    * With helm
+
+            $ helm list
+            $ helm delete --purge go-system
 
 ## Deploy locally with minikube
 
