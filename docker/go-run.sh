@@ -186,6 +186,7 @@ usage() {
     start
     stop
     restart
+    status
     wait
 
     build
@@ -261,6 +262,9 @@ case "$ACTION" in
   ;;
   start)
     up_log $PROJECTS
+  ;;
+  status)
+    ${COMPOSE} ps
   ;;
   stop)
     echo "${COMPOSE} stop $PROJECTS"

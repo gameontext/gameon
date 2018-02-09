@@ -19,13 +19,20 @@ spec:
             secretName: global-cert
       containers:
         - image: {{ .image }}
-          {{- if .imagePullPolicy }}
+{{- if .imagePullPolicy }}
           imagePullPolicy:  {{ .imagePullPolicy }}
-          {{- end }}
+{{- end }}
           name: {{ .serviceName }}
           ports:
             - containerPort: {{ .servicePort }}
               name: {{ .serviceName }}
+{{- if .readinessProbe }}
+          readinessProbe:
+            httpGet:
+              path: {{ .readinessProbe.path }}
+              port: {{ .servicePort }}
+            initialDelaySeconds: {{ .readinessProbe.initialDelaySeconds }}
+{{- end }}
           volumeMounts:
             - name: certificate
               mountPath: /etc/cert

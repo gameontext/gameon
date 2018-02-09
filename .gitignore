@@ -6,7 +6,8 @@
 .gameontext*
 gameon.?*env
 docker-compose.override.yml
-kubernetes/configmap.yaml
-kubernetes/ingress.yaml
+kubernetes/kubectl/configmap.yaml
+kubernetes/kubectl/ingress.yaml
+kubernetes/chart/gameon-system/values.yaml
 slackin
 scratch
