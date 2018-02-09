@@ -2,6 +2,18 @@ BIN_DIR=$( cd "$SCRIPTDIR/../bin" && pwd )
 GO_DIR=$( cd "$SCRIPTDIR/.." && pwd )
 source $BIN_DIR/go-common
 
+wrap_kubectl() {
+  echo "
+> kubectl $@"
+  kubectl $@
+}
+
+wrap_helm() {
+  echo "
+> helm $@"
+  helm $@
+}
+
 check_versions() {
   QUIT=0
   echo ""
@@ -60,11 +72,10 @@ of RAM to run the entire system, e.g. 'minikube start --memory 8192'
   ok "configured Kubernetes cluster found"
 
   if ! kubectl get namespace gameon-system > /dev/null 2>&1; then
-    RESULT=$(kubectl create namespace gameon-system)
-    if [ $? -eq 0 ]; then
-      ok "${RESULT}"
-    else
-      fixme "${RESULT}"
+    wrap_kubectl create namespace gameon-system
+    if [ $? -ne 0 ]; then
+      fixme "unable to  create gameon-system namespace"
+      exit 1
     fi
   else
     ok "gameon-system namespace found"
@@ -120,7 +131,7 @@ export GAMEON_KUBECTL_CONTEXT=$(kubectl config current-context)" > .gameontext.k
 
 check_global_cert() {
   if ! kubectl get secret --namespace=gameon-system global-cert > /dev/null 2>&1; then
-    ok "$(kubectl create secret generic global-cert --namespace=gameon-system --from-file=cert.pem=.gameontext.cert.pem)"
+    ok "$(wrap_kubectl create secret generic global-cert --namespace=gameon-system --from-file=cert.pem=.gameontext.cert.pem)"
   else
     ok "Found global-cert secret in gameon-system namespace"
   fi
@@ -141,22 +152,30 @@ setup() {
   rm .gameontext.onlycert.pem .gameontext.onlykey.pem
   ok "Created a new certificate (.gameontext.cert.pem)"
 
-  check_global_cert
-
   # replace cluster values in well-known strings
-  cp kubernetes/.template.ingress.yaml kubernetes/ingress.yaml
-  cp kubernetes/.template.configmap.yaml kubernetes/configmap.yaml
+  cp kubernetes/.template.ingress.yaml kubernetes/kubectl/ingress.yaml
+  cp kubernetes/.template.configmap.yaml kubernetes/kubectl/configmap.yaml
+  cp kubernetes/.template.values.yaml kubernetes/chart/gameon-system/values.yaml
   if [ -z  ${GAMEON_INGRESS_SECRET+z} ]; then
-    sed -i'' -e "/secretName: GAMEON_INGRESS_SECRET/d" kubernetes/ingress.yaml
+    sed -i'' -e "/secretName: GAMEON_INGRESS_SECRET/d" kubernetes/kubectl/ingress.yaml
   else
-    sed -i'' -e "s/GAMEON_INGRESS_SECRET/${GAMEON_INGRESS_SECRET}/" kubernetes/ingress.yaml
+    sed -i'' -e "s/GAMEON_INGRESS_SECRET/${GAMEON_INGRESS_SECRET}/" kubernetes/kubectl/ingress.yaml
   fi
-  sed -i'' -e "s/GAMEON_INGRESS/${GAMEON_INGRESS}/" kubernetes/ingress.yaml
-  sed -i'' -e "s/GAMEON_INGRESS/${GAMEON_INGRESS}/" kubernetes/configmap.yaml
+  sed -i'' -e "s/GAMEON_INGRESS/${GAMEON_INGRESS}/" kubernetes/kubectl/ingress.yaml
+  sed -i'' -e "s/GAMEON_INGRESS/${GAMEON_INGRESS}/" kubernetes/kubectl/configmap.yaml
+  sed -i'' -e "s/GAMEON_INGRESS/${GAMEON_INGRESS}/" kubernetes/chart/gameon-system/values.yaml
 
   ok "Updated ingress and config map with ingress address: ${GAMEON_INGRESS}"
 
   if [ -n ${GAMEON_MINIKUBE} ]; then
     ok "`minikube addons enable ingress`"
+  fi
+
+  read -p "Do you want to use helm? [y] " answer
+  if [ -z $answer ] || [[ $answer =~ [Yy] ]]; then
+    touch .gameontext.helm
+    wrap_helm init
+  else
+    rm -f .gameontext.helm
   fi
 }

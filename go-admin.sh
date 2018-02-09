@@ -27,7 +27,23 @@ if [ $# -ge 1 ]; then
 fi
 
 usage() {
-  echo "Actions: choose|setup|up|down|env"
+  echo "Actions:
+    choose
+    setup
+    env
+
+    up
+    down
+    status
+    env"
+}
+
+go_run() {
+  if [[ $GO_DEPLOYMENT =~ (docker|kubernetes) ]]; then
+    ./${GO_DEPLOYMENT}/go-run.sh $@
+  else
+    echo "Unknown deployment type $GO_DEPLOYMENT"
+  fi
 }
 
 # get deployment type (go_common)
@@ -54,11 +70,7 @@ case "$ACTION" in
   ;;
   setup)
     echo "Game On! Setting things up with $GO_DEPLOYMENT (Use '$0 choose' to change)"
-    if [[ $GO_DEPLOYMENT =~ (docker|kubernetes) ]]; then
-      ./${GO_DEPLOYMENT}/go-run.sh setup
-    else
-      echo "Unknown deployment type $GO_DEPLOYMENT"
-    fi
+    go_run setup
   ;;
   up)
     if ! [ -f .gameontext ] || [ "$GO_DEPLOYMENT" != "$(< .gameontext)" ]; then
@@ -66,27 +78,18 @@ case "$ACTION" in
     fi
     echo "Game On! Starting game services with $GO_DEPLOYMENT"
     echo "This may take awhile. Be patient."
-    if [[ $GO_DEPLOYMENT =~ (docker|kubernetes) ]]; then
-      echo "For other actions, use scripts in the ${GO_DEPLOYMENT}/ directory"
-      ./${GO_DEPLOYMENT}/go-run.sh up
-    else
-      echo "Unknown deployment type $GO_DEPLOYMENT"
-    fi
+    echo "For other actions, use scripts in the ${GO_DEPLOYMENT}/ directory"
+    go_run up
   ;;
   down)
     echo "Game On! Stopping game services with $GO_DEPLOYMENT"
-    if [[ $GO_DEPLOYMENT =~ (docker|kubernetes) ]]; then
-      ./${GO_DEPLOYMENT}/go-run.sh down
-    else
-      echo "Unknown deployment type $GO_DEPLOYMENT"
-    fi
+    go_run down
+  ;;
+  status)
+    go_run status
   ;;
   env)
-    if [[ $GO_DEPLOYMENT =~ (docker|kubernetes) ]]; then
-      ./${GO_DEPLOYMENT}/go-run.sh env
-    else
-      echo "Unknown deployment type $GO_DEPLOYMENT"
-    fi
+    go_run env
   ;;
   *)
     usage
