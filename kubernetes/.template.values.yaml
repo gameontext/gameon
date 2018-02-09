@@ -1,5 +1,5 @@
 global:
-  frontDoor: gameon.192.168.99.100.xip.io
+  frontDoor: GAMEON_INGRESS
   mode: development
   data:
 # Global: interservice communication

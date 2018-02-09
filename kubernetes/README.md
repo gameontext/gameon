@@ -12,7 +12,7 @@ Start with:
 
 Instructions below will reference `go-run`, the alias created above. Feel free to invoke `./kubernetes/go-run.sh` directly if you prefer.
 
-The `go-run.sh` script encapsulates the operations needed to deploy core game services to kubernetes. Please do open the script to see what the steps do! We opted for readability over shell script-fu for that reason.
+The `go-run.sh` and `k8s-functions` scripts encapsulate setup and deployment of core game services to kubernetes. Please do open the scripts to see what they do! We opted for readability over shell script-fu for that reason.
 
 ## Prerequisites
 
@@ -21,25 +21,19 @@ The `go-run.sh` script encapsulates the operations needed to deploy core game se
 
 ## General bring-up instructions
 
-1. Create your cluster (see sections below)
-    * [Deploy locally with minikube](deploy-in-ibm-cloud-kubernetes)
-    * [Deploy in IBM Cloud Kubernetes](deploy-in-ibm-cloud-kubernetes)
+1. [Create or retrieve credentials for your cluster](#create-a-kubernetes-cluster)
 
 2. Setup your cluster:
 
         $ go-run setup
 
-    This will ensure you have the right versions of applications we use, create a `gameon-system` name space, create a cerficate for signing JWTs, and create a generic kubernetes secret containing that certificate.
+    This will ensure you have the right versions of applications we use, prompt to use helm or not, and create a cerficate for signing JWTs.
 
 3. Bring up your cluster
-    * With kubectl
 
-            $ go-run up
+        $ go-run up
 
-    * With helm
-
-            $ helm init
-            $ helm install --name go-system ./kubernetes/chart/gameon-system/
+    This step will also create a `gameon-system` name space and a generic kubernetes secret containing that certificate.
 
 4. Wait for services to be available
 
@@ -49,17 +43,15 @@ The `go-run.sh` script encapsulates the operations needed to deploy core game se
 
 5. Bring down your clusters
 
-    * With kubectl
+        $ go-run down
 
-            $ go-run down
 
-    * With helm
+## Create a Kubernetes cluster
 
-            $ helm list
-            $ helm delete --purge go-system
+* [Minikube](#minikube)
+* [IBM Cloud Kubernetes](#ibm-cloud-kubernetes)
 
-## Deploy locally with minikube
-
+### Minikube
 
 1. [Install minikube](https://kubernetes.io/docs/tasks/tools/install-minikube/)
 
@@ -74,7 +66,7 @@ The `go-run.sh` script encapsulates the operations needed to deploy core game se
 4. (optional) Use `minikube dashboard` to inspect the contents of the `gameon-system` namespace.
 
 
-## Deploy in IBM Cloud Kubernetes
+### IBM Cloud Kubernetes
 
 
 1. You will need to create a cluster and install the IBM Cloud CLI.
@@ -104,13 +96,7 @@ The `go-run.sh` script encapsulates the operations needed to deploy core game se
 
 2. Enable `kubectl` to talk to your cluster
 
-        $ bx cs cluster-config <cluster_name_or_id>
-
-    You should get something like this:
-
-        export KUBECONFIG=/Users/<user_name>/.bluemix/plugins/container-service/clusters/<cluster_name>/kube-config-prod-dal10-<cluster_name>.yml
-
-    Execute that command to allow `kubectl` to work with your cluster.
+        $ eval $(bx cs cluster-config <cluster-name> | grep "export KUBECONFIG")
 
 3. Verify `kubectl` can connect to your cluster:
 
@@ -133,7 +119,7 @@ The `go-run.sh` script encapsulates the operations needed to deploy core game se
     Datacenter:		dal10
     Master URL:		https://qq.ww.ee.rr:qwer
     <b>Ingress subdomain:	anthony-test.us-south.containers.mybluemix.net
-    Ingress secret:		anthony-test</b>
+    Ingress secret:	anthony-test</b>
     Workers:		2
     Version:		1.7.4_1506* (1.8.6_1504 latest)
     </pre>

@@ -21,9 +21,6 @@ if [ $# -ge 1 ]; then
   shift
 fi
 
-BASE="ingress configmap couchdb kafka"
-CORE="auth player map mediator room webapp"
-
 platform_up() {
   if [ ! -f .gameontext.kubernetes ] || [ ! -f .gameontext.cert.pem ]; then
     setup
@@ -33,15 +30,11 @@ platform_up() {
     check_global_cert
   fi
 
-  for x in $BASE; do
-    echo "> kubectl apply -f kubernetes/${x}.yaml"
-    kubectl apply -f kubernetes/${x}.yaml
-  done
-
-  for x in $CORE; do
-    echo "> kubectl apply -f kubernetes/${x}.yaml"
-    kubectl apply -f kubernetes/${x}.yaml
-  done
+  if [ ! -f .gameontext.helm ];  then
+    wrap_helm install --name go-system ./kubernetes/chart/gameon-system/
+  else
+    wrap_kubectl apply -R -f kubernetes/kubectl
+  fi
 
   echo "To test for readiness: http://${GAMEON_INGRESS}/site_alive"
   echo 'To wait for readiness: ./kubernetes/go-run.sh wait'
@@ -49,19 +42,16 @@ platform_up() {
 }
 
 platform_down() {
-  check_cluster
-
-  for x in $CORE; do
-    echo "> kubectl delete -f kubernetes/${x}.yaml"
-    kubectl apply -f kubernetes/${x}.yaml
-  done
-
-  for x in $BASE; do
-    echo "> kubectl delete -f kubernetes/${x}.yaml"
-    kubectl apply -f kubernetes/${x}.yaml
-  done
-
-  kubectl delete namespace gameon-system
+  if kubectl get namespace gameon-system > /dev/null 2>&1; then
+    if [ ! -f .gameontext.helm ];  then
+      wrap_helm delete --purge go-system
+    else
+      wrap_kubectl delete -R -f kubernetes/kubectl
+    fi
+    wrap_kubectl delete namespace gameon-system
+  else
+    ok "gameon-system stopped"
+  fi
 }
 
 usage() {
@@ -73,6 +63,7 @@ usage() {
 
     up
     down
+    status
     wait
   "
 }
@@ -90,6 +81,9 @@ case "$ACTION" in
   ;;
   host)
     ingress_host
+  ;;
+  status)
+    wrap_kubectl get all --namespace=gameon-system
   ;;
   env)
     echo "alias go-run='${SCRIPTDIR}/go-run.sh';"
