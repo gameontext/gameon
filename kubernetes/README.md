@@ -46,12 +46,16 @@ The `go-run.sh` and `k8s-functions` scripts encapsulate setup and deployment of 
         $ go-run down
 
 
-## Create a Kubernetes cluster
+## Set up a Kubernetes cluster
 
-* [Minikube](#minikube)
+`kubectl` needs to be able to talk to a Kuberenetes cluster! You may have one already, in which case, all you need to do is make sure `kubectl` can work with it.
+
+* [Minikube](#minikube) -- local development cluster
 * [IBM Cloud Kubernetes](#ibm-cloud-kubernetes)
 
 ### Minikube
+
+If you already have a configured minikube cluster, skip to step 3.
 
 1. [Install minikube](https://kubernetes.io/docs/tasks/tools/install-minikube/)
 
@@ -59,15 +63,20 @@ The `go-run.sh` and `k8s-functions` scripts encapsulate setup and deployment of 
 
         $ minikube start --memory 8192
 
-3. Follow the [general bring-up instructions](#general-bring-up-instructions)
+3. Ensure the `minikube` context is current context for `kubectl`
 
-    Note: the script detects that minikube is in use, and uses `minikube ip` to figure out the cluster's external IP address. The script will also enable the minikube ingress addon.
+        $ kubectl config set-context minikube
 
-4. (optional) Use `minikube dashboard` to inspect the contents of the `gameon-system` namespace.
+4. Follow the [general bring-up instructions](#general-bring-up-instructions)
+
+    **Note: the script detects that minikube** is in use, and uses `minikube ip` to figure out the cluster's external IP address. The script will also enable the minikube ingress addon.
+
+5. (optional) Use `minikube dashboard` to inspect the contents of the `gameon-system` namespace.
 
 
 ### IBM Cloud Kubernetes
 
+If you already have a configured cluster, skip to step 3.
 
 1. You will need to create a cluster and install the IBM Cloud CLI.
 
