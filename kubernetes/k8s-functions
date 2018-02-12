@@ -35,7 +35,7 @@ check_versions() {
     QUIT=1
   else
     KUBECTL_VERSION=$(kubectl version --client --short)
-    check_version "${KUBECTL_VERSION}" 1.9.2
+    check_version "${KUBECTL_VERSION}" 1.8.0
   fi
 
   echo "* helm version 2.8.0 or greater"
@@ -49,7 +49,7 @@ check_versions() {
     QUIT=1
   else
     HELM_VERSION=$(helm version --client --short)
-    check_version "${HELM_VERSION}" 2.8.0
+    check_version "${HELM_VERSION}" 2.7.2
   fi
 
   echo "***********  "

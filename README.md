@@ -32,7 +32,7 @@ This is the TL;DR version.
       * the Vagrantfile updates the .bashrc for the vagrant user to set `DOCKER_MACHINE_NAME=vagrant` to tweak script behavior for use with vagrant.
       * VM provisioning will perform the next two steps on your behalf.
 
-4. (Kubernetes) [Create or retrieve credentials for your cluster](kubernetes/README.md#create-a-kubernetes-cluster)
+4. (Kubernetes) [Create or retrieve credentials for your cluster](kubernetes/README.md#set-up-a-kubernetes-cluster)
 
 5. Set up required keystores and environment variables. This step also pulls the initial images required for running the system.
 
