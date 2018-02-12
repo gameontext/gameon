@@ -109,7 +109,7 @@ Vagrant.configure("2") do |config|
     echo 'export DOCKER_MACHINE_NAME=vagrant' | tee -a /home/vagrant/.profile
 
     # Don't try to run kubenetes in this VM unless you know what you're doing
-    echo 'export GO_DEPLOYMENT=docker-compose' | tee -a /home/vagrant/.profile
+    echo 'export GO_DEPLOYMENT=docker' | tee -a /home/vagrant/.profile
 
     # By default this working directory is mapped to /vagrant,
     # automatically change directories on login

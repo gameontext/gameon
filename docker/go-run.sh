@@ -12,7 +12,7 @@
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 source $SCRIPTDIR/docker-functions
 
-GO_DEPLOYMENT=docker-compose
+GO_DEPLOYMENT=docker
 get_gameontext_hostip
 
 # Ensure we're executing from project root directory
