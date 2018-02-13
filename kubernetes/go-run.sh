@@ -30,7 +30,7 @@ platform_up() {
     check_global_cert
   fi
 
-  if [ ! -f .gameontext.helm ];  then
+  if [ -f .gameontext.helm ];  then
     wrap_helm install --name go-system ./kubernetes/chart/gameon-system/
   else
     wrap_kubectl apply -R -f kubernetes/kubectl
@@ -43,7 +43,7 @@ platform_up() {
 
 platform_down() {
   if kubectl get namespace gameon-system > /dev/null 2>&1; then
-    if [ ! -f .gameontext.helm ];  then
+    if [ -f .gameontext.helm ];  then
       wrap_helm delete --purge go-system
     else
       wrap_kubectl delete -R -f kubernetes/kubectl
