@@ -157,13 +157,13 @@ setup() {
   cp kubernetes/.template.configmap.yaml kubernetes/kubectl/configmap.yaml
   cp kubernetes/.template.values.yaml kubernetes/chart/gameon-system/values.yaml
   if [ -z  ${GAMEON_INGRESS_SECRET+z} ]; then
-    sed -i'' -e "/secretName: GAMEON_INGRESS_SECRET/d" kubernetes/kubectl/ingress.yaml
+    sed -i '' -e "/secretName: GAMEON_INGRESS_SECRET/d" kubernetes/kubectl/ingress.yaml
   else
-    sed -i'' -e "s/GAMEON_INGRESS_SECRET/${GAMEON_INGRESS_SECRET}/" kubernetes/kubectl/ingress.yaml
+    sed -i '' -e "s/GAMEON_INGRESS_SECRET/${GAMEON_INGRESS_SECRET}/" kubernetes/kubectl/ingress.yaml
   fi
-  sed -i'' -e "s/GAMEON_INGRESS/${GAMEON_INGRESS}/" kubernetes/kubectl/ingress.yaml
-  sed -i'' -e "s/GAMEON_INGRESS/${GAMEON_INGRESS}/" kubernetes/kubectl/configmap.yaml
-  sed -i'' -e "s/GAMEON_INGRESS/${GAMEON_INGRESS}/" kubernetes/chart/gameon-system/values.yaml
+  sed -i '' -e "s/GAMEON_INGRESS/${GAMEON_INGRESS}/" kubernetes/kubectl/ingress.yaml
+  sed -i '' -e "s/GAMEON_INGRESS/${GAMEON_INGRESS}/" kubernetes/kubectl/configmap.yaml
+  sed -i '' -e "s/GAMEON_INGRESS/${GAMEON_INGRESS}/" kubernetes/chart/gameon-system/values.yaml
 
   ok "Updated ingress and config map with ingress address: ${GAMEON_INGRESS}"
 
