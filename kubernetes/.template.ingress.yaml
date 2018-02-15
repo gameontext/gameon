@@ -6,8 +6,8 @@ metadata:
 spec:
   tls:
     - hosts:
-      - GAMEON_INGRESS
-    secretName: GAMEON_INGRESS_SECRET
+        - GAMEON_INGRESS
+      secretName: GAMEON_INGRESS_SECRET
   rules:
   - host: GAMEON_INGRESS
     http:

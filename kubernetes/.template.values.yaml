@@ -39,10 +39,10 @@ ingress:
   annotations: {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
+  tls:
+    - hosts:
+        - GAMEON_INGRESS_SECRET
+      secretName: GAMEON_INGRESS_SECRET
 
 # Core services: Used to generate core service & deployment artifacts
 # Specify imagePullPolicy per item, or rely on default behavior
