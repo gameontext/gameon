@@ -10,7 +10,7 @@ services:
 #      - "9449:9443"
 #    volumes:
 #      - '$HOME:$HOME'
-#      - '../auth/auth-wlpcfg/servers/gameon-auth:/opt/ibm/wlp/usr/servers/defaultServer'
+#      - '../auth/auth-wlpcfg/servers/gameon-auth:/opt/ol/wlp/usr/servers/defaultServer'
 
 #  map:
 #    build:
@@ -20,7 +20,7 @@ services:
 #      - "9447:9443"
 #    volumes:
 #      - '$HOME:$HOME'
-#      - '../map/map-wlpcfg/servers/gameon-map:/opt/ibm/wlp/usr/servers/defaultServer'
+#      - '../map/map-wlpcfg/servers/gameon-map:/opt/ol/wlp/usr/servers/defaultServer'
 
 #  mediator:
 #    build:
@@ -30,7 +30,7 @@ services:
 #      - "9446:9443"
 #    volumes:
 #      - '$HOME:$HOME'
-#      - '../mediator/mediator-wlpcfg/servers/gameon-mediator:/opt/ibm/wlp/usr/servers/defaultServer'
+#      - '../mediator/mediator-wlpcfg/servers/gameon-mediator:/opt/ol/wlp/usr/servers/defaultServer'
 
 #  player:
 #    build:
@@ -40,7 +40,7 @@ services:
 #      - "9443:9443"
 #    volumes:
 #      - '$HOME:$HOME'
-#      - '../player/player-wlpcfg/servers/gameon-player:/opt/ibm/wlp/usr/servers/defaultServer'
+#      - '../player/player-wlpcfg/servers/gameon-player:/opt/ol/wlp/usr/servers/defaultServer'
 
 #  proxy:
 #    build:
@@ -56,7 +56,7 @@ services:
 #      - "9445:9443"
 #    volumes:
 #      - '$HOME:$HOME'
-#      - '../room/room-wlpcfg/servers/gameon-room:/opt/ibm/wlp/usr/servers/defaultServer'
+#      - '../room/room-wlpcfg/servers/gameon-room:/opt/ol/wlp/usr/servers/defaultServer'
 
 #  swagger:
 #    build:
