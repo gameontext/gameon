@@ -18,6 +18,7 @@ The `go-run.sh` and `k8s-functions` scripts encapsulate setup and deployment of 
 
 * [Docker](https://docs.docker.com/install/)
 * [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+* [helm](https://docs.helm.sh/using_helm/#installing-helm)(optional)
 
 ## General bring-up instructions
 
@@ -27,9 +28,13 @@ The `go-run.sh` and `k8s-functions` scripts encapsulate setup and deployment of 
 
         $ go-run setup
 
-    This will ensure you have the right versions of applications we use, prompt to use helm or not, and create a cerficate for signing JWTs.
+    This will ensure you have the right versions of applications we use, prompt to use helm or not, and create a certificate for signing JWTs.
 
-3. Bring up your cluster
+    If your cluster IP changes (or you have made changes to some templated files and want to start over), use:
+
+        $ go-run reset
+
+3. Start the game
 
         $ go-run up
 
@@ -39,11 +44,36 @@ The `go-run.sh` and `k8s-functions` scripts encapsulate setup and deployment of 
 
         $ go-run wait
 
-4. Visit your external cluster IP address
+5. Visit your external cluster IP address
 
-5. Bring down your clusters
+6. Stop the game
 
         $ go-run down
+
+## Iterative development with Kubernetes
+
+
+
+[Using helm? Skip ahead](#development-with-helm)
+
+
+
+### Development with Helm
+
+Iterative development with kubernetes varies a little bit if you're using helm.
+
+1. Open `kubernetes/chart/values.yaml`, find the service you want to update, and alter it to use the _latest_ image:
+
+        # player service
+        - serviceName: player
+          servicePort: 9080
+          path: /players
+          image: gameontext/gameon-player:**latest**
+          readinessProbe:
+            path: /players/v1/health
+            initialDelaySeconds: 40
+
+2.
 
 
 ## Set up a Kubernetes cluster
