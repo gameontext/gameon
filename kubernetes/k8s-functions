@@ -142,15 +142,24 @@ setup() {
   check_cluster
   get_cluster_ip
 
-  # Create certificate (for signing JWTs)
-  SUBJECT=${GAMEON_SUBJECT-"/CN=${GAMEON_INGRESS}/OU=GameOn Application/O=The Ficticious GameOn Company/L=Earth/ST=Happy/C=CA"}
-  openssl req -x509 -days 365 -nodes -newkey rsa:4096 \
-     -keyout .gameontext.onlykey.pem \
-     -out .gameontext.onlycert.pem \
-     -subj "${SUBJECT}"
-  cat .gameontext.onlycert.pem .gameontext.onlykey.pem > .gameontext.cert.pem
-  rm .gameontext.onlycert.pem .gameontext.onlykey.pem
-  ok "Created a new certificate (.gameontext.cert.pem)"
+  if [ -f .gameontext.cert.pem ]; then
+    OLD_IP=$(openssl x509 -noout -subject -in .gameontext.cert.pem | sed -e 's/^subject.*CN=\([^/]*\).*$/\1/')
+    if [ "${OLD_IP}" != "${GAMEON_INGRESS}" ]; then
+      rm .gameontext.cert.pem
+    fi
+  fi
+
+  if [ ! -f .gameontext.cert.pem ]; then
+    # Create certificate (for signing JWTs)
+    SUBJECT=${GAMEON_SUBJECT-"/CN=${GAMEON_INGRESS}/OU=GameOn Application/O=The Ficticious GameOn Company/L=Earth/ST=Happy/C=CA"}
+    openssl req -x509 -days 365 -nodes -newkey rsa:4096 \
+       -keyout .gameontext.onlykey.pem \
+       -out .gameontext.onlycert.pem \
+       -subj "${SUBJECT}"
+    cat .gameontext.onlycert.pem .gameontext.onlykey.pem > .gameontext.cert.pem
+    rm .gameontext.onlycert.pem .gameontext.onlykey.pem
+    ok "Created a new certificate (.gameontext.cert.pem)"
+  fi
 
   # replace cluster values in well-known strings
   cp kubernetes/.template.ingress.yaml kubernetes/kubectl/ingress.yaml
