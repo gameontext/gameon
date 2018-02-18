@@ -38,6 +38,8 @@ This is the TL;DR version.
 
         $ go-admin setup
 
+    Note: it is safe to run `setup` again, e.g. to check dependencies, or regenerate files if IP addresses change
+
 6. Start the game (supporting platform and core services):
 
         $ go-admin up
