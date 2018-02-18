@@ -30,7 +30,7 @@ spec:
         secret:
           secretName: global-cert
       containers:
-      - image: gameontext/gameon-mediator:latest
+      - image: gameontext/gameon-mediator:lastgood
         imagePullPolicy: Always
         name: mediator
         ports:
