@@ -30,7 +30,7 @@ spec:
         secret:
           secretName: global-cert
       containers:
-      - image: gameontext/gameon-auth:latest
+      - image: gameontext/gameon-auth:lastgood
         name: auth
         ports:
         - containerPort: 9080

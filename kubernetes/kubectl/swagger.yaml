@@ -26,7 +26,7 @@ spec:
         app: gameon-swagger
     spec:
       containers:
-      - image: gameontext/gameon-swagger:latest
+      - image: gameontext/gameon-swagger:lastgood
         imagePullPolicy: Always
         name: swagger
         ports:
