@@ -137,6 +137,13 @@ check_global_cert() {
   fi
 }
 
+reset() {
+  rm .gameontext.cert.pem
+  rm kubernetes/kubectl/ingress.yaml
+  rm kubernetes/kubectl/configmap.yaml
+  rm kubernetes/chart/gameon-system/values.yaml
+}
+
 setup() {
   check_versions
   check_cluster
@@ -145,7 +152,7 @@ setup() {
   if [ -f .gameontext.cert.pem ]; then
     OLD_IP=$(openssl x509 -noout -subject -in .gameontext.cert.pem | sed -e 's/^subject.*CN=\([^/]*\).*$/\1/')
     if [ "${OLD_IP}" != "${GAMEON_INGRESS}" ]; then
-      rm .gameontext.cert.pem
+      reset
     fi
   fi
 
@@ -161,10 +168,12 @@ setup() {
     ok "Created a new certificate (.gameontext.cert.pem)"
   fi
 
+  # create new files from templates if they don't already exist
+  cp -n kubernetes/.template.ingress.yaml kubernetes/kubectl/ingress.yaml
+  cp -n kubernetes/.template.configmap.yaml kubernetes/kubectl/configmap.yaml
+  cp -n kubernetes/.template.values.yaml kubernetes/chart/gameon-system/values.yaml
+
   # replace cluster values in well-known strings
-  cp kubernetes/.template.ingress.yaml kubernetes/kubectl/ingress.yaml
-  cp kubernetes/.template.configmap.yaml kubernetes/kubectl/configmap.yaml
-  cp kubernetes/.template.values.yaml kubernetes/chart/gameon-system/values.yaml
   if [ -z  ${GAMEON_INGRESS_SECRET+z} ]; then
     sed -i '' -e "/secretName: GAMEON_INGRESS_SECRET/d" kubernetes/kubectl/ingress.yaml
     sed -i '' -e "/secretName: GAMEON_INGRESS_SECRET/d" kubernetes/chart/gameon-system/values.yaml
