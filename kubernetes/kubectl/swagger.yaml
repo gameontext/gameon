@@ -1,38 +1,38 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: webapp
+  name: swagger
   namespace: gameon-system
   labels:
-    app: gameon-webapp
+    app: gameon-swagger
 spec:
   type: ClusterIP
   ports:
   - port: 8080
   selector:
-    app: gameon-webapp
+    app: gameon-swagger
 ---
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: webapp
+  name: swagger
   namespace: gameon-system
   labels:
-    app: gameon-webapp
+    app: gameon-swagger
 spec:
   template:
     metadata:
       labels:
-        app: gameon-webapp
+        app: gameon-swagger
     spec:
       containers:
-      - image: gameontext/gameon-webapp:latest
+      - image: gameontext/gameon-swagger:latest
         imagePullPolicy: Always
-        name: webapp
+        name: swagger
         ports:
         - containerPort: 8080
         readinessProbe:
           httpGet:
-            path: /health
+            path: /
             port: 8080
           initialDelaySeconds: 40

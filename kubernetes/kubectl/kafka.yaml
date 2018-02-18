@@ -7,9 +7,9 @@ metadata:
     app: gameon
 spec:
   ports:
-    - port: 9092
-      protocol: TCP
-      targetPort: 9092
+  - port: 9092
+    protocol: TCP
+    targetPort: 9092
   selector:
     app: gameon-kafka
 ---

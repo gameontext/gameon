@@ -8,7 +8,7 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - port: 9080
+  - port: 9080
   selector:
     app: gameon-room
 ---
@@ -26,19 +26,24 @@ spec:
         app: gameon-room
     spec:
       volumes:
-        - name: certificate
-          secret:
-            secretName: global-cert
+      - name: certificate
+        secret:
+          secretName: global-cert
       containers:
       - image: gameontext/gameon-room:latest
         imagePullPolicy: Always
         name: room
         ports:
-          - containerPort: 9080
-            name: room
+        - containerPort: 9080
+          name: room
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 9080
+          initialDelaySeconds: 40
         volumeMounts:
-          - name: certificate
-            mountPath: /etc/cert
+        - name: certificate
+          mountPath: /etc/cert
         envFrom:
-          - configMapRef:
-              name: global-config
+        - configMapRef:
+            name: global-config
