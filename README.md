@@ -22,7 +22,7 @@ This is the TL;DR version.
         $ eval $(./go-admin.sh env)  # set aliases for admin scripts
         $ alias go-run               # confirm path  (docker or kubernetes)
 
-3. (Optional / Docker Compose) Use Vagrant for your development environment
+3. (Optional / Docker Compose only) Use Vagrant for your development environment
    1. Install Vagrant
    2. `vagrant up` (likely with `--provider=virtualbox`)
    3. `vagrant ssh`
@@ -32,7 +32,7 @@ This is the TL;DR version.
       * the Vagrantfile updates the .bashrc for the vagrant user to set `DOCKER_MACHINE_NAME=vagrant` to tweak script behavior for use with vagrant.
       * VM provisioning will perform the next two steps on your behalf.
 
-4. (Kubernetes) [Create or retrieve credentials for your cluster](kubernetes/README.md#set-up-a-kubernetes-cluster)
+4. (Kubernetes only) [Create or retrieve credentials for your cluster](kubernetes/README.md#set-up-a-kubernetes-cluster)
 
 5. Set up required keystores and environment variables. This step also pulls the initial images required for running the system.
 
@@ -69,45 +69,9 @@ If you want to contribute to the game's core services, no worries! Assuming you'
         $ git submodule init map
         $ git submodule update map
 
-### Iterative development with Docker Compose
-
-1. Copy the `docker/docker-compose.override.yml.example` file to `docker/docker-compose.override.yml`, and uncomment the section for the service you want to change:
-    ```
-    map:
-      build:
-        context:  map/map-wlpcfg
-      volumes:
-        - '$HOME:$HOME'
-        - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
-    ```
-    The volume mapping in the `$HOME` directory is optional. If you're using a runtime like Liberty that supports incremental publish / hot swap, using this volume ensures paths will resolve properly.
-
-2. Build the project(s) (includes building wars and creating keystores required for local development). You may have different requirements per service (e.g. most require Java 8):
-
-        $ go-run rebuild map
-
-    This will build the project artifacts and the docker container, and will replace the container in the running system.
-
-3. Iterate!
-      * For subsequent code changes to the same project:
-
-                $ go-run rebuild map
-
-      * To rebuild multiple projects, specify multiple projects as arguments, e.g.
-
-                $ go-run rebuild map player auth
-
-      * To rebuild all projects, use either:
-
-                $ go-run rebuild
-
-        or
-
-                $ go-run rebuild
-
-### Iterative development with Kubernetes
-
-Coming soon.
+Updating the game environment once you've made changes varies by deployment:
+* [Iterative development with Docker Compose](docker/README.md#iterative-development-with-docker-compose)
+* [Iterative development with Kubernetes](kubernetes/README.md#iterative-development-with-kubernetes)
 
 ----
 
