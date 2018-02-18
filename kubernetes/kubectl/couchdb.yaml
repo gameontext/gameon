@@ -7,9 +7,9 @@ metadata:
     app: gameon-couchdb
 spec:
   ports:
-    - port: 5984
-      protocol: TCP
-      targetPort: 5984
+  - port: 5984
+    protocol: TCP
+    targetPort: 5984
   selector:
     app: gameon-couchdb
 ---

@@ -8,7 +8,7 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - port: 9080
+  - port: 9080
   selector:
     app: gameon-mediator
 ---
@@ -26,19 +26,24 @@ spec:
         app: gameon-mediator
     spec:
       volumes:
-        - name: certificate
-          secret:
-            secretName: global-cert
+      - name: certificate
+        secret:
+          secretName: global-cert
       containers:
-        - image: gameontext/gameon-mediator:latest
-          imagePullPolicy: Always
+      - image: gameontext/gameon-mediator:latest
+        imagePullPolicy: Always
+        name: mediator
+        ports:
+        - containerPort: 9080
           name: mediator
-          ports:
-            - containerPort: 9080
-              name: mediator
-          volumeMounts:
-            - name: certificate
-              mountPath: /etc/cert
-          envFrom:
-            - configMapRef:
-                name: global-config
+        readinessProbe:
+          httpGet:
+            path: /mediator/
+            port: 9080
+          initialDelaySeconds: 40
+        volumeMounts:
+        - name: certificate
+          mountPath: /etc/cert
+        envFrom:
+        - configMapRef:
+            name: global-config

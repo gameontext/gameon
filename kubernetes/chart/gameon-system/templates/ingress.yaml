@@ -11,6 +11,11 @@ metadata:
 {{ toYaml . | indent 4 }}
 {{- end }}
 spec:
+{{- with .Values.ingress.backend }}
+  backend:
+    serviceName: {{ .serviceName }}
+    servicePort: {{ .servicePort }}
+{{- end }}
 {{- if .Values.ingress.tls }}
   tls:
   {{- range .Values.ingress.tls }}
@@ -26,10 +31,12 @@ spec:
     - http:
         paths:
         {{- range .Values.coreServices }}
+        {{- if eq (.skipIngress | default false) false }}
         - path: {{ .path }}
           backend:
             serviceName: {{ .serviceName }}-service
             servicePort: {{ .servicePort }}
+        {{- end }}
         {{- end }}
   {{- end }}
   {{- range .Values.ingress.hosts }}
