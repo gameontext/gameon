@@ -30,7 +30,7 @@ spec:
         secret:
           secretName: global-cert
       containers:
-      - image: gameontext/gameon-room:latest
+      - image: gameontext/gameon-room:lastgood
         imagePullPolicy: Always
         name: room
         ports:

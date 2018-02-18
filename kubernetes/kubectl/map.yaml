@@ -30,7 +30,7 @@ spec:
         secret:
           secretName: global-cert
       containers:
-      - image: gameontext/gameon-map:latest
+      - image: gameontext/gameon-map:lastgood
         imagePullPolicy: Always
         name: map
         ports:
