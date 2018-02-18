@@ -58,6 +58,7 @@ usage() {
   echo "
   Actions:
     setup
+    reset
     env
     host
 
@@ -69,8 +70,11 @@ usage() {
 }
 
 case "$ACTION" in
-  setup)
+  reset)
     reset
+    setup
+  ;;
+  setup)
     setup
   ;;
   up)
