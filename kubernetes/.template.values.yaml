@@ -15,7 +15,6 @@ global:
     KAFKA_SERVICE_URL: kafka-service.gameon-system.svc.cluster.local:9092
     MESSAGEHUB_USER: ''
     MESSAGEHUB_PASSWORD: ''
-  development:
 # Global configuration vars for running locally
     TARGET_PLATFORM: local
     SYSTEM_ID: game-on.org
@@ -40,69 +39,77 @@ ingress:
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   tls:
-    - hosts:
-        - GAMEON_INGRESS_SECRET
-      secretName: GAMEON_INGRESS_SECRET
+  - hosts:
+    - GAMEON_INGRESS
+    secretName: GAMEON_INGRESS_SECRET
+#  Define default backend for the ingress
+  backend:
+    serviceName: webapp
+    servicePort: 8080
 
-# Core services: Used to generate core service & deployment artifacts
+####
+# Core services:
+# Used to generate core service & deployment artifacts
+#
 # Specify imagePullPolicy per item, or rely on default behavior
 # see templates/coreservice.yaml and templates/coredeployment.yaml
 coreServices:
 # auth service
-  - serviceName: auth
-    servicePort: 9080
-    path: /auth
-    image: gameontext/gameon-auth:latest
-    configMapRef:
-      - gameon-system-auth-config
-    readinessProbe:
-      path: /auth/health
-      initialDelaySeconds: 40
+- serviceName: auth
+  servicePort: 9080
+  path: /auth
+  image: gameontext/gameon-auth:latest
+  configMapRef:
+  - gameon-system-auth-config
+  readinessProbe:
+    path: /auth/health
+    initialDelaySeconds: 40
 # map service
-  - serviceName: map
-    servicePort: 9080
-    path: /map
-    image: gameontext/gameon-map:latest
-    readinessProbe:
-      path: /map/v1/health
-      initialDelaySeconds: 40
+- serviceName: map
+  servicePort: 9080
+  path: /map
+  image: gameontext/gameon-map:latest
+  readinessProbe:
+    path: /map/v1/health
+    initialDelaySeconds: 40
 # mediator service
-  - serviceName: mediator
-    servicePort: 9080
-    path: /mediator
-    image: gameontext/gameon-mediator:latest
-    readinessProbe:
-      path: /mediator/
-      initialDelaySeconds: 20
+- serviceName: mediator
+  servicePort: 9080
+  path: /mediator
+  image: gameontext/gameon-mediator:latest
+  readinessProbe:
+    path: /mediator/
+    initialDelaySeconds: 40
 # player service
-  - serviceName: player
-    servicePort: 9080
-    path: /players
-    image: gameontext/gameon-player:latest
-    readinessProbe:
-      path: /players/v1/health
-      initialDelaySeconds: 20
+- serviceName: player
+  servicePort: 9080
+  path: /players
+  image: gameontext/gameon-player:latest
+  readinessProbe:
+    path: /players/v1/health
+    initialDelaySeconds: 40
 # swagger service
-  - serviceName: swagger
-    servicePort: 8080
+- serviceName: swagger
+  servicePort: 8080
+  path: /swagger/
+  image: gameontext/gameon-swagger:lastgood
+  readinessProbe:
     path: /
-    image: gameontext/gameon-swagger:lastgood
-    readinessProbe:
-      path: /
-      initialDelaySeconds: 20
+    initialDelaySeconds: 40
 # room service
-  - serviceName: room
-    servicePort: 9080
-    path: /rooms
-    image: gameontext/gameon-room:latest
-    readinessProbe:
-      path: /
-      initialDelaySeconds: 40
+- serviceName: room
+  servicePort: 9080
+  path: /rooms
+  image: gameontext/gameon-room:latest
+  readinessProbe:
+    path: /rooms/
+    initialDelaySeconds: 40
 # webapp service
-  - serviceName: webapp
-    servicePort: 8080
-    path: /
-    image: gameontext/gameon-webapp:latest
-    readinessProbe:
-      path: /health
-      initialDelaySeconds: 40
+- serviceName: webapp
+  servicePort: 8080
+  skipIngress: true
+  path: /
+  image: gameontext/gameon-webapp:latest
+  readinessProbe:
+    path: /health
+    initialDelaySeconds: 40
