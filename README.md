@@ -18,9 +18,6 @@ This is the TL;DR version.
 2. Change to the gameon directory, choose Kubernetes or Docker Compose, set aliases to save typing
 
         $ cd gameon                  # cd into the project directory
-        $ ./go-admin.sh choose       # choose Docker Compose or Kubernetes
-        $ eval $(./go-admin.sh env)  # set aliases for admin scripts
-        $ alias go-run               # confirm path  (docker or kubernetes)
 
 3. (Optional / Docker Compose only) Use Vagrant for your development environment
    1. Install Vagrant
@@ -36,6 +33,9 @@ This is the TL;DR version.
 
 5. Set up required keystores and environment variables. This step also pulls the initial images required for running the system.
 
+        $ ./go-admin.sh choose       # choose Docker Compose or Kubernetes
+        $ eval $(./go-admin.sh env)  # set aliases for admin scripts
+        $ alias go-run               # confirm path  (docker or kubernetes)
         $ go-admin setup
 
     Note: it is safe to run `setup` again, e.g. to check dependencies, or regenerate files if IP addresses change
