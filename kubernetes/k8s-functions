@@ -57,7 +57,7 @@ check_versions() {
 }
 
 check_cluster() {
-  if ! kubectl cluster-info > /dev/null 2>&1; then
+  if ! kubectl --request-timeout 2s cluster-info > /dev/null 2>&1; then
     fixme "No configured Kubernetes cluster"
     echo ""
     echo "You need to set up a Kubernetes cluster and provide its configuration
@@ -131,8 +131,8 @@ export GAMEON_KUBECTL_CONTEXT=$(kubectl config current-context)" > .gameontext.k
 }
 
 check_global_cert() {
-  if ! kubectl get secret --namespace=gameon-system global-cert > /dev/null 2>&1; then
-    ok "$(wrap_kubectl create secret generic global-cert --namespace=gameon-system --from-file=cert.pem=.gameontext.cert.pem)"
+  if ! kubectl -n gameon-system get secret global-cert > /dev/null 2>&1; then
+    ok "$(wrap_kubectl -n gameon-system create secret generic global-cert --from-file=cert.pem=.gameontext.cert.pem)"
   else
     ok "Found global-cert secret in gameon-system namespace"
   fi
