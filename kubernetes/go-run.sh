@@ -87,7 +87,7 @@ case "$ACTION" in
     ingress_host
   ;;
   status)
-    wrap_kubectl get all --namespace=gameon-system
+    wrap_kubectl -n gameon-system get all
   ;;
   env)
     echo "alias go-run='${SCRIPTDIR}/go-run.sh';"
@@ -95,10 +95,8 @@ case "$ACTION" in
   ;;
   wait)
     get_cluster_ip
-    echo "Waiting until http://${GAMEON_INGRESS}/site_alive returns OK."
-    echo "This may take awhile, as it is starting a number of containers at the same time."
 
-    until $(curl --output /dev/null --silent --head --fail http://${GAMEON_INGRESS}/site_alive 2>/dev/null)
+    until $(kubectl -n gameon-system get pods | grep 0/ > /dev/null)
     do
       printf '.'
       sleep 5s
