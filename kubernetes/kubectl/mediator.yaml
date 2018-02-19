@@ -32,7 +32,6 @@ spec:
           secretName: global-cert
       containers:
       - image: gameontext/gameon-mediator:lastgood
-        imagePullPolicy: Always
         name: mediator
         ports:
         - containerPort: 9080

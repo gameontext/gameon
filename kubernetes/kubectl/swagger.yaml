@@ -28,7 +28,6 @@ spec:
     spec:
       containers:
       - image: gameontext/gameon-swagger:lastgood
-        imagePullPolicy: Always
         name: swagger
         ports:
         - containerPort: 8080
