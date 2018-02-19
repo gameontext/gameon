@@ -28,7 +28,6 @@ spec:
     spec:
       containers:
       - image: gameontext/gameon-webapp:lastgood
-        imagePullPolicy: Always
         name: webapp
         ports:
         - containerPort: 8080

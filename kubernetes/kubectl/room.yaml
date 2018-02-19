@@ -32,7 +32,6 @@ spec:
           secretName: global-cert
       containers:
       - image: gameontext/gameon-room:lastgood
-        imagePullPolicy: Always
         name: room
         ports:
         - containerPort: 9080
