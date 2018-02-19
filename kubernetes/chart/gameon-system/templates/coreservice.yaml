@@ -11,6 +11,11 @@ spec:
   type: ClusterIP
   ports:
     - port: {{ .servicePort }}
+{{- if .servicePortName }}
+      name: {{ .servicePortName }}
+{{- else }}
+      name: http
+{{- end }}
   selector:
     app: {{ $.Chart.Name }}-{{ .serviceName }}
 ---
