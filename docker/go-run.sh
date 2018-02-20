@@ -54,43 +54,36 @@ up_log() {
   if [ $NOLOGS -eq 0 ]; then
     echo "Starting containers (detached) [$PROJECTS]"
     echo "Logs will continue in the foreground."
-    echo "Start command: "
-    echo "    ${COMPOSE} up -d $PROJECTS"
   else
     echo "Starting containers (detached) [$PROJECTS]"
     echo "View logs: "
     echo "    ./docker/go-run.sh logs $PROJECTS"
-    echo "Start command: "
-    echo "    ${COMPOSE} up -d $PROJECTS"
   fi
   echo
   echo "Launching containers will take some time as dependencies are coordinated."
   echo "*****"
   echo
 
-  ${COMPOSE} up -d $@
+  wrap_compose up -d $@
   if [ $NOLOGS -eq 0 ]; then
     sleep 3
-    ${COMPOSE} logs --tail="5" -f $@
+    wrap_compose logs --tail="5" -f $@
   fi
 }
 
 down_rm() {
   echo "Stopping containers [$PROJECTS]"
-  echo "    ${COMPOSE} stop $@"
-  ${COMPOSE} stop $@
+  wrap_compose stop $@
   echo
   echo "*****"
   echo "Cleaning up containers [$PROJECTS]"
-  echo "    ${COMPOSE} rm $@"
-  ${COMPOSE} rm $@
+  wrap_compose rm $@
 }
 
 refresh() {
   ## Refresh base images (betas)
   echo "Pulling fresh images [$PROJECTS]"
-  echo "   ${COMPOSE}  build --pull $PROJECTS"
-  ${COMPOSE} build --pull $PROJECTS
+  wrap_compose build --pull $PROJECTS
   if [ $? != 0 ]; then
     echo Docker build of $PROJECTS failed.. please examine logs and retry as appropriate.
     exit 2
@@ -116,14 +109,14 @@ rebuild() {
 
       # Build Docker image
       echo "Building docker image for ${project}"
-      ${COMPOSE} build ${project}
+      wrap_compose build ${project}
 
       cd ..
     elif [ "${project}" == "webapp" ]; then
       build_webapp
     else
       echo "${project} is not a gradle project. No other build instructions. Re-building docker image"
-      ${COMPOSE} build ${project}
+      wrap_compose build ${project}
     fi
   done
 }
@@ -140,7 +133,7 @@ setup() {
     echo "This file will use the docker host ip address ($GAMEON_HOST), but will re-map ports for forwarding from the VM."
   fi
 
-  ${COMPOSE} pull
+  wrap_compose pull
   rc=$?
   if [ $rc -ne 0 ]; then
     echo "Trouble pulling core images, we need to sort that first"
@@ -210,11 +203,10 @@ usage() {
 case "$ACTION" in
   build)
     down_rm $PROJECTS
-    ${COMPOSE} build $PROJECTS
+    wrap_compose build $PROJECTS
   ;;
   down)
-    echo "${COMPOSE} stop $PROJECTS"
-    ${COMPOSE} stop $PROJECTS
+    wrap_compose stop $PROJECTS
     platform_down
   ;;
   env)
@@ -224,7 +216,7 @@ case "$ACTION" in
     echo "alias go-admin='${GO_DIR}/go-admin.sh'"
   ;;
   logs)
-    ${COMPOSE} logs -f $PROJECTS
+    wrap_compose logs -f $PROJECTS
   ;;
   platform_up)
     platform_up $@
@@ -244,7 +236,7 @@ case "$ACTION" in
     refresh $PROJECTS
   ;;
   reload_proxy)
-    ${COMPOSE} kill -s HUP proxy
+    wrap_compose kill -s HUP proxy
   ;;
   reset_kafka)
     reset_kafka
@@ -254,8 +246,7 @@ case "$ACTION" in
     up_log $PROJECTS
   ;;
   rm)
-    echo "${COMPOSE} rm $PROJECTS"
-    ${COMPOSE} rm $PROJECTS
+    wrap_compose rm $PROJECTS
   ;;
   setup)
     setup
@@ -264,11 +255,10 @@ case "$ACTION" in
     up_log $PROJECTS
   ;;
   status)
-    ${COMPOSE} ps
+    wrap_compose ps
   ;;
   stop)
-    echo "${COMPOSE} stop $PROJECTS"
-    ${COMPOSE} stop $PROJECTS
+    wrap_compose stop $PROJECTS
   ;;
   up)
     NOLOGS=1

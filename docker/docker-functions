@@ -21,6 +21,18 @@ then
     DOCKER_CMD="sudo docker"
 fi
 
+wrap_docker() {
+  echo "
+> ${DOCKER_CMD} $@"
+  ${DOCKER_CMD} $@
+}
+
+wrap_compose() {
+  echo "
+> ${COMPOSE} $@"
+  ${COMPOSE} $@
+}
+
 docker_versions() {
   echo ""
   echo "***********  "
@@ -89,7 +101,7 @@ build_webapp() {
     fi
 
     # Build the final Docker image
-    ${COMPOSE} build webapp
+    wrap_compose build webapp
   else
     echo "******"
     echo "No webapp source, using image"
@@ -101,7 +113,7 @@ ensure_keystore() {
   ## Creating Keystores
   # Docker volume operations need absolute paths
   DOCKERPATHPREFIX=
-  ${DOCKER_CMD} version -f '{{.Client.Os}}' | grep windows
+  wrap_docker version -f '{{.Client.Os}}' | grep windows
   rc=$?
   if [ $rc -eq 0 ]
   then
@@ -111,39 +123,29 @@ ensure_keystore() {
 
   # If the keystore volume doesn't exist, then we should generate
   # the keystores we need for local signed JWTs to work
-  ${DOCKER_CMD} volume inspect keystore &> /dev/null
+  wrap_docker volume inspect keystore &> /dev/null
   rc=$?
   if [ $rc -ne 0 ]
   then
-    ${DOCKER_CMD} volume create --name keystore
-    # Dump cmd..
-    echo ${DOCKER_CMD} run \
-      -v keystore:/tmp/keystore \
-      -v ${DOCKERPATHPREFIX}${BIN_DIR}/gen-keystore.sh:/tmp/gen-keystore.sh \
-      -w /tmp --rm ibmjava bash ./gen-keystore.sh ${GAMEON_HOST}
+    wrap_docker volume create --name keystore
     # Generate keystore
-    ${DOCKER_CMD} run \
+    wrap_docker run \
       -v keystore:/tmp/keystore \
       -v ${DOCKERPATHPREFIX}${BIN_DIR}/gen-keystore.sh:/tmp/gen-keystore.sh \
       -w /tmp --rm ibmjava bash ./gen-keystore.sh ${GAMEON_HOST}
     # Copy ltpa.keys
-    echo ${DOCKER_CMD} run \
-      -v keystore:/tmp/keystore \
-      -v ${DOCKERPATHPREFIX}${IMG_DIR}/ltpa.keys:/tmp/ltpa.keys \
-      -w /tmp --rm ibmjava cp ltpa.keys keystore/ltpa.keys
-    # Generate keystore
-    ${DOCKER_CMD} run \
+    wrap_docker run \
       -v keystore:/tmp/keystore \
       -v ${DOCKERPATHPREFIX}${IMG_DIR}/ltpa.keys:/tmp/ltpa.keys \
       -w /tmp --rm ibmjava cp ltpa.keys keystore/ltpa.keys
   fi
 
   ## Ensure volume exists for node modules (avoid putting in filesystem because of OS differences)
-  ${DOCKER_CMD} volume inspect webapp-node-modules &> /dev/null
+  wrap_docker volume inspect webapp-node-modules &> /dev/null
   rc=$?
   if [ $rc -ne 0 ]
   then
-    ${DOCKER_CMD} volume create --name webapp-node-modules
+    wrap_docker volume create --name webapp-node-modules
   fi
 }
 
@@ -171,30 +173,30 @@ platform_up() {
   echo "Starting platform services ${PLATFORM}"
 
   # Start new ones
-  ${COMPOSE} up -d ${PLATFORM}
+  wrap_compose up -d ${PLATFORM}
 }
 
 platform_down() {
   echo "Stopping control plane services..."
-  ${COMPOSE} kill  ${PLATFORM}
-  ${COMPOSE} rm -f ${PLATFORM}
+  wrap_compose kill  ${PLATFORM}
+  wrap_compose rm -f ${PLATFORM}
 }
 
 reset_kafka() {
   echo "Stop kafka and dependent services"
-  ${COMPOSE} stop kafka ${PROJECTS}
-  ${COMPOSE} kill kafka ${PROJECTS}
-  ${COMPOSE} rm -f kafka ${PROJECTS}
+  wrap_compose stop kafka ${PROJECTS}
+  wrap_compose kill kafka ${PROJECTS}
+  wrap_composerm -f kafka ${PROJECTS}
   echo "Resetting kafka takes some time ... "
   echo "Sleep 30"
   sleep 30
   echo "Start Kafka"
-  ${COMPOSE} up -d kafka
+  wrap_compose up -d kafka
   echo "Sleep 60"
   sleep 60
-  ${COMPOSE} logs --tail="5" kafka
+  wrap_compose logs --tail="5" kafka
   echo "Rebuild projects"
-  ${COMPOSE} build  ${PROJECTS}
-  ${COMPOSE} up -d  ${PROJECTS}
-  ${COMPOSE} logs --tail="5" -f  ${PROJECTS}
+  wrap_compose build  ${PROJECTS}
+  wrap_compose up -d  ${PROJECTS}
+  wrap_compose logs --tail="5" -f  ${PROJECTS}
 }
