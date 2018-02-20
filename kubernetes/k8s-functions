@@ -14,6 +14,12 @@ wrap_helm() {
   helm $@
 }
 
+wrap_minikube() {
+  echo "
+> minikube $@"
+  minikube $@
+}
+
 check_versions() {
   QUIT=0
   echo ""
@@ -195,8 +201,24 @@ setup() {
   read -p "Do you want to use helm? [y] " answer
   if [ -z $answer ] || [[ $answer =~ [Yy] ]]; then
     touch .gameontext.helm
-    wrap_helm init
+
+    if ! kubectl get po -n kube-system | grep -q tiller-deploy; then
+      wrap_helm init
+
+      echo "Tiller initialized ... "
+      tiller=$(kubectl get po -n kube-system | grep tiller-deploy | awk '{print $1;}')
+      wait_until_ready -n kube-system get po ${tiller}
+      echo " ... Tiller is ready"
+    fi
+
   else
     rm -f .gameontext.helm
   fi
+}
+
+wait_until_ready() {
+  while kubectl $@ | grep -q 0/; do
+    printf '.'
+    sleep 5s
+  done
 }

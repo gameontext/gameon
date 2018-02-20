@@ -57,15 +57,17 @@ platform_down() {
 usage() {
   echo "
   Actions:
-    setup
-    reset
-    env
-    host
+    setup    -- set up k8s secrets, prompt for helm
+    reset    -- replace generated files (cert, config with cluster IP)
+    env      -- eval-compatible commands to create aliases
+    host     -- manually set host information about your k8s cluster
 
-    up
-    down
-    status
-    wait
+    up       -- install/update gameon-system namespace
+    down     -- delete the gameon-system namespace
+    status   -- return status of gameon-system namespace
+    wait     -- wait until the game services are up and ready to play!
+
+    mini-istio -- minikube start with parameters for istio
   "
 }
 
@@ -85,9 +87,31 @@ case "$ACTION" in
   ;;
   host)
     ingress_host
+    reset
   ;;
   status)
     wrap_kubectl -n gameon-system get all
+  ;;
+  mini-istio)
+    wrap_minikube start \
+      --extra-config=controller-manager.ClusterSigningCertFile="/var/lib/localkube/certs/ca.crt" \
+      --extra-config=controller-manager.ClusterSigningKeyFile="/var/lib/localkube/certs/ca.key" \
+      --extra-config=apiserver.Admission.PluginNames=NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota \
+      --kubernetes-version=v1.9.0 \
+      --memory 8192
+  ;;
+  mini-registry)
+    if ! kubectl -n kube-system get service kube-registry > /dev/null; then
+      # Create a docker registry in minikube at port 5000
+      wrap_kubectl apply -f kubernetes/kube-registry.yaml
+    fi
+
+    registry=$(kubectl get po -n kube-system | grep kube-registry-v0 | awk '{print $1;}')
+    echo "Waiting for registry pod to start"
+    wait_until_ready -n kube-system get pod ${registry}
+
+    # Forward the registry port to the host
+    wrap_kubectl port-forward --namespace kube-system ${registry} 5000:5000
   ;;
   env)
     echo "alias go-run='${SCRIPTDIR}/go-run.sh';"
@@ -96,13 +120,14 @@ case "$ACTION" in
   wait)
     get_cluster_ip
 
-    until $(kubectl -n gameon-system get pods | grep 0/ > /dev/null)
-    do
-      printf '.'
-      sleep 5s
-    done
-    echo ""
-    echo "Game On! You're ready to play: https://${GAMEON_INGRESS}/"
+    if kubectl -n gameon-system get po | grep -q mediator; then
+      echo "Waiting for gameon-system pods to start"
+      wait_until_ready -n gameon-system get pods
+      echo ""
+      echo "Game On! You're ready to play: https://${GAMEON_INGRESS}/"
+    else
+      echo "You haven't started any game services"
+    fi
   ;;
   *)
     usage

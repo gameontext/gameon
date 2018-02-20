@@ -1,7 +1,8 @@
 # Deploying core game services in kubernetes
 
-For the following instructions, we'll assume you've either cloned the repo
-or downloaded and extracted a zip of its contents.
+Obtain the source for this repository:
+  HTTPS: git clone https://github.com/gameontext/gameon.git
+  SSH: git clone git@github.com:gameontext/gameon.git
 
 Start with:
 
