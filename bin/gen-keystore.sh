@@ -144,5 +144,13 @@ keytool -importkeystore \
   -destkeystore keystore/truststore.jks \
   -srcstorepass changeit \
   -deststorepass truststore
+
+echo | openssl s_client -showcerts -servername *.googleapis.com -connect www.googleapis.com:443 </dev/null 2>&1 | sed -ne '/BEGIN\ CERTIFICATE/,/END\ CERTIFICATE/ p' > keystore/googleca.pem
+ 
+keytool -import -v -trustcacerts -alias googleca -file keystore/googleca.pem -storepass truststore -keypass keystore -noprompt -keystore keystore/truststore.jks 
+
+curl https://secure.globalsign.net/cacert/Root-R2.crt > keystore/globalsign-r2.crt
+keytool -import -v -trustcacerts -alias globalsign-r2 -file keystore/globalsign-r2.crt -storepass truststore -keypass keystore -noprompt -keystore keystore/truststore.jks
+
 #clean up the public cert..
 rm -f keystore/public.crt
