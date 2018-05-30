@@ -15,7 +15,7 @@ This is the TL;DR version.
   * HTTPS: `git clone https://github.com/gameontext/gameon.git`
   * SSH: `git clone git@github.com:gameontext/gameon.git`
 
-2. Change to the gameon directory, choose Kubernetes or Docker Compose, set aliases to save typing
+2. Change to the gameon directory
 
         $ cd gameon                  # cd into the project directory
 
@@ -27,7 +27,7 @@ This is the TL;DR version.
 
    * Notes:
       * the Vagrantfile updates the .bashrc for the vagrant user to set `DOCKER_MACHINE_NAME=vagrant` to tweak script behavior for use with vagrant.
-      * VM provisioning will perform the next two steps on your behalf.
+      * VM provisioning will perform the next two (applicable) steps on your behalf.
 
 4. (Kubernetes only) [Create or retrieve credentials for your cluster](kubernetes/README.md#set-up-a-kubernetes-cluster)
 

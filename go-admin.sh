@@ -34,8 +34,7 @@ usage() {
 
     up
     down
-    status
-    env"
+    status"
 }
 
 go_run() {
