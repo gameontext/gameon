@@ -69,7 +69,7 @@ Iterative development with kubernetes varies a little bit if you're using helm.
         - serviceName: player
           servicePort: 9080
           path: /players
-          image: gameontext/gameon-player:**latest**
+          image: gameontext/gameon-player:latest
           readinessProbe:
             path: /players/v1/health
             initialDelaySeconds: 40
