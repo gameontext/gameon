@@ -23,7 +23,7 @@ The `go-run.sh` and `k8s-functions` scripts encapsulate setup and deployment of 
 
 ## General bring-up instructions
 
-1. [Create or retrieve credentials for your cluster](#create-a-kubernetes-cluster)
+1. [Create or retrieve credentials for your cluster](#set-up-a-kubernetes-cluster)
 
 2. Setup your cluster:
 
