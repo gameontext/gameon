@@ -1,8 +1,8 @@
 # Deploying core game services in kubernetes
 
 Obtain the source for this repository:
-  HTTPS: git clone https://github.com/gameontext/gameon.git
-  SSH: git clone git@github.com:gameontext/gameon.git
+* HTTPS: git clone https://github.com/gameontext/gameon.git
+* SSH: git clone git@github.com:gameontext/gameon.git
 
 Start with:
 
@@ -53,13 +53,35 @@ The `go-run.sh` and `k8s-functions` scripts encapsulate setup and deployment of 
 
 ## Iterative development with Kubernetes
 
+We'll assume for the following that you want to make changes to the player service.
+
+1. Clone the project:
+  * HTTPS: git clone https://github.com/gameontext/gameon-player.git
+  * SSH: git clone git@github.com:gameontext/gameon-player.git
+
+2. Make your changes.
+3. Rebuild the application and the docker image following instructions in the project's `README.md` file. For most of our Java projects (including player), the steps look something like the following: 
+      
+        $ ./gradlew build --rerun-tasks
+        $ docker build -t gameontext/gameon-player player-wlpcfg
+
+4. Push the rebuild docker image to a repository where kubernetes can find it. Assuming we do naming tricks to share a local docker repository (see below), then we do something like this: 
+
+        $ docker tag gameontext/gameon-player localhost:5000/gameontext/gameon-player
+        $ docker push localhost:5000/gameontext/gameon-player
+
+5. See [Iterating with Kubernetes](#iterating-with-kubernetes) or [Iterating with Helm](#iterating-with-helm) and perform the required next steps to get the new image running in your kubernetes cluster.
+
+### Sharing the docker registry with minikube
+
+For local development with kubernetes and minikube, you can share your local docker registry with the minikube VM to make it easier for kubernetes to find your updated images [credit: Tanmai Gopal](https://blog.hasura.io/sharing-a-local-registry-for-minikube-37c7240d0615).
+
+    $ go-run mini-registry
+
+### Iterating with Kubernetes
 
 
-[Using helm? Skip ahead](#development-with-helm)
-
-
-
-### Development with Helm
+### Iterating with Helm
 
 Iterative development with kubernetes varies a little bit if you're using helm.
 
@@ -73,8 +95,6 @@ Iterative development with kubernetes varies a little bit if you're using helm.
           readinessProbe:
             path: /players/v1/health
             initialDelaySeconds: 40
-
-2.
 
 
 ## Set up a Kubernetes cluster
