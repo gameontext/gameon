@@ -8,6 +8,12 @@ wrap_kubectl() {
   kubectl $@
 }
 
+wrap_exec_kubectl() {
+  echo "
+> kubectl $@"
+  exec kubectl $@
+}
+
 wrap_helm() {
   echo "
 > helm $@"

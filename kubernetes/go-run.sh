@@ -68,6 +68,7 @@ usage() {
     wait     -- wait until the game services are up and ready to play!
 
     mini-istio -- minikube start with parameters for istio
+    mini-registry -- proxy minikube registry addon
   "
 }
 
@@ -101,17 +102,21 @@ case "$ACTION" in
       --memory 8192
   ;;
   mini-registry)
-    if ! kubectl -n kube-system get service kube-registry > /dev/null; then
+    if ! kubectl -n kube-system get service registry > /dev/null; then
       # Create a docker registry in minikube at port 5000
-      wrap_kubectl apply -f kubernetes/kube-registry.yaml
+      wrap_minikube addons enable registry
     fi
 
-    registry=$(kubectl get po -n kube-system | grep kube-registry-v0 | awk '{print $1;}')
+    registry=$(kubectl get po -n kube-system | grep registry- | awk '{print $1;}')
     echo "Waiting for registry pod to start"
     wait_until_ready -n kube-system get pod ${registry}
 
     # Forward the registry port to the host
-    wrap_kubectl port-forward --namespace kube-system ${registry} 5000:5000
+    echo "Port forwarding: minikube docker registry should be reachable at localhost:5000.
+This can be left in the foreground, or sent to the background.
+
+If you run using docker-machine, an additional step is required to map the docker-machine port 5000 to localhost:5000."
+    wrap_exec_kubectl port-forward -n kube-system ${registry} 5000:5000
   ;;
   env)
     echo "alias go-run='${SCRIPTDIR}/go-run.sh';"
