@@ -53,49 +53,70 @@ The `go-run.sh` and `k8s-functions` scripts encapsulate setup and deployment of 
 
 ## Iterative development with Kubernetes
 
-We'll assume for the following that you want to make changes to the player service.
+We'll assume for the following that you want to make changes to the map service, and are continuing with the git submodule created in the [common README.md](../README.md#core-service-development-optional).
 
-1. Clone the project:
-  * HTTPS: git clone https://github.com/gameontext/gameon-player.git
-  * SSH: git clone git@github.com:gameontext/gameon-player.git
+1. Checkout your own branch (or add an additional remote for your fork) using standard git commands:
 
-2. Make your changes.
-3. Rebuild the application and the docker image following instructions in the project's `README.md` file. For most of our Java projects (including player), the steps look something like the following: 
-      
-        $ ./gradlew build --rerun-tasks
-        $ docker build -t gameontext/gameon-player player-wlpcfg
+      $ cd map
+      $ git checkout -b mybranch
 
-4. Push the rebuild docker image to a repository where kubernetes can find it. Assuming we do naming tricks to share a local docker repository (see below), then we do something like this: 
+2. Make your changes, and rebuild the service and the docker image for the modified project
+  * From the map directory:
 
-        $ docker tag gameontext/gameon-player localhost:5000/gameontext/gameon-player
-        $ docker push localhost:5000/gameontext/gameon-player
+          $ ./gradlew build --rerun-tasks
+          $ ./gradlew image
 
-5. See [Iterating with Kubernetes](#iterating-with-kubernetes) or [Iterating with Helm](#iterating-with-helm) and perform the required next steps to get the new image running in your kubernetes cluster.
+  * Via `go-run`
+
+          $ go-run rebuild map
+
+    Note: the `go-run` command will rebuild any of the submodules, even those that are not java/gradle-based.
+
+3. If you're using a docker registry ([see below](#sharing-the-docker-registry-with-minikube)), push the rebuilt docker image. If you are using minikube's registry plugin + kube_proxy, the publish target is `localhost:5000`.
+
+        $ docker tag gameontext/gameon-map localhost:5000/gameontext/gameon-map
+        $ docker push localhost:5000/gameontext/gameon-map
+
+4. See [Updating images with Kubernetes metadata](#updating-images-with-kubernetes-metadata) or [Updating images with Helm](#updating-images-with-helm) for the required next steps to get the new image running in your kubernetes cluster.
 
 ### Sharing the docker registry with minikube
 
-For local development with kubernetes and minikube, you can share your local docker registry with the minikube VM to make it easier for kubernetes to find your updated images [credit: Tanmai Gopal](https://blog.hasura.io/sharing-a-local-registry-for-minikube-37c7240d0615).
+There are two options to make publishing your new images easier for minikube to find.
 
-    $ go-run mini-registry
+1. Use minikube as your DOCKER_HOST.
 
-### Iterating with Kubernetes
+        $ eval $(minikube docker-env)
+
+    Note: the docker-based webap build relies on the bind-mount of local volumes, which gets very confused with a remote DOCKER_HOST. If you use this method, build webapp directly using node & gulp (see project README.md). The `final` step of `build.sh` (which produces the image) will still work.
+
+2. Use the minikube registry addon. We've added a `go-run` action to make this easy:
+
+        $ go-run mini-registry
+
+### Updating images with Kubernetes metadata
 
 
-### Iterating with Helm
+### Updating images with Helm
 
 Iterative development with kubernetes varies a little bit if you're using helm.
 
-1. Open `kubernetes/chart/values.yaml`, find the service you want to update, and alter it to use the _latest_ image:
+1. Open `kubernetes/chart/values.yaml`, find the service you want to update, and alter it to use the _latest_ image. If you're using a docker registy, include that as well:
 
-        # player service
-        - serviceName: player
+        # map service
+        - serviceName: map
           servicePort: 9080
-          path: /players
-          image: gameontext/gameon-player:latest
+          path: /map
+          image: localhost:5000/gameontext/gameon-map:latest
           readinessProbe:
-            path: /players/v1/health
+            path: /map/v1/health
             initialDelaySeconds: 40
 
+2. Delete and re-install the helm chart (could upgrade the chart version, but we'll opt for scorched earth for safety):
+
+        $ go-run down
+        $ go-run up
+
+  Note: `go-run` will display the `helm` and `kubectl` commands it is using with these actions.
 
 ## Set up a Kubernetes cluster
 

@@ -13,6 +13,7 @@ source $SCRIPTDIR/k8s-functions
 cd "${GO_DIR}"
 
 GO_DEPLOYMENT=kubernetes
+COREPROJECTS="auth map mediator player proxy room swagger webapp"
 
 #set the action, default to help if none passed.
 ACTION=help
@@ -54,9 +55,29 @@ platform_down() {
   fi
 }
 
+push() {
+  PROJECTS=''
+  registry_ip=$(kubectl -n kube-system get svc registry -o jsonpath="{.spec.clusterIP}")
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      all) PROJECTS="$COREPROJECTS $PROJECTS";;
+      *) PROJECTS="$1 $PROJECTS";;
+    esac
+    shift
+  done
+
+  echo "Pushing projects [$PROJECTS]"
+  for project in $PROJECTS
+  do
+    eval $(minikube docker-env)
+    wrap_docker tag gameontext/gameon-${project} ${registry_ip}/gameontext/gameon-${project}
+    wrap_docker push ${registry_ip}/gameontext/gameon-${project}
+  done
+}
+
 rebuild() {
   PROJECTS=''
-  COREPROJECTS="auth map mediator player proxy room swagger webapp"
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -71,7 +92,12 @@ rebuild() {
   do
     echo
     echo "*****"
-    if [ -d "${project}" ] && [ -e "${project}/build.gradle" ]; then
+
+    if [ ! -d "${project}" ]; then
+      continue
+    fi
+
+    if [ -e "${project}/build.gradle" ]; then
       echo "Building project ${project} with gradle"
 
       cd "$project"
@@ -85,19 +111,12 @@ rebuild() {
       # Build Docker image
       echo "Building docker image for ${project}"
       ./gradlew build image
-    elif [ "${project}" == "webapp" ] && [ -f ${GO_DIR}/webapp/build.sh ]; then
+    elif [ -d "${project}" ] && [ "${project}" == "webapp" ] && [ -f ${GO_DIR}/webapp/build.sh ]; then
       echo "webapp source present:  $(ls -d ${GO_DIR}/webapp/app)"
-      echo "Building using ${GO_DIR}/webapp/build.sh"
       ${GO_DIR}/webapp/build.sh
-      rc=$?
-      if [ $rc != 0 ]
-      then
-        echo Node build failed. Please investigate, Game On! is unlikely to work until the issue is resolved.
-        exit 1
-      fi
       ${GO_DIR}/webapp/build.sh final
     else
-      echo "${project} is not a gradle project. Re-building docker image"
+      echo "Re-building docker image for ${project}"
       cd "$project"
       ${DOCKER_CMD} build -t gameontext/gameon-${project} .
     fi
@@ -166,12 +185,24 @@ case "$ACTION" in
     echo "Waiting for registry pod to start"
     wait_until_ready -n kube-system get pod ${registry}
 
-    # Forward the registry port to the host
-    echo "Port forwarding: minikube docker registry should be reachable at localhost:5000.
-This can be left in the foreground, or sent to the background.
+    registry_ip=$(kubectl -n kube-system get svc registry -o jsonpath="{.spec.clusterIP}")
+    echo "Next steps:
+* set up minikube docker-env to share minikube docker host:
+  $ eval \$(minikube docker-env)
+* tag the with the minikube registry:
+  $ docker tag <imageName> ${registry_ip}/<imageName>
+* push the image to the minikube registry:
+  $ docker push ${registry_ip}/<imageName>
 
-If you run using docker-machine, an additional step is required to map the docker-machine port 5000 to localhost:5000."
-    wrap_exec_kubectl port-forward -n kube-system ${registry} 5000:5000
+Use go-run mini-push <project name> to automate these steps.
+
+To use the pushed image, kube metadata must be updated to reference ${registry_ip}/<imageName>.
+* If you're using helm, update the image reference(s) in values.yaml
+* If you aren't, edit the service's yaml in the kubectl directory.
+"
+  ;;
+  mini-push)
+    push $@
   ;;
   env)
     echo "alias go-run='${SCRIPTDIR}/go-run.sh';"
