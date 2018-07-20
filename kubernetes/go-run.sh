@@ -37,7 +37,6 @@ platform_up() {
     wrap_kubectl apply -R -f kubernetes/kubectl
   fi
 
-  echo "To test for readiness: http://${GAMEON_INGRESS}/site_alive"
   echo 'To wait for readiness: ./kubernetes/go-run.sh wait'
   echo 'To type less: eval $(./kubernetes/go-run.sh env)'
 }
@@ -53,27 +52,6 @@ platform_down() {
   else
     ok "gameon-system stopped"
   fi
-}
-
-push() {
-  PROJECTS=''
-  registry_ip=$(kubectl -n kube-system get svc registry -o jsonpath="{.spec.clusterIP}")
-
-  while [[ $# -gt 0 ]]; do
-    case "$1" in
-      all) PROJECTS="$COREPROJECTS $PROJECTS";;
-      *) PROJECTS="$1 $PROJECTS";;
-    esac
-    shift
-  done
-
-  echo "Pushing projects [$PROJECTS]"
-  for project in $PROJECTS
-  do
-    eval $(minikube docker-env)
-    wrap_docker tag gameontext/gameon-${project} ${registry_ip}/gameontext/gameon-${project}
-    wrap_docker push ${registry_ip}/gameontext/gameon-${project}
-  done
 }
 
 rebuild() {
@@ -139,7 +117,6 @@ usage() {
     wait     -- wait until the game services are up and ready to play!
 
     mini-istio -- minikube start with parameters for istio
-    mini-registry -- proxy minikube registry addon
   "
 }
 
@@ -166,6 +143,11 @@ case "$ACTION" in
   ;;
   status)
     wrap_kubectl -n gameon-system get all
+
+    get_cluster_ip
+    echo "
+    When ready, the game is available at https://${GAMEON_INGRESS}/
+    "
   ;;
   mini-istio)
     wrap_minikube start \
@@ -174,35 +156,6 @@ case "$ACTION" in
       --extra-config=apiserver.Admission.PluginNames=NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota \
       --kubernetes-version=v1.9.0 \
       --memory 8192
-  ;;
-  mini-registry)
-    if ! kubectl -n kube-system get service registry > /dev/null; then
-      # Create a docker registry in minikube at port 5000
-      wrap_minikube addons enable registry
-    fi
-
-    registry=$(kubectl get po -n kube-system | grep registry- | awk '{print $1;}')
-    echo "Waiting for registry pod to start"
-    wait_until_ready -n kube-system get pod ${registry}
-
-    registry_ip=$(kubectl -n kube-system get svc registry -o jsonpath="{.spec.clusterIP}")
-    echo "Next steps:
-* set up minikube docker-env to share minikube docker host:
-  $ eval \$(minikube docker-env)
-* tag the with the minikube registry:
-  $ docker tag <imageName> ${registry_ip}/<imageName>
-* push the image to the minikube registry:
-  $ docker push ${registry_ip}/<imageName>
-
-Use go-run mini-push <project name> to automate these steps.
-
-To use the pushed image, kube metadata must be updated to reference ${registry_ip}/<imageName>.
-* If you're using helm, update the image reference(s) in values.yaml
-* If you aren't, edit the service's yaml in the kubectl directory.
-"
-  ;;
-  mini-push)
-    push $@
   ;;
   env)
     echo "alias go-run='${SCRIPTDIR}/go-run.sh';"

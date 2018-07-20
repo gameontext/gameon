@@ -55,12 +55,16 @@ The `go-run.sh` and `k8s-functions` scripts encapsulate setup and deployment of 
 
 We'll assume for the following that you want to make changes to the map service, and are continuing with the git submodule created in the [common README.md](../README.md#core-service-development-optional).
 
-1. Checkout your own branch (or add an additional remote for your fork) using standard git commands:
+1. (Minikube) If you are using minikube, switch to that as your docker host
+
+      $ eval $(minikube docker-env)
+
+2. Checkout your own branch (or add an additional remote for your fork) using standard git commands:
 
       $ cd map
       $ git checkout -b mybranch
 
-2. Make your changes, and rebuild the service and the docker image for the modified project
+3. Make your changes, and rebuild the service and the docker image for the modified project
   * From the map directory:
 
           $ ./gradlew build --rerun-tasks
@@ -72,41 +76,23 @@ We'll assume for the following that you want to make changes to the map service,
 
     Note: the `go-run` command will rebuild any of the submodules, even those that are not java/gradle-based.
 
-3. If you're using a docker registry ([see below](#sharing-the-docker-registry-with-minikube)), push the rebuilt docker image. If you are using minikube's registry plugin + kube_proxy, the publish target is `localhost:5000`.
-
-        $ docker tag gameontext/gameon-map localhost:5000/gameontext/gameon-map
-        $ docker push localhost:5000/gameontext/gameon-map
-
 4. See [Updating images with Kubernetes metadata](#updating-images-with-kubernetes-metadata) or [Updating images with Helm](#updating-images-with-helm) for the required next steps to get the new image running in your kubernetes cluster.
-
-### Sharing the docker registry with minikube
-
-There are two options to make publishing your new images easier for minikube to find.
-
-1. Use minikube as your DOCKER_HOST.
-
-        $ eval $(minikube docker-env)
-
-    Note: the docker-based webap build relies on the bind-mount of local volumes, which gets very confused with a remote DOCKER_HOST. If you use this method, build webapp directly using node & gulp (see project README.md). The `final` step of `build.sh` (which produces the image) will still work.
-
-2. Use the minikube registry addon. We've added a `go-run` action to make this easy:
-
-        $ go-run mini-registry
 
 ### Updating images with Kubernetes metadata
 
 
 ### Updating images with Helm
 
-Iterative development with kubernetes varies a little bit if you're using helm.
+If you're using helm, we need to update the image tag and the pull policy to work with specific images. We're following along with minikube on this one. If you aren't using minikube (and sharing the docker host), then this gets a little more complicated, and you need to start working with a docker registry.
 
-1. Open `kubernetes/chart/values.yaml`, find the service you want to update, and alter it to use the _latest_ image. If you're using a docker registy, include that as well:
+1. Open `kubernetes/chart/values.yaml`, find the service you want to update. Set the tag to latest, and the pull policy to Never (we officially never want to pull the latest from dockerhub, we only want kubernetes to use the version we've placed in its path).
 
         # map service
         - serviceName: map
           servicePort: 9080
           path: /map
-          image: localhost:5000/gameontext/gameon-map:latest
+          image: lgameontext/gameon-map:experimental
+          imagePullPolicy: Never
           readinessProbe:
             path: /map/v1/health
             initialDelaySeconds: 40
