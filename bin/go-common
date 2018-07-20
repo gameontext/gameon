@@ -53,3 +53,16 @@ get_deployment() {
   fi
   GO_DEPLOYMENT=${GO_DEPLOYMENT-docker}
 }
+
+#configure docker command
+DOCKER_CMD="docker"
+if [ "$(uname)" != "Darwin" ] && [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]
+then
+    DOCKER_CMD="sudo docker"
+fi
+
+wrap_docker() {
+  echo "
+> ${DOCKER_CMD} $@"
+  ${DOCKER_CMD} $@
+}
