@@ -14,18 +14,10 @@ fi
 
 #configure docker compose command
 COMPOSE="docker-compose -f $SCRIPTDIR/docker-compose.yml ${OVERRIDE}"
-DOCKER_CMD="docker"
 if [ "$(uname)" != "Darwin" ] && [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]
 then
     COMPOSE="sudo ${COMPOSE}"
-    DOCKER_CMD="sudo docker"
 fi
-
-wrap_docker() {
-  echo "
-> ${DOCKER_CMD} $@"
-  ${DOCKER_CMD} $@
-}
 
 wrap_compose() {
   echo "

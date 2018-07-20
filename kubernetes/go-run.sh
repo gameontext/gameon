@@ -54,6 +54,58 @@ platform_down() {
   fi
 }
 
+rebuild() {
+  PROJECTS=''
+  COREPROJECTS="auth map mediator player proxy room swagger webapp"
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      all) PROJECTS="$COREPROJECTS $PROJECTS";;
+      *) PROJECTS="$1 $PROJECTS";;
+    esac
+    shift
+  done
+
+  echo "Building projects [$PROJECTS]"
+  for project in $PROJECTS
+  do
+    echo
+    echo "*****"
+    if [ -d "${project}" ] && [ -e "${project}/build.gradle" ]; then
+      echo "Building project ${project} with gradle"
+
+      cd "$project"
+      ./gradlew build --rerun-tasks
+      rc=$?
+      if [ $rc != 0 ]; then
+        echo Gradle build failed. Please investigate, Game On! is unlikely to work until the issue is resolved.
+        exit 1
+      fi
+
+      # Build Docker image
+      echo "Building docker image for ${project}"
+      ./gradlew build image
+    elif [ "${project}" == "webapp" ] && [ -f ${GO_DIR}/webapp/build.sh ]; then
+      echo "webapp source present:  $(ls -d ${GO_DIR}/webapp/app)"
+      echo "Building using ${GO_DIR}/webapp/build.sh"
+      ${GO_DIR}/webapp/build.sh
+      rc=$?
+      if [ $rc != 0 ]
+      then
+        echo Node build failed. Please investigate, Game On! is unlikely to work until the issue is resolved.
+        exit 1
+      fi
+      ${GO_DIR}/webapp/build.sh final
+    else
+      echo "${project} is not a gradle project. Re-building docker image"
+      cd "$project"
+      ${DOCKER_CMD} build -t gameontext/gameon-${project} .
+    fi
+
+    cd ${GO_DIR}
+  done
+}
+
 usage() {
   echo "
   Actions:
@@ -88,6 +140,9 @@ case "$ACTION" in
   host)
     ingress_host
     reset
+  ;;
+  rebuild)
+    rebuild $@
   ;;
   status)
     wrap_kubectl -n gameon-system get all
