@@ -68,32 +68,29 @@ rebuild() {
   echo "Building projects [$PROJECTS]"
   for project in $PROJECTS
   do
-    echo
-    echo "*****"
-
     if [ ! -d "${project}" ]; then
       continue
     fi
 
+    echo
+    echo "*****"
+    cd "$project"
+
     if [ -e "${project}/build.gradle" ]; then
       echo "Building project ${project} with gradle"
-
-      cd "$project"
       ./gradlew build --rerun-tasks
       rc=$?
       if [ $rc != 0 ]; then
         echo Gradle build failed. Please investigate, Game On! is unlikely to work until the issue is resolved.
         exit 1
       fi
-
-      # Build Docker image
       echo "Building docker image for ${project}"
       ./gradlew build image
-    elif [ -d "${project}" ] && [ "${project}" == "webapp" ] && [ -f ${GO_DIR}/webapp/build.sh ]; then
+    elif [ "${project}" == "webapp" ] && [ -f build.sh ]; then
       echo "webapp source present:  $(ls -d ${GO_DIR}/webapp/app)"
-      ${GO_DIR}/webapp/build.sh
-      ${GO_DIR}/webapp/build.sh final
-    else
+      ./build.sh
+      ./build.sh final
+    elif [ -f ${project}/Dockerfile ]; then
       echo "Re-building docker image for ${project}"
       cd "$project"
       ${DOCKER_CMD} build -t gameontext/gameon-${project} .

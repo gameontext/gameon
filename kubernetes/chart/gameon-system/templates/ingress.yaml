@@ -10,25 +10,23 @@ metadata:
   annotations:
 {{ toYaml . | indent 4 }}
 {{- end }}
+
 spec:
 {{- with .Values.ingress.backend }}
   backend:
     serviceName: {{ .serviceName }}
     servicePort: {{ .servicePort }}
 {{- end }}
-{{- if .Values.ingress.tls }}
+# TLS block causes automatic redirection of http -> https
   tls:
-  {{- range .Values.ingress.tls }}
     - hosts:
-      {{- range .hosts }}
-        - {{ . }}
-      {{- end }}
-      secretName: {{ .secretName }}
-  {{- end }}
+      - {{ .Values.global.frontDoor }}
+{{- with .Values.ingress.secretName }}
+      secretName: {{ . }}
 {{- end }}
   rules:
-  {{- if .Values.coreServices }}
-    - http:
+    - host: {{ .Values.global.frontDoor }}
+      http:
         paths:
         {{- range .Values.coreServices }}
         {{- if eq (.skipIngress | default false) false }}
@@ -38,15 +36,4 @@ spec:
             servicePort: {{ .servicePort }}
         {{- end }}
         {{- end }}
-  {{- end }}
-  {{- range .Values.ingress.hosts }}
-    - host: {{ .host }}
-      http:
-        paths:
-        {{- range .services }}
-        - path: {{ .path }}
-          backend:
-            serviceName: {{ .Chart.Name }}-{{ .serviceName }}
-            servicePort: {{ .servicePort }}
-        {{- end }}
-  {{- end }}
+
