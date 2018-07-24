@@ -24,4 +24,4 @@
 	url = https://github.com/gameontext/gameon-auth.git
 [submodule "auth-spring-social"]
 	path = auth-spring-social
-	url = https://github.com/gameontext/gameon-auth-spring-social.git	
+	url = https://github.com/gameontext/gameon-auth-spring-social.git
