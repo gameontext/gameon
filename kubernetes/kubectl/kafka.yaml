@@ -30,6 +30,7 @@ spec:
     spec:
       containers:
       - image: gameontext/go-reactive-sandbox:latest
+        imagePullPolicy: IfNotPresent
         name: kafka
         ports:
         - containerPort: 9092

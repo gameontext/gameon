@@ -44,7 +44,7 @@ This is the TL;DR version.
 
         $ go-admin up
 
-7. Wait for the game to start. This will vary between Docker Compose and Kubernetes approaches. `./go-admin.sh up` will tell you what to try next.
+7. Wait for the game to start. This will vary between Docker Compose and Kubernetes approaches. The result of `go-admin up` will tell you what to try next.
 
 8. **Carry on with [building your rooms](https://gameontext.gitbooks.io/gameon-gitbook/content/walkthroughs/createRoom.html)!**
 
