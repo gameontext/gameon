@@ -27,6 +27,10 @@ ok() {
 fixme() {
   echo -e "${RED}FIXME:${NO_COLOR} $1"
 }
+note() {
+  echo ""
+  echo -e "${BLUE}NOTE:${NO_COLOR} $1"
+}
 
 # return 0 if version (parsed from string ' dd?.dd?.dd?') is equal or greater than
 # the other provided version

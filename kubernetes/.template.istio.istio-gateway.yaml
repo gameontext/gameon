@@ -1,0 +1,28 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: gameon-gateway
+  namespace: gameon-system
+spec:
+  selector:
+    istio: ingressgateway # use istio gateway impl
+  servers:
+  - port: 
+      name: http
+      number: 80
+      protocol: HTTP
+    hosts:
+    - GAMEON_INGRESS
+    tls:
+      httpsRedirect: true # sends 301 redirect for http requests
+  - port:
+      name: https
+      number: 443
+      protocol: HTTPS
+    hosts:
+    - GAMEON_INGRESS
+    tls:
+      mode: SIMPLE #enables HTTPS on this port
+      serverCertificate: /etc/istio/ingressgateway-certs/tls.crt
+      privateKey: /etc/istio/ingressgateway-certs/tls.key
+
