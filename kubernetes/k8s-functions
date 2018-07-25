@@ -2,6 +2,9 @@ BIN_DIR=$( cd "$SCRIPTDIR/../bin" && pwd )
 GO_DIR=$( cd "$SCRIPTDIR/.." && pwd )
 source $BIN_DIR/go-common
 
+GO_DEPLOYMENT=kubernetes
+COREPROJECTS="auth map mediator player proxy room swagger webapp"
+
 wrap_kubectl() {
   echo "
 > kubectl $@"
@@ -20,141 +23,17 @@ wrap_helm() {
   helm $@
 }
 
-wrap_minikube() {
+wrap_istioctl() {
   echo "
-> minikube $@"
-  minikube $@
+> istioctl $@"
+  istioctl $@
 }
 
-check_versions() {
-  QUIT=0
-  echo ""
-  echo "***********  "
-  echo "Game On! Text requires:"
-
-  echo "* Docker CE version 17.06 or greater"
-  DOCKER_VERSION=$(docker -v)
-  check_version "${DOCKER_VERSION}" 17.06.0
-
-  echo "* kubectl version 1.9.2 or greater"
-  if ! which kubectl > /dev/null; then
-    echo -e "  ${RED}MISSING${NO_COLOR}: kubectl not found"
-    echo "    kubectl either isn't installed, or isn't available on your PATH"
-    echo "    Set up kubectl using the following instructions:"
-    echo "        https://kubernetes.io/docs/tasks/tools/install-kubectl/"
-    echo "    Make sure kubectl is executable by you, and on your path"
-    echo "        PATH=$PATH"
-    QUIT=1
-  else
-    KUBECTL_VERSION=$(kubectl version --client --short)
-    check_version "${KUBECTL_VERSION}" 1.8.0
-  fi
-
-  echo "* helm version 2.8.0 or greater"
-  if ! which helm > /dev/null; then
-    echo -e "  ${RED}MISSING${NO_COLOR}: helm not found"
-    echo "    helm either isn't installed, or isn't available on your PATH"
-    echo "    Set up the helm client using the following instructions:"
-    echo "        https://docs.helm.sh/using_helm/#installing-helm"
-    echo "    Make sure helm is executable by you, and on your path"
-    echo "        PATH=$PATH"
-    QUIT=1
-  else
-    HELM_VERSION=$(helm version --client --short)
-    check_version "${HELM_VERSION}" 2.7.2
-  fi
-
-  echo "***********  "
-  echo ""
-}
-
-check_cluster() {
-  if ! kubectl --request-timeout 2s cluster-info > /dev/null 2>&1; then
-    fixme "No configured Kubernetes cluster"
-    echo ""
-    echo "You need to set up a Kubernetes cluster and provide its configuration
-to kubectl. Verify that the Kubernetes cluster configuration is correct
-using 'kubectl cluster-info'.
-
-If using virtual machine(s), ensure you have at least 4GB (preferably 8GB)
-of RAM to run the entire system, e.g. 'minikube start --memory 8192'
-"
-    exit 1
-  fi
-  ok "configured Kubernetes cluster found"
-
-  if ! kubectl get namespace gameon-system > /dev/null 2>&1; then
-    wrap_kubectl create namespace gameon-system
-    if [ $? -ne 0 ]; then
-      fixme "unable to  create gameon-system namespace"
-      exit 1
-    fi
-    wrap_kubectl label namespace gameon-system istio-injection=enabled
-  else
-    ok "gameon-system namespace found"
-  fi
-}
-
-get_cluster_ip() {
-  if [ -f .gameontext.kubernetes ]; then
-    source .gameontext.kubernetes
-  fi
-
-  kubectx=$(kubectl config current-context)
-  if [ -n "${GAMEON_KUBECTL_CONTEXT}" ] && [ "${GAMEON_KUBECTL_CONTEXT}" != "${kubectx}" ]; then
-    echo "You were using kubectl context '${GAMEON_KUBECTL_CONTEXT}'"
-    echo "Your current kubectl context is '${kubectx}'"
-    read -p "Do you want to re-run setup against the current kube context? [y] " answer
-    if [[ $answer =~ [Yy] ]]; then
-      $0 setup
-    fi
-    exit 1
-  fi
-
-  if [ -z ${GAMEON_INGRESS+x} ]; then
-    certauth=$(kubectl config view -o jsonpath='{.clusters[?(@.name == "'${kubectx}'")].cluster.certificate-authority}')
-    if [[ $certauth =~ minikube ]]; then
-      ok "Detected minikube, using 'minikube ip'"
-      GAMEON_MINIKUBE=1
-      GAMEON_INGRESS=gameon.$(minikube ip).xip.io
-      echo "
-export GAMEON_INGRESS=${GAMEON_INGRESS}
-export GAMEON_KUBECTL_CONTEXT=${kubectx}" > .gameontext.kubernetes
-    fi
-    # still empty? ew.
-    if [ -z ${GAMEON_INGRESS+x} ]; then
-      fixme "Please us '$0 host' to set host information"
-      exit 1
-    fi
-  fi
-}
-
-ingress_host() {
-  rm -f .gameontext.cert.pem
-
-  read -p 'Enter ingress hostname (or subdomain): ' GAMEON_INGRESS
-  read -p 'Enter ingress secret (or enter if none): ' GAMEON_INGRESS_SECRET
-
-  #  PROMPT FOR HOST
-  echo "
-export GAMEON_INGRESS=${GAMEON_INGRESS}
-export GAMEON_INGRESS_SECRET=${GAMEON_INGRESS_SECRET}
-export GAMEON_KUBECTL_CONTEXT=$(kubectl config current-context)" > .gameontext.kubernetes
-}
-
-check_global_cert() {
-  if ! kubectl -n gameon-system get secret global-cert > /dev/null 2>&1; then
-    ok "$(wrap_kubectl -n gameon-system create secret generic global-cert --from-file=cert.pem=.gameontext.cert.pem)"
-  else
-    ok "Found global-cert secret in gameon-system namespace"
-  fi
-}
-
-reset() {
-  rm .gameontext.cert.pem
-  rm kubernetes/kubectl/ingress.yaml
-  rm kubernetes/kubectl/configmap.yaml
-  rm kubernetes/chart/gameon-system/values.yaml
+wait_until_ready() {
+  while wrap_kubectl $@ | grep -q 0/; do
+    printf '.'
+    sleep 5s
+  done
 }
 
 sed_file() {
@@ -167,75 +46,589 @@ sed_file() {
   fi
 }
 
-setup() {
-  check_versions
-  check_cluster
-  get_cluster_ip
+check_cluster_cfg() {
+  # Remember/test previous values
+  if [ -f .gameontext.kubernetes ]; then
+    source .gameontext.kubernetes
+    OLD_INGRESS=GAMEON_INGRESS
 
-  if [ -f .gameontext.cert.pem ]; then
-    OLD_IP=$(openssl x509 -noout -subject -in .gameontext.cert.pem | sed -e 's/^subject.*CN=\([^/]*\).*$/\1/')
-    if [ "${OLD_IP}" != "${GAMEON_INGRESS}" ]; then
-      reset
+    # Check against current context
+    local kubectx=$(kubectl config current-context)
+    if [ -n "${GAMEON_KUBECTL_CONTEXT}" ] && [ "${GAMEON_KUBECTL_CONTEXT}" != "${kubectx}" ]; then
+      fixme "Kubernetes context has changed.
+You were using kubectl context '${GAMEON_KUBECTL_CONTEXT}'
+Your current kubectl context is '${kubectx}'"
+      read -p "Do you want to re-prepare with the current kube context? [y] " answer
+      if [[ $answer =~ [Yy] ]]; then
+        reset_go
+        prepare
+      else
+        exit 1
+      fi
     fi
+  else
+    fixme "Please ensure your kubernetes cluster has been prepared properly
+    go-run prep"
+    exit 1
+  fi
+}
+
+reset_go() {
+  rm -f .gameontext.*.pem
+  rm -f kubernetes/kubectl/ingress.yaml
+  rm -f kubernetes/kubectl/configmap.yaml
+  rm -f kubernetes/chart/gameon-system/values.yaml
+  echo '' > .gameontext.kubernetes
+  unset GAMEON_KUBECTL_CONTEXT
+  unset GAMEON_LOCAL
+  unset GAMEON_INGRESS
+}
+
+prepare() {
+  read -p "Do you want to use istio? [y] " answer
+  if [ -z $answer ] || [[ $answer =~ [Yy] ]]; then
+    touch .gameontext.istio
+  else
+    if [ -f .gameontext.istio ]; then
+      purge_istio
+    fi
+    rm -f .gameontext.istio
   fi
 
+  read -p "Do you want to configure Game On! using helm? [y] " answer
+  if [ -z $answer ] || [[ $answer =~ [Yy] ]]; then
+    touch .gameontext.helm
+  else
+    rm -f .gameontext.helm
+  fi
+
+  if ! check_versions; then
+    exit 1
+  fi
+
+  test_cluster
+  test_local_kubernetes
+  
+  # create new files from templates if they don't already exist
+  cp -n kubernetes/.template.kubectl.configmap.yaml kubernetes/kubectl/configmap.yaml
+  cp -n kubernetes/.template.values.yaml kubernetes/chart/gameon-system/values.yaml
+
+  init_namespace
+  ok "Cluster prepared. Next: go-run up"
+}
+
+platform_up() {
+  if ! kubectl get namespace gameon-system > /dev/null 2>&1; then
+    init_namespace
+  fi
+
+  check_global_cert
+
+  if [ -f .gameontext.helm ];  then
+    wrap_helm install --name gameon-system --replace ./kubernetes/chart/gameon-system/
+  else
+    wrap_kubectl apply -R -f kubernetes/kubectl
+  fi
+
+  if [ -f .gameontext.istio ]; then
+    wrap_kubectl apply -f kubernetes/istio/istio-gateway.yaml
+    wrap_kubectl apply -f kubernetes/istio/istio-gatewayVirtualService.yaml
+  fi
+
+  echo 'To wait for readiness: go-run wait'
+}
+
+platform_down() {
+  echo ${GAMEON_INGRESS}
+  if kubectl get namespace gameon-system > /dev/null 2>&1; then
+    if [ -f .gameontext.helm ];  then
+      wrap_helm delete --purge go-system --timeout 10
+    else
+      wrap_kubectl delete -R -f kubernetes/kubectl --grace-period=10
+    fi
+
+    if [ -f .gameontext.istio ]; then
+      wrap_kubectl delete -f kubernetes/istio/istio-gateway.yaml --grace-period=10
+      wrap_kubectl delete -f kubernetes/istio/istio-gatewayVirtualService.yaml --grace-period=10
+    fi
+
+    ok "Removing the namespace to ensure things are cleaned up, this might take a few minutes"
+    wrap_kubectl delete namespace gameon-system
+  else
+    ok "gameon-system stopped"
+  fi
+  
+  if kubectl get namespace istio-system > /dev/null 2>&1; then
+    read -p "Do you want to remove istio from your cluster? [y] " answer
+    if [ -z $answer ] || [[ $answer =~ [Yy] ]]; then
+      purge_istio
+    fi
+  else
+    ok "istio-system stopped"
+  fi
+}
+
+init_namespace() {
+  if ! kubectl get namespace gameon-system > /dev/null 2>&1; then
+    wrap_kubectl create namespace gameon-system
+    if [ $? -ne 0 ]; then
+      fixme "unable to  create gameon-system namespace"
+      exit 1
+    fi
+  else
+    ok "gameon-system namespace found"
+  fi
+
+  if [ -f .gameontext.istio ]; then
+    if ! kubectl get namespace istio-system > /dev/null 2>&1; then
+      install_istio
+    elif [ -z ${INGRESS_PORT+x} ]; then
+      find_istio_ingress
+    fi
+
+    if kubectl describe namespace gameon-system | grep -q istio; then
+      ok "gameon-system already has the istio-injection=enabled label"
+    else
+      wrap_kubectl label namespace gameon-system istio-injection=enabled
+    fi
+    sed_file '/^ *ingress:/,/^ *[^:]*:/ s/enabled: .*/enabled: false/' kubernetes/chart/gameon-system/values.yaml
+    cp -n kubernetes/.template.istio.istio-gateway.yaml kubernetes/istio/istio-gateway.yaml
+  elif [ -f .gameontext.helm ]; then
+    install_tiller
+    if [ -z ${INGRESS_PORT+x} ]; then
+      find_k8s_ingress
+    fi
+    cp -n kubernetes/.template.kubectl.ingress.yaml kubernetes/kubectl/ingress.yaml
+    sed_file '/^ *ingress:/,/^ *[^:]*:/ s/enabled: .*/enabled: true/' kubernetes/chart/gameon-system/values.yaml
+  fi
+
+  create_certificate
+
+  # Ingress Secret
+  sed_file "s/secretName: .*$/secretName: ${GAMEON_INGRESS_SECRET}/" kubernetes/chart/gameon-system/values.yaml
+  sed_file "s/secretName: .*$/secretName: ${GAMEON_INGRESS_SECRET}/" kubernetes/kubectl/ingress.yaml
+
+  # Front Door
+  local GAME_FRONT_DOOR=${GAMEON_INGRESS}:${SECURE_INGRESS_PORT}
+
+  sed_file "s/frontDoor: .*$/frontDoor: ${GAME_FRONT_DOOR}/" kubernetes/chart/gameon-system/values.yaml
+
+  sed_file "s/RECROOM_SERVICE_URL: .*$/RECROOM_SERVICE_URL: wss:\/\/${GAME_FRONT_DOOR}\/rooms/" kubernetes/kubectl/configmap.yaml
+  sed_file "s/RECROOM_SERVICE_URL: .*$/RECROOM_SERVICE_URL: wss:\/\/${GAME_FRONT_DOOR}\/rooms/" kubernetes/chart/gameon-system/values.yaml
+
+  sed_file "s/FRONT_END_SUCCESS_CALLBACK:.*$/FRONT_END_SUCCESS_CALLBACK: https:\/\/${GAME_FRONT_DOOR}\/#\/login\/callback/" kubernetes/kubectl/configmap.yaml
+  sed_file "s/FRONT_END_FAIL_CALLBACK:.*$/FRONT_END_FAIL_CALLBACK: https:\/\/${GAME_FRONT_DOOR}\/#\/login?login_failed/" kubernetes/kubectl/configmap.yaml
+  sed_file "s/FRONT_END_AUTH_URL:.*$/FRONT_END_AUTH_URL: https:\/\/${GAME_FRONT_DOOR}\/auth/" kubernetes/kubectl/configmap.yaml
+
+  # Gameon Ingress (host)
+
+  ## Holy sed magic.
+  #  Replace hosts with GAMEON_INGRESS. Match hosts:, and then skip that line (/n), and replace the next one.
+  sed_file "/^ *- hosts:/,/^ *[^:]*:/ {
+     /^ *- hosts:/n 
+     s/- .*$/- ${GAMEON_INGRESS}/
+  }" kubernetes/chart/gameon-system/values.yaml
+  sed_file "/^ *- hosts:/,/^ *[^:]*:/ {
+     /^ *- hosts:/n 
+     s/- .*$/- ${GAMEON_INGRESS}/
+  }" kubernetes/kubectl/ingress.yaml
+  sed_file "/^ *hosts:/,/^ *[^:]*:/ {
+     /^ *hosts:/n 
+     s/- .*$/- ${GAMEON_INGRESS}/
+  }" kubernetes/istio/istio-gateway.yaml
+
+  # Replace rules[host]
+  sed_file "s/- host: .*$/- host: ${GAMEON_INGRESS}/" kubernetes/kubectl/ingress.yaml
+
+  ok "Updated templates with Ingress hosts and ports: ${GAMEON_INGRESS}, ${INGRESS_PORT}, and ${SECURE_INGRESS_PORT}"
+}
+
+test_cluster() {
+  if ! kubectl --request-timeout 2s cluster-info > /dev/null 2>&1; then
+    fixme "No configured Kubernetes cluster
+
+You need to set up a Kubernetes cluster and provide its configuration
+to kubectl. Verify that the Kubernetes cluster configuration is correct
+using 'kubectl cluster-info'.
+
+If using virtual machine(s), ensure you have at least 4GB (preferably 8GB)
+of RAM to run the entire system, e.g. 'minikube start --memory 8192'
+"
+    exit 1
+  fi
+  ok "configured Kubernetes cluster found"
+}
+
+get_tiller() {
+  TILLER=$(kubectl get po -n kube-system | grep tiller-deploy | awk '{print $1;}' | xargs)
+  return $(test -n "$TILLER")
+}
+
+get_ingress_gateway() {
+  INGRESS_GATEWAY=$(kubectl get po -n istio-system | grep ingressgateway | awk '{print $1;}' | xargs)
+  return $(test -n "$INGRESS_GATEWAY")
+}
+
+install_tiller() {
+  if ! get_tiller; then
+    wrap_helm init
+    ok "Tiller initialized ... "
+    get_tiller
+    wait_until_ready -n kube-system get po $TILLER
+  fi
+}
+
+install_istio() {
+  local ISTIO_INSTALL=$(cat .gameontext.istio)
+  
+  if [[ ! -z $ISTIO_INSTALL ]] && [ -d ${ISTIO_INSTALL} ]; then
+    read -p "Try to install istio in your cluster? [y] " answer
+  else
+    answer=n
+  fi
+
+  if [ -z $answer ] || [[ $answer =~ [Yy] ]]; then
+    cd ${ISTIO_INSTALL} 
+
+    # Always install CRDs first
+    wrap_kubectl apply -f install/kubernetes/helm/istio/templates/crds.yaml
+
+    if ! kubectl get -n kube-system serviceaccounts tiller > /dev/null 2>&1; then
+      wrap_kubectl create -f install/kubernetes/helm/helm-service-account.yaml
+    else
+      ok "tiller service account already exists"
+    fi
+
+    if ! get_tiller; then
+      wrap_helm init --service-account tiller
+      ok "Tiller initialized ... "
+      until get_tiller; do
+        sleep 3
+      done
+      wait_until_ready -n kube-system get po $TILLER
+    fi
+
+    if [ ! -z ${GAMEON_LOCAL+x} ]; then
+      note "
+When running Istio on minikube or in docker-for-desktop, a NodePort is used instead 
+of an external load balancer."
+
+      wrap_helm install install/kubernetes/helm/istio --name istio --namespace istio-system \
+          --set gateways.istio-ingressgateway.type=NodePort \
+          --set gateways.istio-egressgateway.type=NodePort \
+          --set global.proxy.includeIPRanges="10.0.0.1/24" 
+    else        
+      wrap_helm install install/kubernetes/helm/istio --name istio --namespace istio-system  \
+          --set global.proxy.includeIPRanges="10.0.0.1/24"
+    fi
+
+    until get_ingress_gateway; do
+      sleep 3
+    done
+
+    echo "Waiting for Istio Ingress gateway: $INGRESS_GATEWAY"
+    wait_until_ready -n istio-system get po $INGRESS_GATEWAY
+    find_istio_ingress
+
+    cd ${GO_DIR}
+  else
+    find_k8s_ingress
+    echo ""
+    fixme "Install istio into your cluster the steps should look something like: 
+    
+    cd \$(cat .gameontext.istio)
+    kubectl apply -f install/kubernetes/helm/istio/templates/crds.yaml
+    kubectl create -f install/kubernetes/helm/helm-service-account.yaml
+    helm init --service-account tiller
+    helm install install/kubernetes/helm/istio --name istio --namespace istio-system
+  
+See: https://istio.io/docs/setup/kubernetes/helm-install/
+    
+Run prep again once Istio has been installed in your cluster.
+
+    go-run prep"
+    exit 1
+  fi
+}
+
+purge_istio() {
+  wrap_helm delete --purge istio
+  wrap_kubectl delete namespace istio-system
+}
+
+test_local_kubernetes() {
+  local kubectx=$(kubectl config current-context)
+
+  if [[ $kubectx =~ docker-for-desktop ]]; then
+    GAMEON_LOCAL=docker
+    GAMEON_INGRESS=localhost
+  fi
+
+  certauth=$(kubectl config view -o jsonpath='{.clusters[?(@.name == "'${kubectx}'")].cluster.certificate-authority}')
+  if [[ $certauth =~ minikube ]]; then
+    ok "`minikube addons enable ingress`"
+    echo "Detected minikube, using 'minikube ip'"
+    GAMEON_LOCAL=minikube
+    GAMEON_INGRESS=gameon.$(minikube ip).xip.io
+  fi
+
+  if [ ! -z ${GAMEON_LOCAL+x} ]; then
+    GAMEON_INGRESS_SECRET=
+    GAMEON_INTERNAL_IPRANGE="10.0.0.1/24"
+  fi
+}
+
+find_istio_ingress() {
+  if [ ! -z ${GAMEON_LOCAL+x} ]; then
+    INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
+    SECURE_INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="https")].nodePort}')
+    ok "Local Istio Ingress ${GAMEON_INGRESS} using port ${INGRESS_PORT} and secure port ${SECURE_INGRESS_PORT}"
+  else 
+    # TODO: verify Istio ingress behavior on IKS
+    GAMEON_INGRESS=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+    GAMEON_INGRESS_SECRET=
+    if [ -z ${GAMEON_INGRESS+x} ]; then
+      fixme "An external IP was not assigned to the Istio Ingress Gateway. An external load balancer may not be supported."
+      exit 1
+    fi
+    INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].port}')
+    SECURE_INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="https")].port}')
+
+    if [ -z ${GAMEON_INTERNAL_IPRANGE+x} ]; then
+      read -p 'Enter cluster internal IP Range (e.g. 10.0.0.1/24): ' GAMEON_INTERNAL_IPRANGE
+    fi
+
+    ok "Istio Ingress: ${GAMEON_INGRESS} using port ${INGRESS_PORT} and secure port ${SECURE_INGRESS_PORT}"
+  fi
+
+  echo "
+export GAMEON_LOCAL=${GAMEON_LOCAL}
+export GAMEON_INGRESS=${GAMEON_INGRESS}
+export GAMEON_INGRESS_SECRET=${GAMEON_INGRESS_SECRET}
+export GAMEON_KUBECTL_CONTEXT=$(kubectl config current-context)
+export GAMEON_INTERNAL_IPRANGE=${GAMEON_INTERNAL_IPRANGE}
+export INGRESS_PORT=${INGRESS_PORT}
+export SECURE_INGRESS_PORT=${SECURE_INGRESS_PORT}
+  " > ${GO_DIR}/.gameontext.kubernetes
+
+  source ${GO_DIR}/.gameontext.kubernetes
+}
+
+find_k8s_ingress() {
+  if [ ! -z ${GAMEON_LOCAL+x} ]; then
+    ok "Local Kubernetes Ingress ${GAMEON_INGRESS} using port 80 and secure port 443"
+  elif [ -z ${GAMEON_INGRESS+x} ]; then
+    #  PROMPT FOR CLUSTER INFORMATION 
+    read -p 'Enter ingress hostname (or subdomain): ' GAMEON_INGRESS
+    read -p 'Enter ingress secret (or enter if none): ' GAMEON_INGRESS_SECRET
+    read -p 'Enter cluster internal IP Range (e.g. 10.0.0.1/24): ' GAMEON_INTERNAL_IPRANGE
+  fi
+
+  echo "
+export GAMEON_LOCAL=${GAMEON_LOCAL}
+export GAMEON_INGRESS=${GAMEON_INGRESS}
+export GAMEON_INGRESS_SECRET=${GAMEON_INGRESS_SECRET}
+export GAMEON_KUBECTL_CONTEXT=$(kubectl config current-context)
+export GAMEON_INTERNAL_IPRANGE=${GAMEON_INTERNAL_IPRANGE}
+export INGRESS_PORT=80
+export SECURE_INGRESS_PORT=443
+  " > ${GO_DIR}/.gameontext.kubernetes
+
+  source ${GO_DIR}/.gameontext.kubernetes
+}
+
+define_ingress() {
+  if [ -f .gameontext.istio ]; then
+    find_istio_ingress
+  else
+    find_k8s_ingress
+  fi  
+}
+
+create_certificate() {
+
+  # Create certificate (for signing JWTs)
   if [ ! -f .gameontext.cert.pem ]; then
-    # Create certificate (for signing JWTs)
-    SUBJECT=${GAMEON_SUBJECT-"/CN=${GAMEON_INGRESS}/OU=GameOn Application/O=The Ficticious GameOn Company/L=Earth/ST=Happy/C=CA"}
+    local SUBJECT=${GAMEON_SUBJECT-"/CN=${GAMEON_INGRESS}/OU=GameOn Application/O=The Ficticious GameOn Company/L=Earth/ST=Happy/C=CA"}
     openssl req -x509 -days 365 -nodes -newkey rsa:4096 \
        -keyout .gameontext.onlykey.pem \
        -out .gameontext.onlycert.pem \
        -subj "${SUBJECT}"
     cat .gameontext.onlycert.pem .gameontext.onlykey.pem > .gameontext.cert.pem
-    rm .gameontext.onlycert.pem .gameontext.onlykey.pem
+    
     ok "Created a new certificate (.gameontext.cert.pem)"
+
+    check_global_cert force
+  fi
+}
+
+check_global_cert() {
+  wrap_kubectl -n gameon-system get secret global-cert 2>/dev/null
+  local exists=$?
+
+  if [ $# -gt 0 ] && [ $exists -eq 0 ]; then
+    wrap_kubectl -n gameon-system delete secret global-cert
+    ok "Deleted old global-cert secret in gameon-system namespace"
+    exists=1
   fi
 
-  # create new files from templates if they don't already exist
-  cp -n kubernetes/.template.ingress.yaml kubernetes/kubectl/ingress.yaml
-  cp -n kubernetes/.template.configmap.yaml kubernetes/kubectl/configmap.yaml
-  cp -n kubernetes/.template.values.yaml kubernetes/chart/gameon-system/values.yaml
-
-  # replace cluster values in well-known strings
-  if [ -z  ${GAMEON_INGRESS_SECRET+z} ]; then
-    sed_file "/secretName: GAMEON_INGRESS_SECRET/d" kubernetes/kubectl/ingress.yaml
-    sed_file "/secretName: GAMEON_INGRESS_SECRET/d" kubernetes/chart/gameon-system/values.yaml
+  if [ $exists -eq 1 ]; then
+    wrap_kubectl -n gameon-system create secret generic global-cert --from-file=cert.pem=.gameontext.cert.pem
+    ok "Created global-cert secret in gameon-system namespace"
   else
-    sed_file "s/GAMEON_INGRESS_SECRET/${GAMEON_INGRESS_SECRET}/" kubernetes/kubectl/ingress.yaml
-    sed_file "s/GAMEON_INGRESS_SECRET/${GAMEON_INGRESS_SECRET}/" kubernetes/chart/gameon-system/values.yaml
-  fi
-  sed_file "s/GAMEON_INGRESS/${GAMEON_INGRESS}/" kubernetes/kubectl/ingress.yaml
-  sed_file "s/GAMEON_INGRESS/${GAMEON_INGRESS}/" kubernetes/kubectl/configmap.yaml
-  sed_file "s/GAMEON_INGRESS/${GAMEON_INGRESS}/" kubernetes/chart/gameon-system/values.yaml
-
-  ok "Updated ingress and config map with ingress address: ${GAMEON_INGRESS}"
-
-  if [ -n ${GAMEON_MINIKUBE} ]; then
-    ok "`minikube addons enable ingress`"
+    ok "Found global-cert secret in gameon-system namespace"
   fi
 
-  read -p "Do you want to use helm? [y] " answer
-  if [ -z $answer ] || [[ $answer =~ [Yy] ]]; then
-    touch .gameontext.helm
+  if [ -f .gameontext.istio ]; then
+    wrap_kubectl -n istio-system get secret istio-ingressgateway-certs 2>/dev/null
+    local exists=$?
 
-    if ! kubectl get po -n kube-system | grep -q tiller-deploy; then
-      wrap_helm init
-
-      echo "Tiller initialized ... "
-      tiller=$(kubectl get po -n kube-system | grep tiller-deploy | awk '{print $1;}')
-      wait_until_ready -n kube-system get po ${tiller}
-      echo " ... Tiller is ready"
+    if [ $# -gt 0 ] && [ $exists -eq 0 ]; then
+      wrap_kubectl -n istio-system delete secret istio-ingressgateway-certs
+      ok "Deleted old istio-ingressgateway-certs secret in istio-system namespace"
+      exists=1
     fi
 
-  else
-    rm -f .gameontext.helm
+    if [ $exists -eq 1 ]; then
+      wrap_kubectl -n istio-system create secret tls istio-ingressgateway-certs --cert=.gameontext.onlycert.pem --key=.gameontext.onlykey.pem
+      ok "Created istio-ingressgateway-certs secret in istio-system namespace"
+    else
+      ok "Found istio-ingressgateway-certs secret in istio-system namespace"
+    fi
   fi
 }
 
-wait_until_ready() {
-  while kubectl $@ | grep -q 0/; do
-    printf '.'
-    sleep 5s
+rebuild() {
+  PROJECTS=''
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      all) PROJECTS="$COREPROJECTS $PROJECTS";;
+      *) PROJECTS="$1 $PROJECTS";;
+    esac
+    shift
+  done
+
+  echo "Building projects [$PROJECTS]"
+  for project in $PROJECTS
+  do
+    if [ ! -d "${project}" ]; then
+      continue
+    fi
+
+    echo
+    echo "*****"
+    cd "$project"
+
+    if [ -e "build.gradle" ]; then
+      echo "Building project ${project} with gradle"
+      ./gradlew build --rerun-tasks
+      rc=$?
+      if [ $rc != 0 ]; then
+        echo Gradle build failed. Please investigate, Game On! is unlikely to work until the issue is resolved.
+        exit 1
+      fi
+      echo "Building docker image for ${project}"
+      ./gradlew build image
+    elif [ "${project}" == "webapp" ] && [ -f build.sh ]; then
+      echo "webapp source present:  $(ls -d ${GO_DIR}/webapp/app)"
+      ./build.sh
+      ./build.sh final
+    elif [ -f Dockerfile ]; then
+      echo "Re-building docker image for ${project}"
+      ${DOCKER_CMD} build -t gameontext/gameon-${project} .
+    fi
+
+    cd ${GO_DIR}
   done
 }
+
+check_versions() {
+  local QUIT=0
+  local VERSION=''
+  echo ""
+  echo "***********  "
+  echo "Game On! Text requires:"
+
+  echo "* Docker CE version 17.06 or greater"
+  VERSION=$(docker -v)
+  check_version "${VERSION}" 17.06.0
+
+  echo "* kubectl version 1.10.0 or greater"
+  if ! which kubectl > /dev/null; then
+    echo -e "  ${RED}MISSING${NO_COLOR}: kubectl not found"
+    echo "    kubectl either isn't installed, or isn't available on your PATH"
+    echo "        PATH=$PATH"
+    echo ""
+    echo " Try one of the following: "
+    echo ""
+    echo "  * Set up kubectl:"
+    echo "        https://kubernetes.io/docs/tasks/tools/install-kubectl/"
+    echo "  * Enable Kubernetes in Docker for Mac:"
+    echo "        https://docs.docker.com/docker-for-mac/#kubernetes"
+    echo "  * Enable Kubernetes in Docker for Windows:"
+    echo "        https://docs.docker.com/docker-for-windows/#kubernetes"
+    echo ""
+    QUIT=1
+  else
+    VERSION=$(kubectl version --client --short)
+    check_version "${VERSION}" 1.10.0
+  fi
+
+  if which minikube > /dev/null; then
+    echo "* minikube version 0.28.0 or later"
+    VERSION=$(minikube version)
+    check_Version "${VERSION}" 0.28.0
+  fi
+
+  if [ -f .gameontext.istio ] || [ -f .gameontext.helm ]; then
+    echo "* helm version 2.8.0 or greater"
+    if ! which helm > /dev/null; then
+      echo -e "  ${RED}MISSING${NO_COLOR}: helm not found"
+      echo "    helm either isn't installed, or isn't available on your PATH"
+      echo "    Set up the helm client using the following instructions:"
+      echo "        https://docs.helm.sh/using_helm/#installing-helm"
+      echo "    Make sure helm is executable by you, and on your path"
+      echo "        PATH=$PATH"
+      QUIT=1
+    else
+      VERSION=$(helm version --client --short)
+      check_version "${VERSION}" 2.7.2
+     fi
+  fi
+
+  if [ -f .gameontext.istio ]; then
+    echo "* istio version 1.0.0 or greater"
+    if ! which istioctl > /dev/null; then
+      echo -e "  ${RED}MISSING${NO_COLOR}: istioctl not found"
+      echo "    istioctl either isn't installed, or isn't available on your PATH"
+      echo "    Set up istioctl using the following instructions:"
+      echo "        https://istio.io/docs/setup/kubernetes/download-release/"
+      echo "    Make sure istioctl is executable by you, and on your path"
+      echo "        PATH=$PATH"
+      QUIT=1
+    else
+      VERSION=$(istioctl version --short)
+      check_version "${VERSION}" 1.0.0
+
+      local INSTALL=$(cd $(dirname $(which istioctl))/.. && pwd)
+      if [ -d ${INSTALL}/install/kubernetes/helm ]; then
+        echo ${INSTALL} > .gameontext.istio
+      else
+        echo -e "  ${RED}MISSING${NO_COLOR}: istio kubernetes helm directory not found"
+        echo "    The istio install directory contains templates used for setup / teardown using helm"
+        echo "    If you aren't using istioctl from an extracted istio release,"
+        echo "    please set the path into the .gameontext.istio file:"
+        echo "        \$ echo <path-to-istio-release-dir> >> ${GO_DIR}/.gameontext.istio"
+        echo "    Specifically, the specified directory should contain istio helm templates"
+        echo "    under install/kubernetes/helm"
+      fi
+    fi
+  fi
+
+  echo "***********  "
+  echo ""
+  return $QUIT
+}
+
 

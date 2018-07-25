@@ -1,12 +1,12 @@
 global:
-  frontDoor: GAMEON_INGRESS
+  frontDoor: GAME_FRONT_DOOR
   mode: development
   data:
 # Global: interservice communication
     MAP_SERVICE_URL: http://map-service.gameon-system.svc.cluster.local:9080/map/v1/sites
     MAP_HEALTH_SERVICE_URL: http://map-service.gameon-system.svc.cluster.local:9080/map/v1/health
     PLAYER_SERVICE_URL: http://player-service.gameon-system.svc.cluster.local:9080/players/v1/accounts
-    RECROOM_SERVICE_URL: ws://room-service.gameon-system.svc.cluster.local:9080/rooms
+    RECROOM_SERVICE_URL: wss://GAME_FRONT_DOOR/rooms
 # Global: Common backing services
     COUCHDB_USER: mapUser
     COUCHDB_PASSWORD: myCouchDBSecret
@@ -35,6 +35,7 @@ auth:
     TWITTER_CONSUMER_SECRET: ''
 
 ingress:
+  enabled: GAMEON_NO_ISTIO
   annotations: {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"

@@ -8,7 +8,7 @@ data:
   MAP_SERVICE_URL: http://map.gameon-system.svc.cluster.local:9080/map/v1/sites
   MAP_HEALTH_SERVICE_URL: http://map.gameon-system.svc.cluster.local:9080/map/v1/health
   PLAYER_SERVICE_URL: http://player.gameon-system.svc.cluster.local:9080/players/v1/accounts
-  RECROOM_SERVICE_URL: ws://room.gameon-system.svc.cluster.local:9080/rooms
+  RECROOM_SERVICE_URL: wss://GAME_FRONT_DOOR/rooms
 # Global: Common backing services
   COUCHDB_USER: mapUser
   COUCHDB_PASSWORD: myCouchDBSecret
@@ -34,6 +34,6 @@ data:
   GOOGLE_APP_SECRET: ''
   TWITTER_CONSUMER_KEY: ''
   TWITTER_CONSUMER_SECRET: ''
-  FRONT_END_SUCCESS_CALLBACK: http://GAMEON_INGRESS/#/login/callback
-  FRONT_END_FAIL_CALLBACK: http://GAMEON_INGRESS/#/login?login_failed
-  FRONT_END_AUTH_URL: http://GAMEON_INGRESS/auth
+  FRONT_END_SUCCESS_CALLBACK: https://GAME_FRONT_DOOR/#/login/callback
+  FRONT_END_FAIL_CALLBACK: https://GAME_FRONT_DOOR/#/login?login_failed
+  FRONT_END_AUTH_URL: https://GAME_FRONT_DOOR/auth

@@ -25,11 +25,13 @@ The `go-run.sh` and `k8s-functions` scripts encapsulate setup and deployment of 
 
 1. [Create or retrieve credentials for your cluster](#set-up-a-kubernetes-cluster)
 
-2. Setup your cluster:
+2. Setup your cluster for the game:
 
-        $ go-run setup
+        $ go-run prep
 
-    This will ensure you have the right versions of applications we use, prompt to use helm or not, and create a certificate for signing JWTs.
+    The `prep` stage (`setup` is an alias), will prepare your kubernetes cluster. It will ask you if you want to use istio, and it will ask if you want to use helm. It will then check dependencies, verify that your kubernetes cluster exists, and generate resources based on attributes of your cluster.
+
+    Note: it is safe to run `prep` again at any time, for sanity or because you want to try something else (e.g. istio or helm or both or neither).
 
     If your cluster IP changes (or you have made changes to some templated files and want to start over), use:
 
@@ -39,7 +41,7 @@ The `go-run.sh` and `k8s-functions` scripts encapsulate setup and deployment of 
 
         $ go-run up
 
-    This step will also create a `gameon-system` name space and a generic kubernetes secret containing that certificate.
+    This step will create a `gameon-system` namespace and a generic kubernetes secret containing a self-signed SSL certificate.
 
 4. Wait for services to be available
 
@@ -47,7 +49,9 @@ The `go-run.sh` and `k8s-functions` scripts encapsulate setup and deployment of 
 
 5. Visit your external cluster IP address
 
-6. Stop the game
+6. **Carry on with [building your rooms](https://gameontext.gitbooks.io/gameon-gitbook/content/walkthroughs/createRoom.html)!**
+
+7. Stop / Clean up the game
 
         $ go-run down
 
@@ -78,20 +82,38 @@ We'll assume for the following that you want to make changes to the map service,
 
 4. See [Updating images with Kubernetes metadata](#updating-images-with-kubernetes-metadata) or [Updating images with Helm](#updating-images-with-helm) for the required next steps to get the new image running in your kubernetes cluster.
 
-### Updating images with Kubernetes metadata
+### Updating images with Kubernetes
 
+After an initial deployment of game resources (e.g. via `go-run up`, `kubectl apply ... `, or `helm install`), we can change the image kubernetes is using for the deployment. Continuing on with our revisions to map _while sharing the docker host with minikube_:
+
+      ## ensure :latest tag exists (per above), note image id
+      $ docker images gameontext/gameon-map
+      ## Confirm map deployment
+      $ kubectl -n gameon-system get deployments
+      ## Update imagePullPolicy to "Never", and image tag to :latest
+      $ kubectl -n gameon-system edit deployment/map
+
+After saving the edited deployment, you should be able to verify that the map deployment was updated to use the built container using the following:
+
+      $ docker ps --filter ancestor=_latestImageId_
+
+Alternately, you can make the same changes to the deployment metadata defined in the kubernetes/kubectl directory to make them persistent across restarts. Once the file has been edited, apply the changes:
+
+      $ kubectl apply -f kubernetes/kubectl/map.yaml
+
+The downside of this approach is that you have to be careful not to check these changes in. ;)
 
 ### Updating images with Helm
 
-If you're using helm, we need to update the image tag and the pull policy to work with specific images. We're following along with minikube on this one. If you aren't using minikube (and sharing the docker host), then this gets a little more complicated, and you need to start working with a docker registry.
+If you're using helm, you can edit `values.yaml` to persist changes to the image tag or the image pull policy. `values.yaml` is a generated file, so there won't be any warnings from git about uncommitted changes on this path.
 
-1. Open `kubernetes/chart/values.yaml`, find the service you want to update. Set the tag to latest, and the pull policy to Never (we officially never want to pull the latest from dockerhub, we only want kubernetes to use the version we've placed in its path).
+1. Open `kubernetes/chart/values.yaml`, find the service you want to update. Set the tag to latest, and the pull policy to Never.
 
         # map service
         - serviceName: map
           servicePort: 9080
           path: /map
-          image: lgameontext/gameon-map:experimental
+          image: gameontext/gameon-map:latest
           imagePullPolicy: Never
           readinessProbe:
             path: /map/v1/health
@@ -102,7 +124,26 @@ If you're using helm, we need to update the image tag and the pull policy to wor
         $ go-run down
         $ go-run up
 
-  Note: `go-run` will display the `helm` and `kubectl` commands it is using with these actions.
+  Note: `go-run` will display the invoked `helm` and `kubectl` commands.
+
+### Notes about image tags and imagePullPolicy
+
+By default, docker builds images tagged with :latest. Our images are published to docker hub, and a :latest image does exist there.
+
+Also by default, Kubernetes will apply imagePullPolicy=Always to images tagged with :latest unless a different pull policy is specified.
+
+Because we're shaing the minikube docker host in this example, we want to set the imagePullPolicy to Never AND set the image tag to :latest after we've built a new :latest image.
+
+When you aren't using minikube (which means you can't safely share the docker host), you need to go through a docker registry. Each node in this case will have its own cache. To ensure your new shiny images are used, you'll want to update the image to specifically reference what you're pushing to a docker registry, and to set an imagePullPolicy of `Always`.
+
+
+## Viewing application logs in Kubernetes
+
+
+
+
+
+---
 
 ## Set up a Kubernetes cluster
 
@@ -197,6 +238,6 @@ If you already have a configured cluster, skip to step 3.
         Enter ingress hostname (or subdomain): <paste ingress subdomain>
         Enter ingress secret (or enter if none): <paste ingress secret>
 
-    This creates a `.gameontext.kubernetes` file used to remember hosts
+    This creates a `.gameontext.kubernetes` file used to remember cluster information
 
 5. Follow the [general bring-up instructions](#general-bring-up-instructions)

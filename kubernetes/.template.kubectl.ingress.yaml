@@ -7,7 +7,7 @@ metadata:
 
 spec:
   backend:
-    serviceName: webapp
+    serviceName: webapp.gameon-system.svc.cluster.local
     servicePort: 8080
 # TLS block causes automatic redirection of http -> https
   tls:
@@ -20,25 +20,25 @@ spec:
       paths:
       - path: /auth
         backend:
-          serviceName: auth
+          serviceName: auth.gameon-system.svc.cluster.local
           servicePort: 9080
       - path: /players
         backend:
-          serviceName: player
+          serviceName: player.gameon-system.svc.cluster.local
           servicePort: 9080
       - path: /mediator
         backend:
-          serviceName: mediator
+          serviceName: mediator.gameon-system.svc.cluster.local
           servicePort: 9080
       - path: /map
         backend:
-          serviceName: map
+          serviceName: map.gameon-system.svc.cluster.local
           servicePort: 9080
       - path: /rooms
         backend:
-          serviceName: room
+          serviceName: room.gameon-system.svc.cluster.local
           servicePort: 9080
       - path: /swagger
         backend:
-          serviceName: swagger
+          serviceName: swagger.gameon-system.svc.cluster.local
           servicePort: 8080
