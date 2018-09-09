@@ -125,6 +125,7 @@ services:
   util:
     build:
       context: ../images/util
+    image: gameon-util
     command: tail -f /dev/null
     volumes:
       - 'keystore:/keystore'

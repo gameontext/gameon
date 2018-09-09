@@ -112,8 +112,10 @@ ensure_keystore() {
     DOCKERPATHPREFIX=/
     sed -i 's/\r//' ${BIN_DIR}/gen-keystore.sh
   fi
-  
-  use_image=gameontext/docker-liberty-custom
+
+  if [[ "$(docker images -q gameon-util 2> /dev/null)" == "" ]]; then
+    wrap_compose build util
+  fi
 
   # If the keystore volume doesn't exist, then we should generate
   # the keystores we need for local signed JWTs to work
@@ -123,15 +125,15 @@ ensure_keystore() {
   then
     wrap_docker volume create --name keystore
     # Generate keystore
-    wrap_docker run \
+    wrap_compose run -T\
       -v keystore:/tmp/keystore \
       -v ${DOCKERPATHPREFIX}${BIN_DIR}/gen-keystore.sh:/tmp/gen-keystore.sh \
-      -w /tmp --rm ${use_image} bash ./gen-keystore.sh ${GAMEON_HOST}
+      -w /tmp --rm util bash ./gen-keystore.sh ${GAMEON_HOST}
     # Copy ltpa.keys
-    wrap_docker run \
+    wrap_compose run -T\
       -v keystore:/tmp/keystore \
       -v ${DOCKERPATHPREFIX}${IMG_DIR}/ltpa.keys:/tmp/ltpa.keys \
-      -w /tmp --rm ${use_image} cp ltpa.keys keystore/ltpa.keys
+      -w /tmp --rm util cp ltpa.keys keystore/ltpa.keys
   fi
 
   ## Ensure volume exists for node modules (avoid putting in filesystem because of OS differences)
