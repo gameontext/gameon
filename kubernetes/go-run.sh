@@ -22,7 +22,7 @@ fi
 usage() {
   echo "
   Actions:
-    prepare  -- set up k8s secrets, prompt for helm
+    setup  -- set up k8s secrets, prompt for helm
     reset    -- replace generated files (cert, config with cluster IP)
     env      -- eval-compatible commands to create aliases
     host     -- manually set host information about your k8s cluster
@@ -39,7 +39,7 @@ case "$ACTION" in
     reset_go
     prepare
   ;;
-  setup|prep)
+  setup)
     prepare
   ;;
   up)
