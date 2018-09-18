@@ -27,11 +27,11 @@ The `go-run.sh` and `k8s-functions` scripts encapsulate setup and deployment of 
 
 2. Setup your cluster for the game:
 
-        $ go-run prep
+        $ go-run setup
 
-    The `prep` stage (`setup` is an alias), will prepare your kubernetes cluster. It will ask you if you want to use istio, and it will ask if you want to use helm. It will then check dependencies, verify that your kubernetes cluster exists, and generate resources based on attributes of your cluster.
+    The `setup` stage will prepare your kubernetes cluster. It will ask you if you want to use istio, and it will ask if you want to use helm. It will then check dependencies, verify that your kubernetes cluster exists, and generate resources based on attributes of your cluster.
 
-    Note: it is safe to run `prep` again at any time, for sanity or because you want to try something else (e.g. istio or helm or both or neither).
+    Note: it is safe to run `setup` again at any time, for sanity or because you want to try something else (e.g. istio or helm or both or neither).
 
     If your cluster IP changes (or you have made changes to some templated files and want to start over), use:
 
@@ -42,6 +42,10 @@ The `go-run.sh` and `k8s-functions` scripts encapsulate setup and deployment of 
         $ go-run up
 
     This step will create a `gameon-system` namespace and a generic kubernetes secret containing a self-signed SSL certificate.
+
+    All core game services will be started in the `gameon-system` namespace. To query or observe game services, the namespace will need to be specified on the command line, e.g.  `kubectl -n gameon-system ...`. Two shortcuts have been created in the `go-run` script to make this easier:
+        * `go-run k` for `kubectl`, e.g. `go-run k get pods`
+        * `go-run i` for `istioctl`, e.g. `go-run i get virtualservices`.
 
 4. Wait for services to be available
 
