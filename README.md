@@ -29,7 +29,7 @@ This is the TL;DR version.
       * the Vagrantfile updates the .bashrc for the vagrant user to set `DOCKER_MACHINE_NAME=vagrant` to tweak script behavior for use with vagrant.
       * VM provisioning will perform the next two (applicable) steps on your behalf.
 
-4. (Kubernetes only) [Create or retrieve credentials for your cluster](kubernetes/README.md#set-up-a-kubernetes-cluster)
+4. (Kubernetes only) [Create or retrieve credentials for your cluster](kubernetes/README.md#set-up-a-kubernetes-cluster).
 
 5. Set up required keystores and environment variables. This step also pulls the initial images required for running the system.
 
@@ -38,11 +38,13 @@ This is the TL;DR version.
         $ alias go-run               # confirm path  (docker or kubernetes)
         $ go-admin setup
 
-    Note: it is safe to run `setup` again, e.g. to check dependencies, or regenerate files if IP addresses change
+    Note: it is safe to run `setup` again, e.g. to check dependencies or regenerate files if IP addresses change
 
 6. Start the game (supporting platform and core services):
 
         $ go-admin up
+
+    Note: Services in Kubernetes will start in the `gameon-system` namespace, which will need to be specified on the command line: `kubectl -n gameon-system ...`. A shortcut for this has been created in the `go-run` script: `go-run k get all`, for example. A similar shortcut exists for `istioctl`: `go-run i get all`. For more details on Game On! and Kubernetes, see the [Kubernetes README](kubernetes/README.md)
 
 7. Wait for the game to start. This will vary between Docker Compose and Kubernetes approaches. The result of `go-admin up` will tell you what to try next.
 
