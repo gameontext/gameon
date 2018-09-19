@@ -257,9 +257,7 @@ init_namespace() {
 
 test_cluster() {
   kubectl --request-timeout 2s cluster-info > /dev/null 2>&1
-  local rc=$?
-  echo "TEST CLUSTER: $rc"
-  return $rc
+  return $?
 }
 
 verify_cluster() {
