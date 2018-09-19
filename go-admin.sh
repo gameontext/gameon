@@ -31,6 +31,7 @@ usage() {
     choose
     setup
     env
+    reset
 
     up
     down
@@ -70,6 +71,12 @@ case "$ACTION" in
   setup)
     echo "Game On! Setting things up with $GO_DEPLOYMENT (Use '$0 choose' to change)"
     go_run setup
+  ;;
+  reset)
+    echo "Stopping the game and removing all Game On! configuration"
+    go_run down
+    go_run reset
+    rm -f .gameontext*
   ;;
   up)
     if ! [ -f .gameontext ] || [ "$GO_DEPLOYMENT" != "$(< .gameontext)" ]; then
