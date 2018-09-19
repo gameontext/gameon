@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 # This will help start/stop Game On services using in a Kubernetes cluster.
 #
@@ -23,7 +23,7 @@ usage() {
   echo "
   Actions:
     setup  -- set up k8s secrets, prompt for helm
-    reset    -- replace generated files (cert, config with cluster IP)
+    reset    -- reset generated files
     env      -- eval-compatible commands to create aliases
     host     -- manually set host information about your k8s cluster
 
@@ -37,7 +37,6 @@ usage() {
 case "$ACTION" in
   reset)
     reset_go
-    prepare
   ;;
   setup)
     prepare
@@ -55,7 +54,7 @@ case "$ACTION" in
   ;;
   status)
     check_cluster_cfg
-    if kubectl -n gameon-system get po | grep -q mediator; then
+    if wrap_kubectl -n gameon-system get po | grep -q mediator; then
       wrap_kubectl -n gameon-system get all
 
       echo "
@@ -71,7 +70,7 @@ When ready, the game is available at https://${GAMEON_INGRESS}:${SECURE_INGRESS_
   ;;
   wait)
     check_cluster_cfg
-    if kubectl -n gameon-system get po | grep -q mediator; then
+    if wrap_kubectl -n gameon-system get po | grep -q mediator; then
       echo "Waiting for gameon-system pods to start"
       wait_until_ready -n gameon-system get pods
       echo ""
@@ -85,10 +84,11 @@ When ready, the game is available at https://${GAMEON_INGRESS}:${SECURE_INGRESS_
     define_ingress
   ;;
   k)
-    wrap_kubectl -n gameon-system $@
+    wrap_exec_kubectl -n gameon-system $@
   ;;
   i)
-    wrap_istioctl -n gameon-system $@
+    get_istio_path
+    wrap_exec_istioctl -n gameon-system $@
   ;;
   cert)
     check_cluster_cfg
