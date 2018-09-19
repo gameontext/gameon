@@ -251,6 +251,11 @@ case "$ACTION" in
   setup)
     setup
   ;;
+  reset)
+    wrap_compose stop $PROJECTS
+    platform_down
+    wrap_docker volume rm -f keystore
+  ;;
   start)
     up_log $PROJECTS
   ;;

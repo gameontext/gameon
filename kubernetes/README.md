@@ -242,6 +242,6 @@ If you already have a configured cluster, skip to step 3.
         Enter ingress hostname (or subdomain): <paste ingress subdomain>
         Enter ingress secret (or enter if none): <paste ingress secret>
 
-    This creates a `.gameontext.kubernetes` file used to remember cluster information
+    This creates a `.gameontext.kubernetes` file containing information about your cluster.
 
 5. Follow the [general bring-up instructions](#general-bring-up-instructions)

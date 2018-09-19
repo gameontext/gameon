@@ -12,11 +12,15 @@ then
   OVERRIDE="-f $SCRIPTDIR/docker-compose.override.yml"
 fi
 
+if [ -z ${DOCKER_MACHINE_NAME+x} ]; then
+  export DOCKER_MACHINE_NAME=
+fi
+
 #configure docker compose command
 COMPOSE="docker-compose -f $SCRIPTDIR/docker-compose.yml ${OVERRIDE}"
 if [ "$(uname)" != "Darwin" ] && [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]
 then
-    COMPOSE="sudo ${COMPOSE}"
+    COMPOSE="sudo DOCKER_MACHINE_NAME=${DOCKER_MACHINE_NAME} ${COMPOSE}"
 fi
 
 wrap_compose() {
