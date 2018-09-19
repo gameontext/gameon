@@ -41,7 +41,7 @@ services:
 #      context: ../player/player-wlpcfg
 #    ports:
 #      - "9082:9080"
-#      - "9443:9443"
+#      - "9448:9443"
 #    volumes:
 #      - '$HOME:$HOME'
 #      - '../player/player-wlpcfg/servers/gameon-player:/opt/ol/wlp/usr/servers/defaultServer'
