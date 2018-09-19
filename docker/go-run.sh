@@ -133,7 +133,9 @@ setup() {
     echo "This file will use the docker host ip address ($GAMEON_HOST), but will re-map ports for forwarding from the VM."
   fi
 
-  wrap_compose pull
+  # Attempt to pull all images except for util, which is built locally
+  local LIST="$PROJECTS $COREPROJECTS"
+  wrap_compose pull ${LIST//util/}
   rc=$?
   if [ $rc -ne 0 ]; then
     echo "Trouble pulling core images, we need to sort that first"
