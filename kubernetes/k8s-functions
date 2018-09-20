@@ -36,7 +36,8 @@ wrap_exec_istioctl() {
 }
 
 wait_until_ready() {
-  while wrap_kubectl $@ | grep -q 0/; do
+  #+4 skips the blank line, >kubectl line, and kubectl headers
+  while [ $(wrap_kubectl $@ | tail -n +4 | awk '{print $2;}' | awk -F "/" '{if($1==$2){print "OK";}else{print "BAD"}}' | grep BAD | wc -l) -gt 0 ]; do
     printf '.'
     sleep 5s
   done
@@ -186,6 +187,11 @@ init_namespace() {
     if [ $? -ne 0 ]; then
       fixme "unable to  create gameon-system namespace"
       exit 1
+    fi
+    wrap_helm version --client| grep "+icp" > /dev/null 2>&1
+    if [ $? ]; then
+      echo "Applying kube pod security policy for go namespace"
+      wrap_kubectl apply -f kubernetes/icp-psp.yaml
     fi
   else
     ok "gameon-system namespace found"
@@ -474,11 +480,55 @@ create_certificate() {
 
   # Create certificate (for signing JWTs)
   if [ ! -f .gameontext.cert.pem ]; then
-    local SUBJECT=${GAMEON_SUBJECT-"/CN=${GAMEON_INGRESS}/OU=GameOn Application/O=The Ficticious GameOn Company/L=Earth/ST=Happy/C=CA"}
-    openssl req -x509 -days 365 -nodes -newkey rsa:4096 \
-       -keyout .gameontext.onlykey.pem \
-       -out .gameontext.onlycert.pem \
-       -subj "${SUBJECT}"
+
+    mkdir ${SCRIPTDIR}/.openssl > /dev/null 2>&1
+
+    echo " - Creating certificate for ${GAMEON_INGRESS} "
+
+    #Generate CA Key And Cert
+    echo " - Generating CA & Cert"
+    local SUBJECT="/CN=gameontext.org/OU=GameOn Development CA/O=The Ficticious GameOn CA Company/L=Earth/ST=Happy/C=CA"
+    openssl genrsa -out ${SCRIPTDIR}/.openssl/server_rootCA.key 4096
+    openssl req -x509 -new -nodes -key ${SCRIPTDIR}/.openssl/server_rootCA.key -sha256 -days 3650 -out ${SCRIPTDIR}/.openssl/server_rootCA.pem -subj "${SUBJECT}"
+
+    #Create CSR config
+    cat <<EOT > ${SCRIPTDIR}/.openssl/rootCSR.cnf
+[req]
+default_bits = 4096
+prompt = no
+default_md = sha256
+distinguished_name = dn
+
+[dn]
+C=CA
+ST=Happy
+L=Earth
+O=The Ficticious GameOn Company
+OU=GameOn Application
+CN = ${GAMEON_INGRESS}
+
+EOT
+
+    cat <<EOT > ${SCRIPTDIR}/.openssl/v3.ext
+authorityKeyIdentifier=keyid,issuer
+basicConstraints=CA:FALSE
+keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = ${GAMEON_INGRESS}
+
+EOT
+
+    echo " - Create Server Key & CSR"
+    #Create Server Key, with CSR
+    openssl req -new -sha256 -nodes -out ${SCRIPTDIR}/.openssl/server.csr -newkey rsa:4096 -keyout .gameontext.onlykey.pem -config <( cat ${SCRIPTDIR}/.openssl/rootCSR.cnf )
+
+    echo " - Sign CSR"
+    #Sign CSR with CA
+    openssl x509 -req -in ${SCRIPTDIR}/.openssl/server.csr -CA ${SCRIPTDIR}/.openssl/server_rootCA.pem -CAkey ${SCRIPTDIR}/.openssl/server_rootCA.key -CAcreateserial -out .gameontext.onlycert.pem -days 3650 -sha256 -extfile ${SCRIPTDIR}/.openssl/v3.ext
+
+    #Append Server Cert & Key into single file for GameOn Use.
     cat .gameontext.onlycert.pem .gameontext.onlykey.pem > .gameontext.cert.pem
 
     ok "Created a new certificate (.gameontext.cert.pem)"
