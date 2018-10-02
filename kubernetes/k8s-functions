@@ -18,15 +18,9 @@ wrap_exec_kubectl() {
 }
 
 wrap_helm() {
-  if [ -f ${GO_DIR}/.gameontext.helm.tls ]; then
-    echo "
-> helm $@ --tls"
-    helm $@ --tls
-  else
-    echo "
-> helm $@"
-    helm $@
-  fi
+  echo "
+> helm $@ ${GAMEON_HELM_TLS_FLAG}"
+  helm $@ ${GAMEON_HELM_TLS_FLAG}
 }
 
 wrap_istioctl() {
@@ -35,8 +29,13 @@ wrap_istioctl() {
   istioctl $@
 }
 
-wait_until_ready() {
+wrap_exec_istioctl() {
+  echo "
+> istioctl $@"
+  exec istioctl $@
+}
 
+wait_until_ready() {
   #+4 skips the blank line, >kubectl line, and kubectl headers
   while [ $(wrap_kubectl $@ | tail -n +4 | awk '{print $2;}' | awk -F "/" '{if($1==$2){print "OK";}else{print "BAD"}}' | grep BAD | wc -l) -gt 0 ]; do
     printf '.'
@@ -46,7 +45,7 @@ wait_until_ready() {
 
 sed_file() {
   if [ -f "${GO_DIR}/$2" ]; then
-    if sed --version >/dev/null 2>&1; then
+    if [ "${GNU_SED}" ]; then
       sed -i -e "$1" "${GO_DIR}/$2"
     else
       sed -i '' -e "$1" "${GO_DIR}/$2"
@@ -57,7 +56,8 @@ sed_file() {
 check_cluster_cfg() {
   # Remember/test previous values
   if [ -f .gameontext.kubernetes ]; then
-    source .gameontext.kubernetes
+    set_env
+
     OLD_INGRESS=GAMEON_INGRESS
 
     # Check against current context
@@ -73,6 +73,11 @@ Your current kubectl context is '${kubectx}'"
       else
         exit 1
       fi
+    elif ! test_cluster; then
+      echo "> kubectl config current-context
+${kubectx}"
+      warn "Configured kubernetes cluster is not reachable."
+      exit 1
     fi
   else
     fixme "Please ensure your kubernetes cluster has been prepared properly
@@ -96,28 +101,28 @@ reset_go() {
 prepare() {
   read -p "Do you want to use istio? [y] " answer
   if [ -z $answer ] || [[ $answer =~ [Yy] ]]; then
-    touch .gameontext.istio
+    GAMEON_USE_ISTIO=1
   else
-    if [ -f .gameontext.istio ]; then
+    if [ "${GAMEON_USE_ISTIO}" ]; then
       purge_istio
     fi
-    rm -f .gameontext.istio
+    GAMEON_USE_ISTIO=
   fi
 
   read -p "Do you want to configure Game On! using helm? [y] " answer
   if [ -z $answer ] || [[ $answer =~ [Yy] ]]; then
-    touch .gameontext.helm
+    GAMEON_USE_HELM=1
   else
-    rm -f .gameontext.helm
+    GAMEON_USE_HELM=
   fi
 
   if ! check_versions; then
     exit 1
   fi
 
-  test_cluster
+  verify_cluster
   test_local_kubernetes
-  
+
   # create new files from templates if they don't already exist
   cp -n kubernetes/.template.kubectl.configmap.yaml kubernetes/kubectl/configmap.yaml
   cp -n kubernetes/.template.values.yaml kubernetes/chart/gameon-system/values.yaml
@@ -133,13 +138,13 @@ platform_up() {
 
   check_global_cert
 
-  if [ -f .gameontext.helm ];  then
+  if [ "${GAMEON_USE_HELM}" ];  then
     wrap_helm install --name gameon-system --replace ./kubernetes/chart/gameon-system/
   else
     wrap_kubectl apply -R -f kubernetes/kubectl
   fi
 
-  if [ -f .gameontext.istio ]; then
+  if [ "${GAMEON_USE_ISTIO}" ]; then
     wrap_kubectl apply -f kubernetes/istio/istio-gateway.yaml
     wrap_kubectl apply -f kubernetes/istio/istio-gatewayVirtualService.yaml
   fi
@@ -148,15 +153,15 @@ platform_up() {
 }
 
 platform_down() {
-  echo ${GAMEON_INGRESS}
-  if kubectl get namespace gameon-system > /dev/null 2>&1; then
-    if [ -f .gameontext.helm ];  then
+  echo "Stopping ${GAMEON_INGRESS}"
+  if wrap_kubectl get namespace gameon-system 2>/dev/null; then
+    if [ "${GAMEON_USE_HELM}" ];  then
       wrap_helm delete --purge gameon-system --timeout 10
     else
       wrap_kubectl delete -R -f kubernetes/kubectl --grace-period=10
     fi
 
-    if [ -f .gameontext.istio ]; then
+    if [ "${GAMEON_USE_ISTIO}" ]; then
       wrap_kubectl delete -f kubernetes/istio/istio-gateway.yaml --grace-period=10
       wrap_kubectl delete -f kubernetes/istio/istio-gatewayVirtualService.yaml --grace-period=10
     fi
@@ -166,8 +171,8 @@ platform_down() {
   else
     ok "gameon-system stopped"
   fi
-  
-  if kubectl get namespace istio-system > /dev/null 2>&1; then
+
+  if wrap_kubectl get namespace istio-system 2>/dev/null; then
     read -p "Do you want to remove istio from your cluster? [y] " answer
     if [ -z $answer ] || [[ $answer =~ [Yy] ]]; then
       purge_istio
@@ -193,7 +198,7 @@ init_namespace() {
     ok "gameon-system namespace found"
   fi
 
-  if [ -f .gameontext.istio ]; then
+  if [ "${GAMEON_USE_ISTIO}" ]; then
     if ! kubectl get namespace istio-system > /dev/null 2>&1; then
       install_istio
     elif [ -z ${INGRESS_PORT+x} ]; then
@@ -207,7 +212,7 @@ init_namespace() {
     fi
     sed_file '/^ *ingress:/,/^ *[^:]*:/ s/enabled: .*/enabled: false/' kubernetes/chart/gameon-system/values.yaml
     cp -n kubernetes/.template.istio.istio-gateway.yaml kubernetes/istio/istio-gateway.yaml
-  elif [ -f .gameontext.helm ]; then
+  elif [ "${GAMEON_USE_HELM}" ]; then
     install_tiller
     if [ -z ${INGRESS_PORT+x} ]; then
       find_k8s_ingress
@@ -239,15 +244,15 @@ init_namespace() {
   ## Holy sed magic.
   #  Replace hosts with GAMEON_INGRESS. Match hosts:, and then skip that line (/n), and replace the next one.
   sed_file "/^ *- hosts:/,/^ *[^:]*:/ {
-     /^ *- hosts:/n 
+     /^ *- hosts:/n
      s/- .*$/- ${GAMEON_INGRESS}/
   }" kubernetes/chart/gameon-system/values.yaml
   sed_file "/^ *- hosts:/,/^ *[^:]*:/ {
-     /^ *- hosts:/n 
+     /^ *- hosts:/n
      s/- .*$/- ${GAMEON_INGRESS}/
   }" kubernetes/kubectl/ingress.yaml
   sed_file "/^ *hosts:/,/^ *[^:]*:/ {
-     /^ *hosts:/n 
+     /^ *hosts:/n
      s/- .*$/- ${GAMEON_INGRESS}/
   }" kubernetes/istio/istio-gateway.yaml
 
@@ -258,8 +263,13 @@ init_namespace() {
 }
 
 test_cluster() {
-  if ! kubectl --request-timeout 2s cluster-info > /dev/null 2>&1; then
-    fixme "No configured Kubernetes cluster
+  kubectl --request-timeout 2s cluster-info > /dev/null 2>&1
+  return $?
+}
+
+verify_cluster() {
+  if ! test_cluster; then
+    fixme "Unable to retrieve cluster information.
 
 You need to set up a Kubernetes cluster and provide its configuration
 to kubectl. Verify that the Kubernetes cluster configuration is correct
@@ -293,16 +303,14 @@ install_tiller() {
 }
 
 install_istio() {
-  local ISTIO_INSTALL=$(cat .gameontext.istio)
-  
-  if [[ ! -z $ISTIO_INSTALL ]] && [ -d ${ISTIO_INSTALL} ]; then
+  if [[ ! -z ${ISTIO_INSTALL+x} ]] && [ -d ${ISTIO_INSTALL} ]; then
     read -p "Try to install istio in your cluster? [y] " answer
   else
     answer=n
   fi
 
   if [ -z $answer ] || [[ $answer =~ [Yy] ]]; then
-    cd ${ISTIO_INSTALL} 
+    cd ${ISTIO_INSTALL}
 
     # Always install CRDs first
     wrap_kubectl apply -f install/kubernetes/helm/istio/templates/crds.yaml
@@ -322,18 +330,18 @@ install_istio() {
       wait_until_ready -n kube-system get po $TILLER
     else
       ok "Using pre-existing Tiller ... "
-    fi 
+    fi
 
     if [ ! -z ${GAMEON_LOCAL+x} ]; then
       note "
-When running Istio on minikube or in docker-for-desktop, a NodePort is used instead 
+When running Istio on minikube or in docker-for-desktop, a NodePort is used instead
 of an external load balancer."
 
       wrap_helm install install/kubernetes/helm/istio --name istio --namespace istio-system \
           --set gateways.istio-ingressgateway.type=NodePort \
           --set gateways.istio-egressgateway.type=NodePort \
-          --set global.proxy.includeIPRanges="10.0.0.1/24" 
-    else        
+          --set global.proxy.includeIPRanges="10.0.0.1/24"
+    else
       wrap_helm install install/kubernetes/helm/istio --name istio --namespace istio-system  \
           --set global.proxy.includeIPRanges="10.0.0.1/24"
     fi
@@ -350,16 +358,16 @@ of an external load balancer."
   else
     find_k8s_ingress
     echo ""
-    fixme "Install istio into your cluster the steps should look something like: 
-    
-    cd \$(cat .gameontext.istio)
+    fixme "Install istio into your cluster the steps should look something like:
+
+    cd ${ISTIO_INSTALL}
     kubectl apply -f install/kubernetes/helm/istio/templates/crds.yaml
     kubectl create -f install/kubernetes/helm/helm-service-account.yaml
     helm init --service-account tiller
     helm install install/kubernetes/helm/istio --name istio --namespace istio-system
-  
+
 See: https://istio.io/docs/setup/kubernetes/helm-install/
-    
+
 Run prep again once Istio has been installed in your cluster.
 
     go-run prep"
@@ -399,13 +407,9 @@ find_istio_ingress() {
     INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
     SECURE_INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="https")].nodePort}')
     ok "Local Istio Ingress ${GAMEON_INGRESS} using port ${INGRESS_PORT} and secure port ${SECURE_INGRESS_PORT}"
-  else 
-    #ICP
-    INGRESS_HOST=$(kubectl get po -l istio=ingressgateway -n istio-system -o 'jsonpath={.items[0].status.hostIP}')
-    GAMEON_INGRESS=gameon.${INGRESS_HOST}.xip.io
-    #For loadbalanced envs.. 
+  else
     # TODO: verify Istio ingress behavior on IKS
-    #GAMEON_INGRESS=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+    GAMEON_INGRESS=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
     GAMEON_INGRESS_SECRET=
     if [ -z ${GAMEON_INGRESS+x} ]; then
       fixme "An external IP was not assigned to the Istio Ingress Gateway. An external load balancer may not be supported."
@@ -422,6 +426,9 @@ find_istio_ingress() {
   fi
 
   echo "
+export GAMEON_USE_ISTIO=${GAMEON_USE_ISTIO}
+export GAMEON_USE_HELM=${GAMEON_USE_HELM}
+export GAMEON_HELM_TLS_FLAG=${GAMEON_HELM_TLS_FLAG}
 export GAMEON_LOCAL=${GAMEON_LOCAL}
 export GAMEON_INGRESS=${GAMEON_INGRESS}
 export GAMEON_INGRESS_SECRET=${GAMEON_INGRESS_SECRET}
@@ -429,22 +436,26 @@ export GAMEON_KUBECTL_CONTEXT=$(kubectl config current-context)
 export GAMEON_INTERNAL_IPRANGE=${GAMEON_INTERNAL_IPRANGE}
 export INGRESS_PORT=${INGRESS_PORT}
 export SECURE_INGRESS_PORT=${SECURE_INGRESS_PORT}
+export ISTIO_INSTALL=${ISTIO_INSTALL}
   " > ${GO_DIR}/.gameontext.kubernetes
 
-  source ${GO_DIR}/.gameontext.kubernetes
+  set_env
 }
 
 find_k8s_ingress() {
   if [ ! -z ${GAMEON_LOCAL+x} ]; then
     ok "Local Kubernetes Ingress ${GAMEON_INGRESS} using port 80 and secure port 443"
   elif [ -z ${GAMEON_INGRESS+x} ]; then
-    #  PROMPT FOR CLUSTER INFORMATION 
+    #  PROMPT FOR CLUSTER INFORMATION
     read -p 'Enter ingress hostname (or subdomain): ' GAMEON_INGRESS
     read -p 'Enter ingress secret (or enter if none): ' GAMEON_INGRESS_SECRET
     read -p 'Enter cluster internal IP Range (e.g. 10.0.0.1/24): ' GAMEON_INTERNAL_IPRANGE
   fi
 
   echo "
+export GAMEON_USE_ISTIO=${GAMEON_USE_ISTIO}
+export GAMEON_USE_HELM=${GAMEON_USE_HELM}
+export GAMEON_HELM_TLS_FLAG=${GAMEON_HELM_TLS_FLAG}
 export GAMEON_LOCAL=${GAMEON_LOCAL}
 export GAMEON_INGRESS=${GAMEON_INGRESS}
 export GAMEON_INGRESS_SECRET=${GAMEON_INGRESS_SECRET}
@@ -452,17 +463,18 @@ export GAMEON_KUBECTL_CONTEXT=$(kubectl config current-context)
 export GAMEON_INTERNAL_IPRANGE=${GAMEON_INTERNAL_IPRANGE}
 export INGRESS_PORT=80
 export SECURE_INGRESS_PORT=443
+export ISTIO_INSTALL=${ISTIO_INSTALL}
   " > ${GO_DIR}/.gameontext.kubernetes
 
-  source ${GO_DIR}/.gameontext.kubernetes
+  set_env
 }
 
 define_ingress() {
-  if [ -f .gameontext.istio ]; then
+  if [ "${GAMEON_USE_ISTIO}" ]; then
     find_istio_ingress
   else
     find_k8s_ingress
-  fi  
+  fi
 }
 
 create_certificate() {
@@ -542,7 +554,7 @@ check_global_cert() {
     ok "Found global-cert secret in gameon-system namespace"
   fi
 
-  if [ -f .gameontext.istio ]; then
+  if [ "${GAMEON_USE_ISTIO}" ]; then
     wrap_kubectl -n istio-system get secret istio-ingressgateway-certs 2>/dev/null
     local exists=$?
 
@@ -641,10 +653,10 @@ check_versions() {
   if which minikube > /dev/null; then
     echo "* minikube version 0.28.0 or later"
     VERSION=$(minikube version)
-    check_Version "${VERSION}" 0.28.0
+    check_version "${VERSION}" 0.28.0
   fi
 
-  if [ -f .gameontext.istio ] || [ -f .gameontext.helm ]; then
+  if [ "${GAMEON_USE_ISTIO}" ] || [ "${GAMEON_USE_HELM}" ]; then
     echo "* helm version 2.8.0 or greater"
     if ! which helm > /dev/null; then
       echo -e "  ${RED}MISSING${NO_COLOR}: helm not found"
@@ -657,20 +669,21 @@ check_versions() {
     else
       VERSION=$(helm version --client --short)
       check_version "${VERSION}" 2.7.2
-      echo ${VERSION} | grep "+icp" > /dev/null 2>&1 
+      echo ${VERSION} | grep "+icp" > /dev/null 2>&1
       RC=$?
       if [ $RC -eq 0 ]; then
         echo "* ICP detected in helm client string, testing if tls required"
 
         helm version > /dev/null 2>&1
         RC=$?
-        if [ $RC -ne 0 ]; then 
+        if [ $RC -ne 0 ]; then
           helm version --tls > /dev/null 2>&1
           RC=$?
           if [ $RC -eq 0 ]; then
-            echo "  - tls confirmed as required"
-            touch ${GO_DIR}/.gameontext.helm.tls
+            echo "  - helm requires --tls option"
+            export GAMEON_HELM_TLS_FLAG="--tls"
           else
+            export GAMEON_HELM_TLS_FLAG=
             kubectl cluster-info > /dev/null 2>&1
             RC=$?
             if [ $RC -ne 0 ]; then
@@ -678,7 +691,7 @@ check_versions() {
               echo "          is configured correctly to talk to your cluster"
               echo "          If using ICP, your authentication may have expired."
             else
-              echo "  - Error: 'helm version' did not return successfully with or without --tls" 
+              echo "  - Error: 'helm version' did not return successfully with or without --tls"
             fi
           fi
         else
@@ -688,15 +701,20 @@ check_versions() {
     fi
   fi
 
-  if [ -f .gameontext.istio ]; then
+  if [ "${GAMEON_USE_ISTIO}" ]; then
+    get_istio_path
+
     echo "* istio version 1.0.0 or greater"
     if ! which istioctl > /dev/null; then
       echo -e "  ${RED}MISSING${NO_COLOR}: istioctl not found"
       echo "    istioctl either isn't installed, or isn't available on your PATH"
       echo "    Set up istioctl using the following instructions:"
       echo "        https://istio.io/docs/setup/kubernetes/download-release/"
-      echo "    Make sure istioctl is executable by you, and on your path"
+      echo "    Make sure istioctl is executable by you, and is either:"
+      echo "    1) on your path (including /bin dir):"
       echo "        PATH=$PATH"
+      echo "    2) in the .gameontext.kubernetes file (not including /bin dir):"
+      echo "        \$ echo ISTIO_INSTALL=<path-to-istio-release-dir> >> ${GO_DIR}/.gameontext.kubernetes"
       QUIT=1
     else
       VERSION=$(istioctl version --short)
@@ -704,13 +722,13 @@ check_versions() {
 
       local INSTALL=$(cd $(dirname $(which istioctl))/.. && pwd)
       if [ -d ${INSTALL}/install/kubernetes/helm ]; then
-        echo ${INSTALL} > .gameontext.istio
+        ISTIO_INSTALL=${INSTALL}
       else
         echo -e "  ${RED}MISSING${NO_COLOR}: istio kubernetes helm directory not found"
         echo "    The istio install directory contains templates used for setup / teardown using helm"
         echo "    If you aren't using istioctl from an extracted istio release,"
-        echo "    please set the path into the .gameontext.istio file:"
-        echo "        \$ echo <path-to-istio-release-dir> >> ${GO_DIR}/.gameontext.istio"
+        echo "    please set the path into the .gameontext.kubernetes file:"
+        echo "        \$ echo ISTIO_INSTALL=<path-to-istio-release-dir> >> ${GO_DIR}/.gameontext.kubernetes"
         echo "    Specifically, the specified directory should contain istio helm templates"
         echo "    under install/kubernetes/helm"
       fi
@@ -720,4 +738,27 @@ check_versions() {
   echo "***********  "
   echo ""
   return $QUIT
+}
+
+set_env() {
+  source .gameontext.kubernetes
+  set_istio_path
+  if sed --version >/dev/null 2>&1; then
+    GNU_SED=1
+  else
+    unset GNU_SED
+  fi
+}
+
+get_istio_path() {
+  eval $(grep ISTIO_INSTALL .gameontext.kubernetes 2>/dev/null)
+  set_istio_path
+}
+
+set_istio_path() {
+  if [ ! -z ${ISTIO_INSTALL+x} ]; then
+    if ! grep -q ${ISTIO_INSTALL} ${PATH} 2>/dev/null; then
+      PATH=${ISTIO_INSTALL}/bin:${PATH}
+    fi
+  fi
 }
