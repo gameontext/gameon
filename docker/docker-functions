@@ -3,7 +3,7 @@ IMG_DIR=$( cd "$SCRIPTDIR/../images" && pwd )
 GO_DIR=$( cd "$SCRIPTDIR/.." && pwd )
 source $BIN_DIR/go-common
 
-PLATFORM="kafka redis couchdb util"
+PLATFORM="kafka redis couchdb util zipkin"
 COREPROJECTS="auth map mediator player proxy room swagger webapp"
 
 OVERRIDE=
