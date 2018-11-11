@@ -47,17 +47,18 @@ if [ -z "${PROJECTS}" ]; then
 fi
 
 up_log() {
+  ensure_datastore
   ensure_keystore
 
   echo
   echo "*****"
   if [ $NOLOGS -eq 0 ]; then
-    echo "Starting containers (detached) [$PROJECTS]"
+    echo "Starting containers (detached) [$@]"
     echo "Logs will continue in the foreground."
   else
-    echo "Starting containers (detached) [$PROJECTS]"
+    echo "Starting containers (detached) [$@]"
     echo "View logs: "
-    echo "    ./docker/go-run.sh logs $PROJECTS"
+    echo "    ./docker/go-run.sh logs $@"
   fi
   echo
   echo "Launching containers will take some time as dependencies are coordinated."
@@ -72,11 +73,11 @@ up_log() {
 }
 
 down_rm() {
-  echo "Stopping containers [$PROJECTS]"
+  echo "Stopping containers [$@]"
   wrap_compose stop $@
   echo
   echo "*****"
-  echo "Cleaning up containers [$PROJECTS]"
+  echo "Cleaning up containers [$@]"
   wrap_compose rm $@
 }
 
@@ -91,7 +92,7 @@ refresh() {
 }
 
 rebuild() {
-  echo "Building projects [$PROJECTS]"
+  echo "Building projects [$@]"
   for project in $@
   do
     echo
@@ -123,6 +124,7 @@ rebuild() {
 
 setup() {
   docker_versions
+  ensure_datastore
   ensure_keystore
 
   SOURCE=$SCRIPTDIR/gameon.env
@@ -198,6 +200,8 @@ usage() {
 
     reload_proxy
     reset_kafka
+    reset_db
+    reset
 
   Use optional arguments to select specific image(s) by name"
 }
@@ -240,9 +244,6 @@ case "$ACTION" in
   reload_proxy)
     wrap_compose kill -s HUP proxy
   ;;
-  reset_kafka)
-    reset_kafka
-  ;;
   restart)
     down_rm $PROJECTS
     up_log $PROJECTS
@@ -254,9 +255,15 @@ case "$ACTION" in
     setup
   ;;
   reset)
-    wrap_compose stop $PROJECTS
-    platform_down
+    down_rm $PROJECTS $PLATFORM
     wrap_docker volume rm -f keystore
+    reset_db
+  ;;
+  reset_kafka)
+    reset_kafka
+  ;;
+  reset_db)
+    reset_db
   ;;
   start)
     up_log $PROJECTS

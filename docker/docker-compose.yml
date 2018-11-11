@@ -26,7 +26,6 @@ services:
   auth:
     image: gameontext/gameon-auth:lastgood
     volumes:
-      - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
       - 'keystore:/opt/ol/wlp/usr/servers/defaultServer/resources/security'
     depends_on:
       kafka:
@@ -39,7 +38,6 @@ services:
   map:
     image: gameontext/gameon-map:lastgood
     volumes:
-      - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
       - 'keystore:/opt/ol/wlp/usr/servers/defaultServer/resources/security'
     depends_on:
       couchdb:
@@ -54,7 +52,6 @@ services:
   mediator:
     image: gameontext/gameon-mediator:lastgood
     volumes:
-      - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
       - 'keystore:/opt/ol/wlp/usr/servers/defaultServer/resources/security'
     depends_on:
       kafka:
@@ -67,7 +64,6 @@ services:
   player:
     image: gameontext/gameon-player:lastgood
     volumes:
-      - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
       - 'keystore:/opt/ol/wlp/usr/servers/defaultServer/resources/security'
     depends_on:
       couchdb:
@@ -82,7 +78,7 @@ services:
   proxy:
     image: gameontext/gameon-proxy:lastgood
     volumes:
-      - 'keystore:/keystore'
+      - 'keystore:/etc/cert'
     env_file: gameon.${DOCKER_MACHINE_NAME}env
     environment:
       - DNS_TCP_ADDR=127.0.0.11
@@ -97,7 +93,6 @@ services:
   room:
     image: gameontext/gameon-room:lastgood
     volumes:
-      - 'keystore:/opt/ibm/wlp/usr/servers/defaultServer/resources/security'
       - 'keystore:/opt/ol/wlp/usr/servers/defaultServer/resources/security'
     depends_on:
       kafka:
@@ -126,9 +121,12 @@ services:
     build:
       context: ../images/util
     image: gameon-util
-    command: tail -f /dev/null
+    depends_on:
+      couchdb:
+        condition: service_healthy
     volumes:
       - 'keystore:/keystore'
+      - 'couchdb-data:/opt/couchdb/data'
     env_file: gameon.${DOCKER_MACHINE_NAME}env
     container_name: util
     networks:
@@ -163,9 +161,10 @@ services:
 
 #### Local CouchDb Backend #########
   couchdb:
-    image: klaemo/couchdb:1.6.1
-    ports:
-      - "5984:5984"
+    image: couchdb:2.2
+    volumes:
+      - 'keystore:/etc/cert'
+      - 'couchdb-data:/opt/couchdb/data'
     container_name: couchdb
     healthcheck:
       test: curl http://localhost:5984/
@@ -179,4 +178,6 @@ networks:
 
 volumes:
   keystore:
+    external: true
+  couchdb-data:
     external: true

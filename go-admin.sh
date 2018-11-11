@@ -73,10 +73,16 @@ case "$ACTION" in
     go_run setup
   ;;
   reset)
-    echo "Stopping the game and removing all Game On! configuration"
-    go_run down
-    go_run reset
-    rm -f .gameontext*
+    echo "======= "
+    echo "Stopping the game and removing all Game On! Docker Compose artifacts"
+    ./docker/go-run.sh down
+    ./docker/go-run.sh reset
+    ok "Docker Compose resources reset"
+    echo "======= "
+    echo "Stopping the game and removing all Game On! kubernetes artifacts"
+    ./kubernetes/go-run.sh down
+    ./kubernetes/go-run.sh reset
+    ok "Kubernetes resources reset"
   ;;
   up)
     if ! [ -f .gameontext ] || [ "$GO_DEPLOYMENT" != "$(< .gameontext)" ]; then

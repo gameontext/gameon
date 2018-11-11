@@ -106,6 +106,9 @@ build_webapp() {
 }
 
 ensure_keystore() {
+  # make sure certificates exist
+  ${BIN_DIR}/gen-certificate.sh "${GO_DIR}" "${GAMEON_HOST}"
+
   ## Creating Keystores
   # Docker volume operations need absolute paths
   DOCKERPATHPREFIX=
@@ -129,15 +132,14 @@ ensure_keystore() {
   then
     wrap_docker volume create --name keystore
     # Generate keystore
-    wrap_compose run -T\
+    wrap_compose run -T \
       -v keystore:/tmp/keystore \
       -v ${DOCKERPATHPREFIX}${BIN_DIR}/gen-keystore.sh:/tmp/gen-keystore.sh \
-      -w /tmp --rm util bash ./gen-keystore.sh ${GAMEON_HOST}
-    # Copy ltpa.keys
-    wrap_compose run -T\
-      -v keystore:/tmp/keystore \
+      -v ${GO_DIR}/.gameontext.cert.pem:/tmp/cert.pem \
+      -v ${GO_DIR}/.gameontext.onlycert.pem:/tmp/server.pem \
+      -v ${GO_DIR}/.gameontext.onlykey.pem:/tmp/private.pem \
       -v ${DOCKERPATHPREFIX}${IMG_DIR}/ltpa.keys:/tmp/ltpa.keys \
-      -w /tmp --rm util cp ltpa.keys keystore/ltpa.keys
+      -w /tmp --rm util bash ./gen-keystore.sh
   fi
 
   ## Ensure volume exists for node modules (avoid putting in filesystem because of OS differences)
@@ -149,7 +151,17 @@ ensure_keystore() {
   fi
 }
 
+ensure_datastore() {
+  wrap_docker volume inspect couchdb-data &> /dev/null
+  rc=$?
+  if [ $rc -ne 0 ]
+  then
+    wrap_docker volume create --name couchdb-data
+  fi
+}
+
 platform_up() {
+  ensure_datastore
   ensure_keystore
 
   FOUND=$(${DOCKER_CMD} ps --format="{{.Names}}")
@@ -186,7 +198,7 @@ reset_kafka() {
   echo "Stop kafka and dependent services"
   wrap_compose stop kafka ${PROJECTS}
   wrap_compose kill kafka ${PROJECTS}
-  wrap_composerm -f kafka ${PROJECTS}
+  wrap_compose rm -f kafka ${PROJECTS}
   echo "Resetting kafka takes some time ... "
   echo "Sleep 30"
   sleep 30
@@ -200,3 +212,15 @@ reset_kafka() {
   wrap_compose up -d  ${PROJECTS}
   wrap_compose logs --tail="5" -f  ${PROJECTS}
 }
+
+reset_db() {
+  read -p 'Clear data from couchdb? (y|N)' answer
+  if [ "$answer" == "y" ] || [ "$answer" == "Y" ]; then
+    echo "Stop couchdb"
+    wrap_compose stop couchdb util
+    wrap_compose rm -f couchdb util
+
+    wrap_docker volume rm -f couchdb-data
+  fi
+}
+
