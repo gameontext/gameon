@@ -108,7 +108,7 @@ keytool -exportcert \
   -storepass testOnlyKeystore \
   -keypass testOnlyKeystore \
   -keystore keystore/key.jks \
-  -file keystore/app.pem \
+  -file keystore/cert.pem \
   -rfc
 #export the private key in pem format for proxy to use
 keytool -importkeystore \
@@ -128,7 +128,7 @@ openssl pkcs12 \
   -nodes \
   -password pass:testOnlyKeystore
 #concat the public and private key for haproxy
-cat keystore/app.pem keystore/private.pem > keystore/proxy.pem
+cat keystore/cert.pem keystore/private.pem > keystore/proxy.pem
 #add the cacert to the truststore
 keytool -importcert \
   -alias gameonca \
