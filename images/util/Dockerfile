@@ -12,3 +12,11 @@ ENV TGZ=kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz
 RUN wget -q "http://apache.mirrors.spacedump.net/kafka/${KAFKA_VERSION}/${TGZ}" -O /tmp/${TGZ} \
  && tar xfz /tmp/${TGZ} -C /opt \
  && rm /tmp/${TGZ}
+
+ADD https://raw.githubusercontent.com/gameontext/gameon/master/bin/init_couchdb.sh /init_couchdb.sh
+COPY ./startup.sh /startup.sh
+
+ENTRYPOINT []
+CMD [ "/startup.sh" ]
+
+HEALTHCHECK CMD test -f /initialized.txt
