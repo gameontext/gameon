@@ -6,6 +6,7 @@ metadata:
   labels:
     app: gameon
 spec:
+  type: ClusterIP
   ports:
   - port: 9092
     protocol: TCP
@@ -16,7 +17,7 @@ spec:
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: kafka
+  name: kafka-deploy
   namespace: gameon-system
   labels:
     app: gameon-kafka
@@ -29,9 +30,10 @@ spec:
         app: gameon-kafka
     spec:
       containers:
-      - image: gameontext/go-reactive-sandbox:latest
+      - name: kafka
+        image: gameontext/go-reactive-sandbox:latest
         imagePullPolicy: IfNotPresent
-        name: kafka
         ports:
-        - containerPort: 9092
-          name: kafka
+        - name: kafka
+          containerPort: 9092
+

@@ -14,56 +14,56 @@ spec:
         prefix: /auth
     route:
     - destination:
-        host: auth-service.gameon-system.svc.cluster.local
+        host: auth.gameon-system.svc.cluster.local
   - match:
     - uri:
         prefix: /map
     route:
     - destination:
-        host: map-service.gameon-system.svc.cluster.local
+        host: map.gameon-system.svc.cluster.local
   - websocketUpgrade: true
     match:
     - uri:
         prefix: /mediator/ws
     route:
     - destination:
-        host: mediator-service.gameon-system.svc.cluster.local
+        host: mediator.gameon-system.svc.cluster.local
   - match:
     - uri:
         prefix: /mediator
     route:
     - destination:
-        host: mediator-service.gameon-system.svc.cluster.local
+        host: mediator.gameon-system.svc.cluster.local
   - match:
     - uri:
         prefix: /players
     route:
     - destination:
-        host: player-service.gameon-system.svc.cluster.local
+        host: player.gameon-system.svc.cluster.local
   - websocketUpgrade: true
     match:
     - uri:
         prefix: /rooms/ws
     route:
     - destination:
-        host: room-service.gameon-system.svc.cluster.local
+        host: room.gameon-system.svc.cluster.local
   - match:
     - uri:
         prefix: /rooms
     route:
     - destination:
-        host: room-service.gameon-system.svc.cluster.local
+        host: room.gameon-system.svc.cluster.local
   - match:
     - uri:
         exact: /swagger
-    redirect: 
+    redirect:
         uri: /swagger/
   - match:
     - uri:
         prefix: /swagger/
     route:
     - destination:
-        host: swagger-service.gameon-system.svc.cluster.local
+        host: swagger.gameon-system.svc.cluster.local
   - route:
     - destination:
-        host: webapp-service.gameon-system.svc.cluster.local
+        host: webapp.gameon-system.svc.cluster.local

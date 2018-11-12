@@ -16,7 +16,7 @@ spec:
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: auth
+  name: auth-deploy
   namespace: gameon-system
   labels:
     app: gameon-auth
@@ -31,11 +31,12 @@ spec:
         secret:
           secretName: global-cert
       containers:
-      - image: gameontext/gameon-auth:lastgood
-        name: auth
+      - name: auth
+        image: gameontext/gameon-auth:lastgood
+        imagePullPolicy: IfNotPresent
         ports:
-        - containerPort: 9080
-          name: auth
+        - name: auth
+          containerPort: 9080
         readinessProbe:
           httpGet:
             path: /auth/health

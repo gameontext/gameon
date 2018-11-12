@@ -2,6 +2,12 @@ BIN_DIR=$( cd "$SCRIPTDIR/../bin" && pwd )
 GO_DIR=$( cd "$SCRIPTDIR/.." && pwd )
 source $BIN_DIR/go-common
 
+if sed --version >/dev/null 2>&1; then
+  GNU_SED=1
+else
+  unset GNU_SED
+fi
+
 GO_DEPLOYMENT=kubernetes
 COREPROJECTS="auth map mediator player proxy room swagger webapp"
 
@@ -9,6 +15,12 @@ wrap_kubectl() {
   echo "
 > kubectl $@"
   kubectl $@
+}
+
+wrap_kubectl_go() {
+  echo "
+> kubectl -n gameon-system $@"
+  kubectl -n gameon-system $@
 }
 
 wrap_exec_kubectl() {
@@ -45,7 +57,7 @@ wait_until_ready() {
 
 sed_file() {
   if [ -f "${GO_DIR}/$2" ]; then
-    if [ "${GNU_SED}" ]; then
+    if [ "${GNU_SED}" == "1" ]; then
       sed -i -e "$1" "${GO_DIR}/$2"
     else
       sed -i '' -e "$1" "${GO_DIR}/$2"
@@ -81,7 +93,7 @@ ${kubectx}"
     fi
   else
     fixme "Please ensure your kubernetes cluster has been prepared properly
-    go-run prep"
+    go-run setup"
     exit 1
   fi
 }
@@ -189,8 +201,8 @@ init_namespace() {
       fixme "unable to  create gameon-system namespace"
       exit 1
     fi
-    wrap_helm version --client| grep "+icp" > /dev/null 2>&1
-    if [ $? ]; then
+
+    if [ "${GAMEON_USE_HELM}" ] && wrap_helm version --client| grep -q "+icp"; then
       echo "Applying kube pod security policy for go namespace"
       wrap_kubectl apply -f kubernetes/icp-psp.yaml
     fi
@@ -210,13 +222,17 @@ init_namespace() {
     else
       wrap_kubectl label namespace gameon-system istio-injection=enabled
     fi
+    # disable kubernetes ingress
     sed_file '/^ *ingress:/,/^ *[^:]*:/ s/enabled: .*/enabled: false/' kubernetes/chart/gameon-system/values.yaml
     cp -n kubernetes/.template.istio.istio-gateway.yaml kubernetes/istio/istio-gateway.yaml
-  elif [ "${GAMEON_USE_HELM}" ]; then
-    install_tiller
+  else
+    if [ "${GAMEON_USE_HELM}" ]; then
+      install_tiller
+    fi
     if [ -z ${INGRESS_PORT+x} ]; then
       find_k8s_ingress
     fi
+    # Enable kubernetes ingress
     cp -n kubernetes/.template.kubectl.ingress.yaml kubernetes/kubectl/ingress.yaml
     sed_file '/^ *ingress:/,/^ *[^:]*:/ s/enabled: .*/enabled: true/' kubernetes/chart/gameon-system/values.yaml
   fi
@@ -231,6 +247,7 @@ init_namespace() {
   local GAME_FRONT_DOOR=${GAMEON_INGRESS}:${SECURE_INGRESS_PORT}
 
   sed_file "s/frontDoor: .*$/frontDoor: ${GAME_FRONT_DOOR}/" kubernetes/chart/gameon-system/values.yaml
+  sed_file "s/frontDoorHost: .*$/frontDoorHost: ${GAMEON_INGRESS}/" kubernetes/chart/gameon-system/values.yaml
 
   sed_file "s/RECROOM_SERVICE_URL: .*$/RECROOM_SERVICE_URL: wss:\/\/${GAME_FRONT_DOOR}\/rooms/" kubernetes/kubectl/configmap.yaml
   sed_file "s/RECROOM_SERVICE_URL: .*$/RECROOM_SERVICE_URL: wss:\/\/${GAME_FRONT_DOOR}\/rooms/" kubernetes/chart/gameon-system/values.yaml
@@ -240,9 +257,8 @@ init_namespace() {
   sed_file "s/FRONT_END_AUTH_URL:.*$/FRONT_END_AUTH_URL: https:\/\/${GAME_FRONT_DOOR}\/auth/" kubernetes/kubectl/configmap.yaml
 
   # Gameon Ingress (host)
-
   ## Holy sed magic.
-  #  Replace hosts with GAMEON_INGRESS. Match hosts:, and then skip that line (/n), and replace the next one.
+  ## Replace hosts with ${GAMEON_INGRESS}. Match hosts:, and then skip that line (/n), and replace the next one.
   sed_file "/^ *- hosts:/,/^ *[^:]*:/ {
      /^ *- hosts:/n
      s/- .*$/- ${GAMEON_INGRESS}/
@@ -370,7 +386,7 @@ See: https://istio.io/docs/setup/kubernetes/helm-install/
 
 Run prep again once Istio has been installed in your cluster.
 
-    go-run prep"
+    go-run setup"
     exit 1
   fi
 }
@@ -397,7 +413,7 @@ test_local_kubernetes() {
   fi
 
   if [ ! -z ${GAMEON_LOCAL+x} ]; then
-    GAMEON_INGRESS_SECRET=
+    GAMEON_INGRESS_SECRET=front-door-certs
     GAMEON_INTERNAL_IPRANGE="10.0.0.1/24"
   fi
 }
@@ -478,80 +494,51 @@ define_ingress() {
 }
 
 create_certificate() {
+  local mtime=
+  if [ -f .gameontext.cert.pem ]; then
+    mtime=$(date -r .gameontext.cert.pem)
+  fi
 
-  # Create certificate (for signing JWTs)
-  if [ ! -f .gameontext.cert.pem ]; then
-    
-    mkdir ${GO_DIR}/.gameontext.openssl > /dev/null 2>&1
+  ${BIN_DIR}/gen-certificate.sh "${GO_DIR}" "${GAMEON_INGRESS}"
 
-    echo " - Creating certificate for ${GAMEON_INGRESS} "
-
-    #Generate CA Key And Cert
-    echo " - Generating CA & Cert"
-    SUBJECT="/CN=gameontext.org/OU=GameOn Development CA/O=The Ficticious GameOn CA Company/L=Earth/ST=Happy/C=CA"
-    openssl genrsa -out ${GO_DIR}/.gameontext.openssl/server_rootCA.key 4096
-    openssl req -x509 -new -nodes -key ${GO_DIR}/.gameontext.openssl/server_rootCA.key -sha256 -days 3650 -out ${GO_DIR}/.gameontext.openssl/server_rootCA.pem -subj "${SUBJECT}"
-
-    #Create CSR config
-cat <<EOT > ${GO_DIR}/.gameontext.openssl/rootCSR.cnf 
-[req]
-default_bits = 4096
-prompt = no
-default_md = sha256
-distinguished_name = dn
-
-[dn]
-C=CA
-ST=Happy
-L=Earth
-O=The Ficticious GameOn Company
-OU=GameOn Application
-CN = ${GAMEON_INGRESS}
-
-EOT
-
-cat <<EOT > ${GO_DIR}/.gameontext.openssl/v3.ext
-authorityKeyIdentifier=keyid,issuer
-basicConstraints=CA:FALSE
-keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
-subjectAltName = @alt_names
-
-[alt_names]
-DNS.1 = ${GAMEON_INGRESS}
-
-EOT
-
-    echo " - Create Server Key & CSR"
-    #Create Server Key, with CSR 
-    openssl req -new -sha256 -nodes -out ${GO_DIR}/.gameontext.openssl/server.csr -newkey rsa:4096 -keyout .gameontext.onlykey.pem -config <( cat ${GO_DIR}/.gameontext.openssl/rootCSR.cnf )
-    
-    echo " - Sign CSR"
-    #Sign CSR with CA 
-    openssl x509 -req -in ${GO_DIR}/.gameontext.openssl/server.csr -CA ${GO_DIR}/.gameontext.openssl/server_rootCA.pem -CAkey ${GO_DIR}/.gameontext.openssl/server_rootCA.key -CAcreateserial -out .gameontext.onlycert.pem -days 3650 -sha256 -extfile ${GO_DIR}/.gameontext.openssl/v3.ext
-
-    #Append Server Cert & Key into single file for GameOn Use.
-    cat .gameontext.onlycert.pem .gameontext.onlykey.pem > .gameontext.cert.pem
-
+  local mtime2=$(date -r .gameontext.cert.pem)
+  if [ "$mtime" != "$mtime2" ]; then
     ok "Created a new certificate (.gameontext.cert.pem)"
     check_global_cert force
   fi
 }
 
 check_global_cert() {
-  wrap_kubectl -n gameon-system get secret global-cert 2>/dev/null
+  wrap_kubectl_go get secret global-cert 2>/dev/null
   local exists=$?
 
   if [ $# -gt 0 ] && [ $exists -eq 0 ]; then
-    wrap_kubectl -n gameon-system delete secret global-cert
+    wrap_kubectl_go delete secret global-cert
     ok "Deleted old global-cert secret in gameon-system namespace"
     exists=1
   fi
 
   if [ $exists -eq 1 ]; then
-    wrap_kubectl -n gameon-system create secret generic global-cert --from-file=cert.pem=.gameontext.cert.pem
+    wrap_kubectl_go create secret generic global-cert --from-file=cert.pem=.gameontext.cert.pem
     ok "Created global-cert secret in gameon-system namespace"
   else
     ok "Found global-cert secret in gameon-system namespace"
+  fi
+
+  wrap_kubectl_go get secret front-door-certs 2>/dev/null
+  local exists=$?
+
+  if [ $# -gt 0 ] && [ $exists -eq 0 ]; then
+    wrap_kubectl_go delete secret front-door-certs
+    ok "Deleted old front-door-certs secret in gameon-system namespace"
+    exists=1
+  fi
+
+  if [ $exists -eq 1 ]; then
+    wrap_kubectl_go create secret tls front-door-certs --cert=.gameontext.onlycert.pem --key=.gameontext.onlykey.pem
+    ok "Created front-door-certs secret in gameon-system namespace"
+  else
+    ok "Found front-door-certs secret in gameon-system namespace"
   fi
 
   if [ "${GAMEON_USE_ISTIO}" ]; then
@@ -743,11 +730,6 @@ check_versions() {
 set_env() {
   source .gameontext.kubernetes
   set_istio_path
-  if sed --version >/dev/null 2>&1; then
-    GNU_SED=1
-  else
-    unset GNU_SED
-  fi
 }
 
 get_istio_path() {
@@ -756,7 +738,7 @@ get_istio_path() {
 }
 
 set_istio_path() {
-  if [ ! -z ${ISTIO_INSTALL+x} ]; then
+  if [ -n "${ISTIO_INSTALL}" ]; then
     if ! grep -q ${ISTIO_INSTALL} ${PATH} 2>/dev/null; then
       PATH=${ISTIO_INSTALL}/bin:${PATH}
     fi

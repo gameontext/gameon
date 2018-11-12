@@ -16,7 +16,7 @@ spec:
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: swagger
+  name: swagger-deploy
   namespace: gameon-system
   labels:
     app: gameon-swagger
@@ -28,6 +28,7 @@ spec:
     spec:
       containers:
       - image: gameontext/gameon-swagger:lastgood
+        imagePullPolicy: IfNotPresent
         name: swagger
         ports:
         - containerPort: 8080

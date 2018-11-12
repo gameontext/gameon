@@ -6,6 +6,7 @@ metadata:
   labels:
     app: gameon-couchdb
 spec:
+  type: ClusterIP
   ports:
   - port: 5984
     protocol: TCP
@@ -16,11 +17,14 @@ spec:
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: couchdb
+  name: couchdb-deploy
   namespace: gameon-system
   labels:
     app: gameon-couchdb
 spec:
+  selector:
+    matchLabels:
+      app: gameon-couchdb
   strategy:
     type: Recreate
   template:
@@ -29,8 +33,12 @@ spec:
         app: gameon-couchdb
     spec:
       containers:
-      - image: klaemo/couchdb:1.6.1
-        name: couchdb
+      - name: couchdb
+        image: couchdb:2.2
+        imagePullPolicy: IfNotPresent
         ports:
-        - containerPort: 5984
-          name: couchdb
+        - name: couchdb
+          containerPort: 5984
+        - name: epmd
+          containerPort: 4369
+        - containerPort: 9100

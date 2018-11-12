@@ -16,7 +16,7 @@ spec:
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: mediator
+  name: mediator-deploy
   namespace: gameon-system
   labels:
     app: gameon-mediator
@@ -31,11 +31,12 @@ spec:
         secret:
           secretName: global-cert
       containers:
-      - image: gameontext/gameon-mediator:lastgood
-        name: mediator
+      - name: mediator
+        image: gameontext/gameon-mediator:lastgood
+        imagePullPolicy: IfNotPresent
         ports:
-        - containerPort: 9080
-          name: mediator
+        - name: mediator
+          containerPort: 9080
         readinessProbe:
           httpGet:
             path: /mediator/
