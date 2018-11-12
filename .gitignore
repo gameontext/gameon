@@ -7,6 +7,7 @@
 gameon.?*env
 docker-compose.override.yml
 kubernetes/kubectl/configmap.yaml
+kubernetes/kubectl/couchdb-pv.yaml
 kubernetes/kubectl/ingress.yaml
 kubernetes/istio/istio-gateway.yaml
 kubernetes/chart/gameon-system/values.yaml

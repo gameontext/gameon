@@ -16,7 +16,7 @@ spec:
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: player
+  name: player-deploy
   namespace: gameon-system
   labels:
     app: gameon-player
@@ -31,11 +31,12 @@ spec:
         secret:
           secretName: global-cert
       containers:
-      - image: gameontext/gameon-player:lastgood
-        name: player
+      - name: player
+        image: gameontext/gameon-player:lastgood
+        imagePullPolicy: IfNotPresent
         ports:
-        - containerPort: 9080
-          name: player
+        - name: player
+          containerPort: 9080
         readinessProbe:
           httpGet:
             path: /players/v1/health

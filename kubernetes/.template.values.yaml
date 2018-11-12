@@ -1,18 +1,19 @@
 global:
   frontDoor: GAME_FRONT_DOOR
+  frontDoorHost: GAMEON_INGRESS
   mode: development
   data:
 # Global: interservice communication
-    MAP_SERVICE_URL: http://map-service.gameon-system.svc.cluster.local:9080/map/v1/sites
-    MAP_HEALTH_SERVICE_URL: http://map-service.gameon-system.svc.cluster.local:9080/map/v1/health
-    PLAYER_SERVICE_URL: http://player-service.gameon-system.svc.cluster.local:9080/players/v1/accounts
+    MAP_SERVICE_URL: http://map.gameon-system.svc.cluster.local:9080/map/v1/sites
+    MAP_HEALTH_SERVICE_URL: http://map.gameon-system.svc.cluster.local:9080/map/v1/health
+    PLAYER_SERVICE_URL: http://player.gameon-system.svc.cluster.local:9080/players/v1/accounts
     RECROOM_SERVICE_URL: wss://GAME_FRONT_DOOR/rooms
 # Global: Common backing services
     COUCHDB_USER: mapUser
     COUCHDB_PASSWORD: myCouchDBSecret
-    COUCHDB_SERVICE_URL: http://couchdb-service.gameon-system.svc.cluster.local:5984
-    COUCHDB_HOST_AND_PORT: couchdb-service.gameon-system.svc.cluster.local:5984
-    KAFKA_SERVICE_URL: kafka-service.gameon-system.svc.cluster.local:9092
+    COUCHDB_SERVICE_URL: http://couchdb.gameon-system.svc.cluster.local:5984
+    COUCHDB_HOST_AND_PORT: couchdb.gameon-system.svc.cluster.local:5984
+    KAFKA_SERVICE_URL: kafka.gameon-system.svc.cluster.local:9092
     MESSAGEHUB_USER: ''
     MESSAGEHUB_PASSWORD: ''
 # Global configuration vars for running locally
@@ -42,7 +43,7 @@ ingress:
   tls:
   - hosts:
     - GAMEON_INGRESS
-    secretName: GAMEON_INGRESS_SECRET
+  secretName: GAMEON_INGRESS_SECRET
 #  Define default backend for the ingress
   backend:
     serviceName: webapp

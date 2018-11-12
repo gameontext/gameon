@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: couchdb-service
+  name: couchdb
   namespace: gameon-system
   labels:
     app: {{ .Chart.Name }}-couchdb
@@ -32,7 +32,7 @@ spec:
         app: {{ .Chart.Name}}-couchdb
     spec:
       containers:
-      - image: klaemo/couchdb:1.6.1
+      - image: couchdb:2.2
         name: couchdb
         ports:
         - containerPort: 5984

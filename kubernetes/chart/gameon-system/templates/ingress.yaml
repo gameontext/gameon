@@ -21,19 +21,19 @@ spec:
 # TLS block causes automatic redirection of http -> https
   tls:
     - hosts:
-      - {{ .Values.global.frontDoor }}
+      - {{ .Values.global.frontDoorHost }}
 {{- with .Values.ingress.secretName }}
       secretName: {{ . }}
 {{- end }}
   rules:
-    - host: {{ .Values.global.frontDoor }}
+    - host: {{ .Values.global.frontDoorHost }}
       http:
         paths:
         {{- range .Values.coreServices }}
         {{- if eq (.skipIngress | default false) false }}
         - path: {{ .path }}
           backend:
-            serviceName: {{ .serviceName }}-service
+            serviceName: {{ .serviceName }}
             servicePort: {{ .servicePort }}
         {{- end }}
         {{- end }}

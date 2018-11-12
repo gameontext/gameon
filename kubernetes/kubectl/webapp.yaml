@@ -16,7 +16,7 @@ spec:
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: webapp
+  name: webapp-deploy
   namespace: gameon-system
   labels:
     app: gameon-webapp
@@ -28,6 +28,7 @@ spec:
     spec:
       containers:
       - image: gameontext/gameon-webapp:lastgood
+        imagePullPolicy: IfNotPresent
         name: webapp
         ports:
         - containerPort: 8080

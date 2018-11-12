@@ -36,6 +36,7 @@ usage() {
 
 case "$ACTION" in
   reset)
+    platform_down
     reset_go
   ;;
   setup)
@@ -54,8 +55,8 @@ case "$ACTION" in
   ;;
   status)
     check_cluster_cfg
-    if wrap_kubectl -n gameon-system get po | grep -q mediator; then
-      wrap_kubectl -n gameon-system get all
+    if wrap_kubectl_go get po | grep -q mediator; then
+      wrap_kubectl_go get all
 
       echo "
 When ready, the game is available at https://${GAMEON_INGRESS}:${SECURE_INGRESS_PORT}/
@@ -70,7 +71,7 @@ When ready, the game is available at https://${GAMEON_INGRESS}:${SECURE_INGRESS_
   ;;
   wait)
     check_cluster_cfg
-    if wrap_kubectl -n gameon-system get po | grep -q mediator; then
+    if wrap_kubectl_go get po | grep -q mediator; then
       echo "Waiting for gameon-system pods to start"
       wait_until_ready -n gameon-system get pods
       echo ""
