@@ -58,7 +58,7 @@ ensure_exists() {
       ;;
       *)
         echo "unknown error with $uri";
-        curl -s -o /dev/null -w "%{http_code}" --fail -X GET $url
+        curl -s --fail -X GET $url
         exit 1
       ;;
     esac
@@ -72,6 +72,7 @@ assert_exists() {
   local result=$(curl -s -o /dev/null -w "%{http_code}" --fail -X GET $url)
   echo "**** curl -X GET $url  ==>  $result "
   if [ $result -ne 200 ]; then
+    curl -s --fail -X GET $url
     exit 1
   fi
 }
