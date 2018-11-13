@@ -70,7 +70,7 @@ assert_exists() {
   local url=${activeUrl}$uri
 
   local result=$(curl -s -o /dev/null -w "%{http_code}" --fail -X GET $url)
-  echo "**** curl -X GET $url  ==>  $result "
+  echo "**** curl -X GET $uri  ==>  $result "
   if [ $result -ne 200 ]; then
     curl -s --fail -X GET $url
     exit 1
