@@ -1,4 +1,4 @@
-FROM gameontext/docker-liberty-custom:master-12
+FROM gameontext/docker-liberty-custom:master-14
 
 LABEL maintainer="Erin Schnabel <schnabel@us.ibm.com> (@ebullientworks)"
 
