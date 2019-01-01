@@ -62,6 +62,7 @@ subjectAltName = @alt_names
 
 [alt_names]
 DNS.1 = ${hostName}
+IP.1 = ${hostName}
 
 EOT
 
