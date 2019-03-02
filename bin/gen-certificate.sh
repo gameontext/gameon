@@ -21,6 +21,17 @@ if [ -f ${targetDir}/.gameontext.onlycert.pem ]; then
   fi
 fi
 
+ALT=
+j=1
+for x in $@; do
+  echo $x
+  ALT="$ALT\nDNS.${j} = ${x}"
+  ((j++))
+done
+if [[ $hostName =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+  ALT="$ALT\nIP.${j} = ${hostName}"
+fi
+
 mkdir -p ${targetDir}/.gameontext.openssl > /dev/null 2>&1
 
 # Create certificate (for signing JWTs)
@@ -61,8 +72,7 @@ keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
 subjectAltName = @alt_names
 
 [alt_names]
-DNS.1 = ${hostName}
-IP.1 = ${hostName}
+DNS.1 = ${hostName}${ALT}
 
 EOT
 
