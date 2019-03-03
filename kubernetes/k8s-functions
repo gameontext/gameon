@@ -239,6 +239,9 @@ init_namespace() {
 
   create_certificate
 
+  # Add internal ip range (using # not / to avoid having to escape /24 in range)
+  sed_file "s#includeIPRanges: .*#includeIPRanges: ${GAMEON_INTERNAL_IPRANGE}#" kubernetes/chart/gameon-system/values.yaml
+
   # Ingress Secret
   sed_file "s/secretName: .*$/secretName: ${GAMEON_INGRESS_SECRET}/" kubernetes/chart/gameon-system/values.yaml
   sed_file "s/secretName: .*$/secretName: ${GAMEON_INGRESS_SECRET}/" kubernetes/kubectl/ingress.yaml

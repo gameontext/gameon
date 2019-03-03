@@ -1,3 +1,4 @@
+{{- $iprange := .Values.global.includeIPRanges }}
 {{- range .Values.coreServices }}
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -10,6 +11,10 @@ metadata:
 spec:
   template:
     metadata:
+{{- if eq .serviceName "mediator" }}
+      annotations:
+        traffic.sidecar.istio.io/includeOutboundIPRanges: {{ $iprange }}
+{{- end }}
       labels:
         app: {{ $.Chart.Name }}-{{ .serviceName }}
     spec:

@@ -2,6 +2,7 @@ global:
   frontDoor: GAME_FRONT_DOOR
   frontDoorHost: GAMEON_INGRESS
   mode: development
+  includeIPRanges: GAMEON_INTERNAL_IPRANGE 
   data:
 # Global: interservice communication
     MAP_SERVICE_URL: http://map.gameon-system.svc.cluster.local:9080/map/v1/sites
