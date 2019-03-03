@@ -19,7 +19,7 @@ else
           GREEN=""
           WHITE=""
             RED=""
-      NO_COLOUR=""
+       NO_COLOR=""
 fi
 
 ok() {

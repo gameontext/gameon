@@ -328,9 +328,6 @@ install_istio() {
   if [ -z $answer ] || [[ $answer =~ [Yy] ]]; then
     cd ${ISTIO_INSTALL}
 
-    # Always install CRDs first
-    wrap_kubectl apply -f install/kubernetes/helm/istio/templates/crds.yaml
-
     if ! kubectl get -n kube-system serviceaccounts tiller > /dev/null 2>&1; then
       wrap_kubectl create -f install/kubernetes/helm/helm-service-account.yaml
     else
@@ -353,13 +350,13 @@ install_istio() {
 When running Istio on minikube or in docker-for-desktop, a NodePort is used instead
 of an external load balancer."
 
-      wrap_helm install install/kubernetes/helm/istio --name istio --namespace istio-system \
+      wrap_helm install install/kubernetes/helm/istio \
+          --name istio --namespace istio-system \
           --set gateways.istio-ingressgateway.type=NodePort \
-          --set gateways.istio-egressgateway.type=NodePort \
-          --set global.proxy.includeIPRanges="10.0.0.1/24"
+          --set gateways.istio-egressgateway.type=NodePort
     else
-      wrap_helm install install/kubernetes/helm/istio --name istio --namespace istio-system  \
-          --set global.proxy.includeIPRanges="10.0.0.1/24"
+      wrap_helm install install/kubernetes/helm/istio \
+          --name istio --namespace istio-system
     fi
 
     until get_ingress_gateway; do
@@ -644,7 +641,8 @@ check_versions() {
   fi
 
   if [ "${GAMEON_USE_ISTIO}" ] || [ "${GAMEON_USE_HELM}" ]; then
-    echo "* helm version 2.8.0 or greater"
+    local helmVersion=2.10.0
+    echo "* helm version ${helmVersion} or greater"
     if ! which helm > /dev/null; then
       echo -e "  ${RED}MISSING${NO_COLOR}: helm not found"
       echo "    helm either isn't installed, or isn't available on your PATH"
@@ -655,7 +653,7 @@ check_versions() {
       QUIT=1
     else
       VERSION=$(helm version --client --short)
-      check_version "${VERSION}" 2.7.2
+      check_version "${VERSION}" ${helmVersion}
       echo ${VERSION} | grep "+icp" > /dev/null 2>&1
       RC=$?
       if [ $RC -eq 0 ]; then
