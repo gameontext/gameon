@@ -1,11 +1,11 @@
 apiVersion: v1
-kind: ConfigMap
+kind: Secret
 metadata:
   name: {{ .Chart.Name }}-auth-config
   namespace: gameon-system
   labels:
     {{- include "gameon-system.labels" . }}
-data:
+stringData:
 # Auth service environment variables
   {{- range  $key, $val := .Values.auth.data }}
   {{ $key }}: {{ $val | quote }}
