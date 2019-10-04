@@ -96,7 +96,11 @@ When ready, the game is available at https://${GAMEON_INGRESS}:${SECURE_INGRESS_
     create_certificate
   ;;
   install_istio)
+    GAMEON_USE_ISTIO=1
     check_cluster_cfg
+    if ! check_versions; then
+      exit 1
+    fi
     install_istio
   ;;
   purge_istio)

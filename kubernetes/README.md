@@ -19,7 +19,7 @@ The `go-run.sh` and `k8s-functions` scripts encapsulate setup and deployment of 
 
 * [Docker](https://docs.docker.com/install/)
 * [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
-* [helm](https://docs.helm.sh/using_helm/#installing-helm)(optional)
+* [helm](https://docs.helm.sh/using_helm/#installing-helm) (optional)
 
 ## General bring-up instructions
 
@@ -154,15 +154,16 @@ When you aren't using minikube (which means you can't safely share the docker ho
 `kubectl` needs to be able to talk to a Kuberenetes cluster! You may have one already, in which case, all you need to do is make sure `kubectl` can work with it.
 
 * [Minikube](#minikube) -- local development cluster
+* [Minishift](#minishift) -- local development cluster (OpenShift 3.x)
 * [IBM Cloud Kubernetes](#ibm-cloud-kubernetes)
 
 ### Minikube
 
-If you already have a configured minikube cluster, skip to step 3.
+If you already have a configured minikube instance, skip to step 3.
 
 1. [Install minikube](https://kubernetes.io/docs/tasks/tools/install-minikube/)
 
-2. Create a minikube cluster:
+2. Start Minikube:
 
         $ minikube start --memory 8192
 
@@ -176,6 +177,27 @@ If you already have a configured minikube cluster, skip to step 3.
 
 5. (optional) Use `minikube dashboard` to inspect the contents of the `gameon-system` namespace.
 
+## Minishift
+
+If you already have a configured minishift instance, skip to step 3.
+
+1. [Install minishift]() to prepare minishift resources
+
+2. Start Minishift. Here is an example that allocates (fairly generous) resources to the single node:
+
+        $ minishift start --cpus 4 --disk-size 40g --memory 16384
+
+3. Login as `admin` with password `admin`.
+
+        $ oc login -u admin -p admin
+
+    If you are asued about insecure connections, say yes unless you have already configured signed certificates.
+
+    You are now logged in as the `admin` user.
+
+3. Verify `kubectl` can connect to your cluster:
+
+        $ kubectl cluster-info
 
 ### IBM Cloud Kubernetes
 
@@ -206,7 +228,7 @@ If you already have a configured cluster, skip to step 3.
 
     When the state changes from `deploying` to `normal`, your cluster is ready for the next step.
 
-2. Enable `kubectl` to talk to your cluster
+2. Configure `kubectl` to talk to your cluster
 
         $ eval $(bx cs cluster-config <cluster-name> | grep "export KUBECONFIG")
 

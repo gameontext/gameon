@@ -43,10 +43,7 @@ check_version()
 {
   version=$(echo $1 | sed -n 's/^[^0-9]*\([0-9.]\{1,\}\).*$/\1/p' )
   minimum=$2
-  winner=$(echo -e "$version\n$minimum" | sed '/^$/d' | sort -V | tail -1)
-  if [ $? -ne 0 ]; then
-    winner=$(echo -e "$version\n$minimum" | sed '/^$/d' | sort -t . -k1,1nr -k2,2nr -k3,3nr | tail -1)
-  fi
+  winner=$(echo -e "$version\n$minimum" | sed '/^$/d' | sort -t . -k1,1n -k2,2n -k3,3n | tail -1)
   if [ "$winner" = "$version" ]; then
     echo -e "  ${GREEN}OK${NO_COLOR}: $1"
   else
