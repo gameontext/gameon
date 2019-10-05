@@ -5,8 +5,9 @@ if [ -z "$targetDir" ]; then
   echo "Usage: specify targetDir for generated certificate"
   exit 1
 fi
+shift
 
-hostName=$2
+hostName=$1
 if [ -z "$hostName" ]; then
   echo "Usage: specify Hostname or IP address for certificate as argument"
   exit 1

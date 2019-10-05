@@ -397,7 +397,7 @@ test_local_kubernetes() {
   then
     echo "Detected minishift, using `minishift ip`"
     GAMEON_LOCAL=minishift
-    GAMEON_INGRESS=gameon.$(minishift ip).nip.io
+    GAMEON_INGRESS=gameon.$(minishift ip).xip.io
     ok "`minishift addons enable prometheus`"
     ok "`minishift addons enable admin-user`"
   fi
@@ -406,7 +406,7 @@ test_local_kubernetes() {
   if [[ $certauth =~ minikube ]]; then
     echo "Detected minikube, using 'minikube ip'"
     GAMEON_LOCAL=minikube
-    GAMEON_INGRESS=gameon.$(minikube ip).nip.io
+    GAMEON_INGRESS=gameon.$(minikube ip).xip.io
     ok "`minikube addons enable ingress`"
   fi
 
@@ -491,11 +491,16 @@ define_ingress() {
 
 create_certificate() {
   local mtime=
+  local IP=
   if [ -f .gameontext.cert.pem ]; then
     mtime=$(date -r .gameontext.cert.pem)
   fi
 
-  ${BIN_DIR}/gen-certificate.sh "${GO_DIR}" "${GAMEON_INGRESS}"
+  if [ "${GAMEON_LOCAL}" == "minikube" ]; then
+    IP=$(minikube ip)
+  fi
+
+  ${BIN_DIR}/gen-certificate.sh "${GO_DIR}" ${IP} "${GAMEON_INGRESS}"
 
   local mtime2=$(date -r .gameontext.cert.pem)
   if [ "$mtime" != "$mtime2" ]; then
