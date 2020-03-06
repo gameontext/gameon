@@ -2,6 +2,7 @@ global:
   frontDoor: GAME_FRONT_DOOR
   frontDoorHost: GAMEON_INGRESS
   mode: development
+  includeIPRanges: GAMEON_INTERNAL_IPRANGE
   data:
 # Global: interservice communication
     MAP_SERVICE_URL: http://map.gameon-system.svc.cluster.local:9080/map/v1/sites
@@ -9,15 +10,18 @@ global:
     PLAYER_SERVICE_URL: http://player.gameon-system.svc.cluster.local:9080/players/v1/accounts
     RECROOM_SERVICE_URL: wss://GAME_FRONT_DOOR/rooms
 # Global: Common backing services
-    COUCHDB_USER: mapUser
-    COUCHDB_PASSWORD: myCouchDBSecret
     COUCHDB_SERVICE_URL: http://couchdb.gameon-system.svc.cluster.local:5984
     COUCHDB_HOST_AND_PORT: couchdb.gameon-system.svc.cluster.local:5984
     KAFKA_SERVICE_URL: kafka.gameon-system.svc.cluster.local:9092
-    MESSAGEHUB_USER: ''
-    MESSAGEHUB_PASSWORD: ''
 # Global configuration vars for running locally
     TARGET_PLATFORM: local
+
+globalsecrets:
+  data:
+    COUCHDB_USER: mapUser
+    COUCHDB_PASSWORD: myCouchDBSecret
+    MESSAGEHUB_USER: ''
+    MESSAGEHUB_PASSWORD: ''
     SYSTEM_ID: game-on.org
     ADMIN_PASSWORD: admin
     MAP_KEY: fish

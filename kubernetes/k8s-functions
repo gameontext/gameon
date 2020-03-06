@@ -103,6 +103,7 @@ reset_go() {
   rm -f .gameontext.*.pem
   rm -f kubernetes/kubectl/ingress.yaml
   rm -f kubernetes/kubectl/configmap.yaml
+  rm -f kubernetes/kubectl/secret.yaml
   rm -f kubernetes/chart/gameon-system/values.yaml
   unset GAMEON_KUBECTL_CONTEXT
   unset GAMEON_LOCAL
@@ -136,6 +137,7 @@ prepare() {
 
   # create new files from templates if they don't already exist
   cp -n kubernetes/.template.kubectl.configmap.yaml kubernetes/kubectl/configmap.yaml
+  cp -n kubernetes/.template.kubectl.secret.yaml kubernetes/kubectl/secret.yaml
   cp -n kubernetes/.template.values.yaml kubernetes/chart/gameon-system/values.yaml
 
   init_namespace
@@ -237,6 +239,13 @@ init_namespace() {
   fi
 
   create_certificate
+
+  # Add internal ip range to kubectl yaml (using # not / to avoid having to escape /24 in range)
+  cp -n kubernetes/.template.kubectl.mediator.yaml kubernetes/kubectl/mediator.yaml
+  sed_file "s#includeOutboundIPRanges: .*#includeOutboundIPRanges: ${GAMEON_INTERNAL_IPRANGE}#" kubernetes/kubectl/mediator.yaml
+
+  # Add internal ip range to chart (using # not / to avoid having to escape /24 in range)
+  sed_file "s#includeIPRanges: .*#includeIPRanges: ${GAMEON_INTERNAL_IPRANGE}#" kubernetes/chart/gameon-system/values.yaml
 
   # Ingress Secret
   sed_file "s/secretName: .*$/secretName: ${GAMEON_INGRESS_SECRET}/" kubernetes/chart/gameon-system/values.yaml

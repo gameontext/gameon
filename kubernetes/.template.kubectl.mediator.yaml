@@ -25,6 +25,8 @@ spec:
     metadata:
       labels:
         app: gameon-mediator
+      annotations:
+        traffic.sidecar.istio.io/includeOutboundIPRanges: 10.0.0.1/24
     spec:
       volumes:
       - name: certificate
@@ -48,3 +50,5 @@ spec:
         envFrom:
         - configMapRef:
             name: global-config
+        - secretRef:
+            name: global-secret

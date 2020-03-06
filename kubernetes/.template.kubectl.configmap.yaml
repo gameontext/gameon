@@ -10,30 +10,13 @@ data:
   PLAYER_SERVICE_URL: http://player.gameon-system.svc.cluster.local:9080/players/v1/accounts
   RECROOM_SERVICE_URL: wss://GAME_FRONT_DOOR/rooms
 # Global: Common backing services
-  COUCHDB_USER: mapUser
-  COUCHDB_PASSWORD: myCouchDBSecret
   COUCHDB_SERVICE_URL: http://couchdb.gameon-system.svc.cluster.local:5984
   COUCHDB_HOST_AND_PORT: couchdb.gameon-system.svc.cluster.local:5984
   KAFKA_SERVICE_URL: kafka.gameon-system.svc.cluster.local:9092
-  MESSAGEHUB_USER: ''
-  MESSAGEHUB_PASSWORD: ''
 # Global configuration vars for running locally
   GAMEON_MODE: development
   TARGET_PLATFORM: local
-  SYSTEM_ID: game-on.org
-  ADMIN_PASSWORD: admin
-  MAP_KEY: fish
-  SWEEP_ID: sweep
-  SWEEP_SECRET: sweepSecret
 # Auth service environment variables
-  FACEBOOK_APP_ID: ''
-  FACEBOOK_APP_SECRET: ''
-  GITHUB_APP_ID: ''
-  GITHUB_APP_SECRET: ''
-  GOOGLE_APP_ID: ''
-  GOOGLE_APP_SECRET: ''
-  TWITTER_CONSUMER_KEY: ''
-  TWITTER_CONSUMER_SECRET: ''
   FRONT_END_SUCCESS_CALLBACK: https://GAME_FRONT_DOOR/#/login/callback
   FRONT_END_FAIL_CALLBACK: https://GAME_FRONT_DOOR/#/login?login_failed
   FRONT_END_AUTH_URL: https://GAME_FRONT_DOOR/auth
