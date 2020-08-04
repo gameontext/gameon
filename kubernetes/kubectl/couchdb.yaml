@@ -14,7 +14,7 @@ spec:
   selector:
     app: gameon-couchdb
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: couchdb-deploy
@@ -22,6 +22,7 @@ metadata:
   labels:
     app: gameon-couchdb
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: gameon-couchdb

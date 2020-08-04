@@ -13,7 +13,7 @@ spec:
   selector:
     app: gameon-swagger
 ---
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: swagger-deploy
@@ -21,6 +21,10 @@ metadata:
   labels:
     app: gameon-swagger
 spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gameon-swagger
   template:
     metadata:
       labels:

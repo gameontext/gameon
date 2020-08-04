@@ -13,7 +13,7 @@ spec:
   selector:
     app: gameon-mediator
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mediator-deploy
@@ -21,6 +21,10 @@ metadata:
   labels:
     app: gameon-mediator
 spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gameon-mediator
   template:
     metadata:
       labels:

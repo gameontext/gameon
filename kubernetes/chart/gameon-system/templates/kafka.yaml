@@ -15,7 +15,7 @@ spec:
   selector:
     app: {{ .Chart.Name }}-kafka
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kafka-deploy
@@ -24,6 +24,10 @@ metadata:
     app: {{ .Chart.Name }}-kafka
     {{- include "gameon-system.labels" . }}
 spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ $.Chart.Name }}-kafka
   strategy:
     type: Recreate
   template:

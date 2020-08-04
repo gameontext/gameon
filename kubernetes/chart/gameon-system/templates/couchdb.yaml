@@ -15,7 +15,7 @@ spec:
   selector:
     app: {{ .Chart.Name}}-couchdb
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: couchdb-deploy
@@ -24,6 +24,10 @@ metadata:
     app: {{ .Chart.Name}}-couchdb
     {{- include "gameon-system.labels" . }}
 spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ $.Chart.Name }}-couchdb
   strategy:
     type: Recreate
   template:

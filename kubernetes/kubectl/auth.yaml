@@ -13,7 +13,7 @@ spec:
   selector:
     app: gameon-auth
 ---
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: auth-deploy
@@ -21,6 +21,10 @@ metadata:
   labels:
     app: gameon-auth
 spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gameon-auth
   template:
     metadata:
       labels:
