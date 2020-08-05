@@ -13,7 +13,7 @@ spec:
   selector:
     app: gameon-webapp
 ---
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: webapp-deploy
@@ -21,6 +21,10 @@ metadata:
   labels:
     app: gameon-webapp
 spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gameon-webapp
   template:
     metadata:
       labels:

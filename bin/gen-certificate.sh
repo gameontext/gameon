@@ -25,12 +25,17 @@ fi
 ALT=
 j=1
 for x in $@; do
-  echo $x
-  ALT="$ALT\nDNS.${j} = ${x}"
-  ((j++))
+  if [[ $x =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+    echo Not adding $x as DNS
+  else
+    echo Adding $x as DNS
+    ALT="$ALT"$'\n'"DNS.${j} = ${x}"
+    ((j++))
+  fi
 done
 if [[ $hostName =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
-  ALT="$ALT\nIP.${j} = ${hostName}"
+  echo Adding $hostName as IP
+  ALT="$ALT"$'\n'"IP.${j} = ${hostName}"
 fi
 
 mkdir -p ${targetDir}/.gameontext.openssl > /dev/null 2>&1

@@ -4,7 +4,7 @@ metadata:
   name: kafka
   namespace: gameon-system
   labels:
-    app: gameon
+    app: gameon-kafka
 spec:
   type: ClusterIP
   ports:
@@ -14,7 +14,7 @@ spec:
   selector:
     app: gameon-kafka
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kafka-deploy
@@ -22,6 +22,10 @@ metadata:
   labels:
     app: gameon-kafka
 spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gameon-kafka
   strategy:
     type: Recreate
   template:
