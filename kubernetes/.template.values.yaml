@@ -1,5 +1,6 @@
 global:
   frontDoor: GAME_FRONT_DOOR
+  frontDoorAltHost: GAMEON_DUMMY_INGRESS
   frontDoorHost: GAMEON_INGRESS
   mode: development
   data:
@@ -48,6 +49,9 @@ ingress:
   backend:
     serviceName: webapp
     servicePort: 8080
+
+routes:
+  enabled: GAMEON_OPENSHIFT
 
 ####
 # Core services:

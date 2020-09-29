@@ -1,5 +1,5 @@
 {{- range .Values.coreServices }}
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name:  {{ .serviceName }}-deploy
@@ -8,6 +8,10 @@ metadata:
     app: {{ $.Chart.Name }}-{{ .serviceName }}
     {{- include "gameon-system.labels" $ }}
 spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ $.Chart.Name }}-{{ .serviceName }}  
   template:
     metadata:
       labels:

@@ -102,10 +102,12 @@ reset_go() {
   rm -rf .gameontext.openssl
   rm -f .gameontext.*.pem
   rm -f kubernetes/kubectl/ingress.yaml
+  rm -f kubernetes/kubectl/routes.yaml
   rm -f kubernetes/kubectl/configmap.yaml
   rm -f kubernetes/chart/gameon-system/values.yaml
   unset GAMEON_KUBECTL_CONTEXT
   unset GAMEON_LOCAL
+  unset GAMEON_OPENSHIFT
   unset GAMEON_INGRESS
 }
 
@@ -132,7 +134,7 @@ prepare() {
   fi
 
   verify_cluster
-  test_local_kubernetes
+  test_kubernetes
 
   # create new files from templates if they don't already exist
   cp -n kubernetes/.template.kubectl.configmap.yaml kubernetes/kubectl/configmap.yaml
@@ -155,9 +157,11 @@ platform_up() {
     wrap_kubectl apply -R -f kubernetes/kubectl
   fi
 
-  if [ "${GAMEON_USE_ISTIO}" ]; then
-    wrap_kubectl apply -f kubernetes/istio/istio-gateway.yaml
-    wrap_kubectl apply -f kubernetes/istio/istio-gatewayVirtualService.yaml
+  if [ "${GAMEON_OPENSHIFT}" == "false" ]; then
+    if [ "${GAMEON_USE_ISTIO}" ]; then
+      wrap_kubectl apply -f kubernetes/istio/istio-gateway.yaml
+      wrap_kubectl apply -f kubernetes/istio/istio-gatewayVirtualService.yaml
+    fi
   fi
 
   echo 'To wait for readiness: go-run wait'
@@ -183,14 +187,16 @@ platform_down() {
     ok "gameon-system stopped"
   fi
 
-  if wrap_kubectl get namespace istio-system 2>/dev/null; then
-    read -p "Do you want to remove istio from your cluster? [y] " answer
-    if [ -z $answer ] || [[ $answer =~ [Yy] ]]; then
-      purge_istio
+  if [ "${GAMEON_OPENSHIFT}" == "false" ]; then 
+    if wrap_kubectl get namespace istio-system 2>/dev/null; then
+      read -p "Do you want to remove istio from your cluster? [y] " answer
+      if [ -z $answer ] || [[ $answer =~ [Yy] ]]; then
+        purge_istio
+      fi
+    else
+      ok "istio-system stopped"
     fi
-  else
-    ok "istio-system stopped"
-  fi
+  fi 
 }
 
 init_namespace() {
@@ -209,7 +215,7 @@ init_namespace() {
     ok "gameon-system namespace found"
   fi
 
-  if [ "${GAMEON_USE_ISTIO}" ]; then
+  if [ "${GAMEON_USE_ISTIO}" -a "${GAMEON_OPENSHIFT}" == "false" ]; then
     if ! kubectl get namespace istio-system > /dev/null 2>&1; then
       install_istio
     elif [ -z ${INGRESS_PORT+x} ]; then
@@ -231,22 +237,33 @@ init_namespace() {
     if [ -z ${INGRESS_PORT+x} ]; then
       find_k8s_ingress
     fi
-    # Enable kubernetes ingress
-    cp -n kubernetes/.template.kubectl.ingress.yaml kubernetes/kubectl/ingress.yaml
-    sed_file '/^ *ingress:/,/^ *[^:]*:/ s/enabled: .*/enabled: true/' kubernetes/chart/gameon-system/values.yaml
+    # Enable kubernetes ingress/routes
+    if [ "${GAMEON_LOCAL}" == "crc" -o "${GAMEON_OPENSHIFT}" == "true" ]; then
+      cp -n kubernetes/.template.kubectl.routes.yaml kubernetes/kubectl/routes.yaml
+      sed_file '/^ *ingress:/,/^ *[^:]*:/ s/enabled: .*/enabled: false/' kubernetes/chart/gameon-system/values.yaml
+      sed_file '/^ *routes:/,/^ *[^:]*:/ s/enabled: .*/enabled: true/' kubernetes/chart/gameon-system/values.yaml
+    else
+      cp -n kubernetes/.template.kubectl.ingress.yaml kubernetes/kubectl/ingress.yaml
+      sed_file '/^ *ingress:/,/^ *[^:]*:/ s/enabled: .*/enabled: true/' kubernetes/chart/gameon-system/values.yaml
+      sed_file '/^ *routes:/,/^ *[^:]*:/ s/enabled: .*/enabled: false/' kubernetes/chart/gameon-system/values.yaml
+    fi
+    
   fi
 
   create_certificate
 
   # Ingress Secret
   sed_file "s/secretName: .*$/secretName: ${GAMEON_INGRESS_SECRET}/" kubernetes/chart/gameon-system/values.yaml
-  sed_file "s/secretName: .*$/secretName: ${GAMEON_INGRESS_SECRET}/" kubernetes/kubectl/ingress.yaml
+  if [ -f kubernetes/kubectl/ingress.yaml ]; then
+    sed_file "s/secretName: .*$/secretName: ${GAMEON_INGRESS_SECRET}/" kubernetes/kubectl/ingress.yaml
+  fi
 
   # Front Door
   local GAME_FRONT_DOOR=${GAMEON_INGRESS}:${SECURE_INGRESS_PORT}
 
   sed_file "s/frontDoor: .*$/frontDoor: ${GAME_FRONT_DOOR}/" kubernetes/chart/gameon-system/values.yaml
   sed_file "s/frontDoorHost: .*$/frontDoorHost: ${GAMEON_INGRESS}/" kubernetes/chart/gameon-system/values.yaml
+  sed_file "s/frontDoorAltHost: .*$/frontDoorHost: ${GAMEON_DUMMY_INGRESS}/" kubernetes/chart/gameon-system/values.yaml
 
   sed_file "s/RECROOM_SERVICE_URL: .*$/RECROOM_SERVICE_URL: wss:\/\/${GAME_FRONT_DOOR}\/rooms/" kubernetes/kubectl/configmap.yaml
   sed_file "s/RECROOM_SERVICE_URL: .*$/RECROOM_SERVICE_URL: wss:\/\/${GAME_FRONT_DOOR}\/rooms/" kubernetes/chart/gameon-system/values.yaml
@@ -262,17 +279,58 @@ init_namespace() {
      /^ *- hosts:/n
      s/- .*$/- ${GAMEON_INGRESS}/
   }" kubernetes/chart/gameon-system/values.yaml
-  sed_file "/^ *- hosts:/,/^ *[^:]*:/ {
-     /^ *- hosts:/n
-     s/- .*$/- ${GAMEON_INGRESS}/
-  }" kubernetes/kubectl/ingress.yaml
+
+  if [ -f kubernetes/kubectl/ingress.yaml ]; then
+    awk 'BEGIN{SPEC=0;TLS=0;HOSTS=0;BLOCK=0;RULES=0;MATCHIDX=0;}
+    {LINE=$0;
+      if($1=="spec:"){SPEC=1;}
+      if(SPEC==1 && $1=="tls:"){TLS=1;}
+      if(TLS==1 && SPEC==1 && $1=="-" && $2=="hosts:"){HOSTS=1;}
+      if(HOSTS==1 && TLS==1 && SPEC==1 && $1=="-" && $2!="hosts:"){BLOCK=1;}
+      if(BLOCK==1 && HOSTS==1 && TLS==1 && SPEC==1 && $1!="-" ){
+        print "    - WIBBLE";
+        print "    - FISH";
+        BLOCK=0; HOSTS=0; TLS=0;
+      }
+      if(SPEC==1 && $1=="rules:"){RULES=1;}
+      if(SPEC==1 && RULES==1 && $1=="-" && $2=="host:"){
+          BLOCK=1;
+          if(MATCHIDX==0){ 
+            print "  - host: ONE"; MATCHIDX++;
+          } else { 
+            print "  - host: TWO"; 
+          }
+      }
+      if(BLOCK==0){print LINE;}
+      if(BLOCK==1 && SPEC==1 && RULES==1 && $1=="-" && $2=="host:"){BLOCK=0;}
+    }
+    END{}' kubernetes/kubectl/ingress.yaml > kubernetes/kubectl/ingress.yaml.updated && mv kubernetes/kubectl/ingress.yaml.updated kubernetes/kubectl/ingress.yaml
+  fi
+
+  if [ -f kubernetes/kubectl/routes.yaml ]; then 
+    #stateful line copy, dupe all lines, except host: and the value of that 
+    #depends on if the name seen for the current yaml section was dummy auth.
+    awk 'BEGIN{DUMMY=0;}
+     {LINE=$0;
+      if(LINE=="---"){DUMMY=0;} 
+      if($1=="name:" && $2=="gameon-dummy-auth-route"){DUMMY=1;} 
+      if($1=="host:"){ 
+        if(DUMMY==1){
+          print "  host: '${GAMEON_DUMMY_INGRESS}'";
+        }else{
+          print "  host: '${GAMEON_INGRESS}'";
+        }
+      }else{
+        print $0;
+      } 
+     }
+     END{}' kubernetes/kubectl/routes.yaml > kubernetes/kubectl/routes.yaml.updated && mv kubernetes/kubectl/routes.yaml.updated kubernetes/kubectl/routes.yaml
+  fi  
+
   sed_file "/^ *hosts:/,/^ *[^:]*:/ {
      /^ *hosts:/n
      s/- .*$/- ${GAMEON_INGRESS}/
   }" kubernetes/istio/istio-gateway.yaml
-
-  # Replace rules[host]
-  sed_file "s/- host: .*$/- host: ${GAMEON_INGRESS}/" kubernetes/kubectl/ingress.yaml
 
   ok "Updated templates with Ingress hosts and ports: ${GAMEON_INGRESS}, ${INGRESS_PORT}, and ${SECURE_INGRESS_PORT}"
 }
@@ -318,6 +376,12 @@ install_tiller() {
 }
 
 install_istio() {
+  if [ "${GAMEON_OPENSHIFT}" == "true" ]; then
+    echo "Game On doesn't support installing istio with openshift, use Red Hat Service Mesh instead."
+    exit 1
+  fi
+
+
   if [[ ! -z ${ISTIO_INSTALL+x} ]] && [ -d ${ISTIO_INSTALL} ]; then
     read -p "Try to install istio in your cluster? [y] " answer
   else
@@ -374,6 +438,11 @@ Run setup again once Istio has been installed in your cluster.
 }
 
 purge_istio() {
+  if [ "${GAMEON_OPENSHIFT}" == "true" ]; then
+    echo "Error, attempt made to remove istio from Openshift, aborting action."
+    exit 1
+  fi
+
   if kubectl get namespace istio-system > /dev/null 2>&1; then
     note "Remove Istio CRDs"
     get_istio_path
@@ -385,7 +454,7 @@ purge_istio() {
   fi
 }
 
-test_local_kubernetes() {
+test_kubernetes() {
   local kubectx=$(kubectl config current-context)
 
   if [[ $kubectx =~ docker-for-desktop ]]; then
@@ -398,30 +467,61 @@ test_local_kubernetes() {
     echo "Detected minishift, using `minishift ip`"
     GAMEON_LOCAL=minishift
     GAMEON_INGRESS=gameon.$(minishift ip).xip.io
+    GAMEON_DUMMY_INGRESS=dummy.$(minishift ip).xip.io
     ok "`minishift addons enable prometheus`"
     ok "`minishift addons enable admin-user`"
   fi
+
+  if crc ip >/dev/null 2>&1;
+  then
+    if kubectl cluster-info | grep crc >/dev/null 2>&1;
+    then
+      echo "Detected CRC, using `crc ip`"
+      GAMEON_LOCAL=crc
+      GAMEON_INGRESS=gameon.$(crc ip).xip.io
+      GAMEON_DUMMY_INGRESS=dummy.$(crc ip).xip.io
+    fi
+  fi
+
+  GAMEON_OPENSHIFT=false
+  if kubectl get routes >/dev/null 2>&1;
+  then
+    echo "Detected OpenShift, enabling routes"
+    GAMEON_OPENSHIFT=true
+
+    # Openshift? did user pick istio ?
+    if [ "${GAMEON_USE_ISTIO}" ]; then
+      echo "Game On doesn't support deploying with Istio to OpenShift, look at Red Hat Service Mesh instead."
+      echo "Please reconfigure without istio"
+      exit 1
+    fi
+  fi    
 
   certauth=$(kubectl config view -o jsonpath='{.clusters[?(@.name == "'${kubectx}'")].cluster.certificate-authority}')
   if [[ $certauth =~ minikube ]]; then
     echo "Detected minikube, using 'minikube ip'"
     GAMEON_LOCAL=minikube
     GAMEON_INGRESS=gameon.$(minikube ip).xip.io
+    GAMEON_DUMMY_INGRESS=dummy.$(minikube ip).xip.io
     ok "`minikube addons enable ingress`"
   fi
 
   if [ ! -z ${GAMEON_LOCAL+x} ]; then
     GAMEON_INGRESS_SECRET=front-door-certs
-    GAMEON_INTERNAL_IPRANGE="10.0.0.1/24"
   fi
 }
 
 find_istio_ingress() {
   if [ ! -z ${GAMEON_LOCAL+x} ]; then
+    # Local k8s, ingress will have been configured above. 
+
     INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
     SECURE_INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="https")].nodePort}')
     ok "Local Istio Ingress ${GAMEON_INGRESS} using port ${INGRESS_PORT} and secure port ${SECURE_INGRESS_PORT}"
+
   else
+    # Remote k8s, 
+
     # TODO: verify Istio ingress behavior on IKS
     GAMEON_INGRESS=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
     GAMEON_INGRESS_SECRET=
@@ -432,10 +532,6 @@ find_istio_ingress() {
     INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].port}')
     SECURE_INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="https")].port}')
 
-    if [ -z ${GAMEON_INTERNAL_IPRANGE+x} ]; then
-      read -p 'Enter cluster internal IP Range (e.g. 10.0.0.1/24): ' GAMEON_INTERNAL_IPRANGE
-    fi
-
     ok "Istio Ingress: ${GAMEON_INGRESS} using port ${INGRESS_PORT} and secure port ${SECURE_INGRESS_PORT}"
   fi
 
@@ -445,9 +541,10 @@ export GAMEON_USE_HELM=${GAMEON_USE_HELM}
 export GAMEON_HELM_TLS_FLAG=${GAMEON_HELM_TLS_FLAG}
 export GAMEON_LOCAL=${GAMEON_LOCAL}
 export GAMEON_INGRESS=${GAMEON_INGRESS}
+export GAMEON_DUMMY_INGRESS=${GAMEON_DUMMY_INGRESS}
 export GAMEON_INGRESS_SECRET=${GAMEON_INGRESS_SECRET}
 export GAMEON_KUBECTL_CONTEXT=$(kubectl config current-context)
-export GAMEON_INTERNAL_IPRANGE=${GAMEON_INTERNAL_IPRANGE}
+export GAMEON_OPENSHIFT=${GAMEON_OPENSHIFT}
 export INGRESS_PORT=${INGRESS_PORT}
 export SECURE_INGRESS_PORT=${SECURE_INGRESS_PORT}
   " > ${GO_DIR}/.gameontext.kubernetes
@@ -461,8 +558,8 @@ find_k8s_ingress() {
   elif [ -z ${GAMEON_INGRESS+x} ]; then
     #  PROMPT FOR CLUSTER INFORMATION
     read -p 'Enter ingress hostname (or subdomain): ' GAMEON_INGRESS
+    read -p 'Enter alternate ingress hostname (for dummy-auth) (or subdomain): ' GAMEON_DUMMY_INGRESS
     read -p 'Enter ingress secret (or enter if none): ' GAMEON_INGRESS_SECRET
-    read -p 'Enter cluster internal IP Range (e.g. 10.0.0.1/24): ' GAMEON_INTERNAL_IPRANGE
   fi
 
   echo "
@@ -471,9 +568,10 @@ export GAMEON_USE_HELM=${GAMEON_USE_HELM}
 export GAMEON_HELM_TLS_FLAG=${GAMEON_HELM_TLS_FLAG}
 export GAMEON_LOCAL=${GAMEON_LOCAL}
 export GAMEON_INGRESS=${GAMEON_INGRESS}
+export GAMEON_DUMMY_INGRESS=${GAMEON_DUMMY_INGRESS}
 export GAMEON_INGRESS_SECRET=${GAMEON_INGRESS_SECRET}
 export GAMEON_KUBECTL_CONTEXT=$(kubectl config current-context)
-export GAMEON_INTERNAL_IPRANGE=${GAMEON_INTERNAL_IPRANGE}
+export GAMEON_OPENSHIFT=${GAMEON_OPENSHIFT}
 export INGRESS_PORT=80
 export SECURE_INGRESS_PORT=443
   " > ${GO_DIR}/.gameontext.kubernetes
@@ -498,6 +596,10 @@ create_certificate() {
 
   if [ "${GAMEON_LOCAL}" == "minikube" ]; then
     IP=$(minikube ip)
+  fi
+
+  if [ "${GAMEON_LOCAL}" == "crc" ]; then
+    IP=$(crc ip)
   fi
 
   ${BIN_DIR}/gen-certificate.sh "${GO_DIR}" ${IP} "${GAMEON_INGRESS}"

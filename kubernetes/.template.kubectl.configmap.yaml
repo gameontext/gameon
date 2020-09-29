@@ -37,3 +37,4 @@ data:
   FRONT_END_SUCCESS_CALLBACK: https://GAME_FRONT_DOOR/#/login/callback
   FRONT_END_FAIL_CALLBACK: https://GAME_FRONT_DOOR/#/login?login_failed
   FRONT_END_AUTH_URL: https://GAME_FRONT_DOOR/auth
+  FRONT_END_DUMMY_AUTH_URL: https://GAMEON_DUMMY_INGRESS/auth
