@@ -288,18 +288,19 @@ init_namespace() {
       if(TLS==1 && SPEC==1 && $1=="-" && $2=="hosts:"){HOSTS=1;}
       if(HOSTS==1 && TLS==1 && SPEC==1 && $1=="-" && $2!="hosts:"){BLOCK=1;}
       if(BLOCK==1 && HOSTS==1 && TLS==1 && SPEC==1 && $1!="-" ){
-        print "    - WIBBLE";
-        print "    - FISH";
+        print "    - '${GAMEON_INGRESS}'";
+        print "    - '${GAMEON_DUMMY_INGRESS}'";
         BLOCK=0; HOSTS=0; TLS=0;
       }
       if(SPEC==1 && $1=="rules:"){RULES=1;}
       if(SPEC==1 && RULES==1 && $1=="-" && $2=="host:"){
           BLOCK=1;
           if(MATCHIDX==0){ 
-            print "  - host: ONE"; MATCHIDX++;
-          } else { 
-            print "  - host: TWO"; 
+            print "  - host: '${GAMEON_INGRESS}'";
+          }else{
+            print "  - host: '${GAMEON_DUMMY_INGRESS}'";
           }
+          MATCHIDX++;
       }
       if(BLOCK==0){print LINE;}
       if(BLOCK==1 && SPEC==1 && RULES==1 && $1=="-" && $2=="host:"){BLOCK=0;}
