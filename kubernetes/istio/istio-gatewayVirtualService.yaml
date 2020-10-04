@@ -9,58 +9,51 @@ spec:
   hosts:
   - '*'
   http:
-  - match:
+  - name: "auth-route"
+    match:
     - uri:
-        prefix: /auth
+        prefix: "/auth"
     route:
     - destination:
         host: auth.gameon-system.svc.cluster.local
-  - match:
+  - name: "map-route"
+    match:
     - uri:
-        prefix: /map
+        prefix: "/map"
     route:
     - destination:
         host: map.gameon-system.svc.cluster.local
-  - websocketUpgrade: true
+  - name: "mediator-route"
     match:
     - uri:
-        prefix: /mediator/ws
+        prefix: "/mediator"
     route:
     - destination:
         host: mediator.gameon-system.svc.cluster.local
-  - match:
+  - name: "players-route"
+    match:
     - uri:
-        prefix: /mediator
-    route:
-    - destination:
-        host: mediator.gameon-system.svc.cluster.local
-  - match:
-    - uri:
-        prefix: /players
+        prefix: "/players"
     route:
     - destination:
         host: player.gameon-system.svc.cluster.local
-  - websocketUpgrade: true
+  - name: "rooms-route"
     match:
     - uri:
-        prefix: /rooms/ws
+        prefix: "/rooms"
     route:
     - destination:
         host: room.gameon-system.svc.cluster.local
-  - match:
+  - name: "swagger-redirect"
+    match:
     - uri:
-        prefix: /rooms
-    route:
-    - destination:
-        host: room.gameon-system.svc.cluster.local
-  - match:
-    - uri:
-        exact: /swagger
+        exact: "/swagger"
     redirect:
-        uri: /swagger/
-  - match:
+        uri: "/swagger/"
+  - name: "swagger-route"
+    match:
     - uri:
-        prefix: /swagger/
+        prefix: "/swagger/"
     route:
     - destination:
         host: swagger.gameon-system.svc.cluster.local
