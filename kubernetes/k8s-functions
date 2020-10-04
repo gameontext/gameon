@@ -152,7 +152,7 @@ platform_up() {
   check_global_cert
 
   if [ "${GAMEON_USE_HELM}" ];  then
-    wrap_helm install --name gameon-system --replace ./kubernetes/chart/gameon-system/
+    wrap_helm install gameon-system --replace ./kubernetes/chart/gameon-system/
   else
     wrap_kubectl apply -R -f kubernetes/kubectl
   fi
@@ -231,9 +231,6 @@ init_namespace() {
     sed_file '/^ *ingress:/,/^ *[^:]*:/ s/enabled: .*/enabled: false/' kubernetes/chart/gameon-system/values.yaml
     cp -n kubernetes/.template.istio.istio-gateway.yaml kubernetes/istio/istio-gateway.yaml
   else
-    if [ "${GAMEON_USE_HELM}" ]; then
-      install_tiller
-    fi
     if [ -z ${INGRESS_PORT+x} ]; then
       find_k8s_ingress
     fi
@@ -263,7 +260,7 @@ init_namespace() {
 
   sed_file "s/frontDoor: .*$/frontDoor: ${GAME_FRONT_DOOR}/" kubernetes/chart/gameon-system/values.yaml
   sed_file "s/frontDoorHost: .*$/frontDoorHost: ${GAMEON_INGRESS}/" kubernetes/chart/gameon-system/values.yaml
-  sed_file "s/frontDoorAltHost: .*$/frontDoorHost: ${GAMEON_DUMMY_INGRESS}/" kubernetes/chart/gameon-system/values.yaml
+  sed_file "s/frontDoorAltHost: .*$/frontDoorAltHost: ${GAMEON_DUMMY_INGRESS}/" kubernetes/chart/gameon-system/values.yaml
 
   sed_file "s/RECROOM_SERVICE_URL: .*$/RECROOM_SERVICE_URL: wss:\/\/${GAME_FRONT_DOOR}\/rooms/" kubernetes/kubectl/configmap.yaml
   sed_file "s/RECROOM_SERVICE_URL: .*$/RECROOM_SERVICE_URL: wss:\/\/${GAME_FRONT_DOOR}\/rooms/" kubernetes/chart/gameon-system/values.yaml
@@ -357,23 +354,9 @@ of RAM to run the entire system, e.g. 'minikube start --memory 8192'
   ok "configured Kubernetes cluster found"
 }
 
-get_tiller() {
-  TILLER=$(kubectl get po -n kube-system | grep tiller-deploy | awk '{print $1;}' | xargs)
-  return $(test -n "$TILLER")
-}
-
 get_ingress_gateway() {
   INGRESS_GATEWAY=$(kubectl get po -n istio-system | grep ingressgateway | awk '{print $1;}' | xargs)
   return $(test -n "$INGRESS_GATEWAY")
-}
-
-install_tiller() {
-  if ! get_tiller; then
-    wrap_helm init
-    ok "Tiller initialized ... "
-    get_tiller
-    wait_until_ready -n kube-system get po $TILLER
-  fi
 }
 
 install_istio() {
@@ -754,7 +737,7 @@ check_versions() {
   fi
 
   if [ "${GAMEON_USE_ISTIO}" ] || [ "${GAMEON_USE_HELM}" ]; then
-    local helmVersion=2.10.0
+    local helmVersion=3.0.0
     echo "* helm version ${helmVersion} or greater"
     if ! which helm > /dev/null; then
       echo -e "  ${RED}MISSING${NO_COLOR}: helm not found"
