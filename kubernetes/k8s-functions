@@ -229,6 +229,8 @@ init_namespace() {
     fi
     # disable kubernetes ingress
     sed_file '/^ *ingress:/,/^ *[^:]*:/ s/enabled: .*/enabled: false/' kubernetes/chart/gameon-system/values.yaml
+    # don't use routes on non-openshift
+    sed_file '/^ *routes:/,/^ *[^:]*:/ s/enabled: .*/enabled: false/' kubernetes/chart/gameon-system/values.yaml
     cp -n kubernetes/.template.istio.istio-gateway.yaml kubernetes/istio/istio-gateway.yaml
   else
     if [ -z ${INGRESS_PORT+x} ]; then
