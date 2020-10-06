@@ -1,7 +1,8 @@
 global:
   frontDoor: GAME_FRONT_DOOR
-  frontDoorAltHost: GAMEON_DUMMY_INGRESS
+  frontDoorAlt: GAMEON_DUMMY
   frontDoorHost: GAMEON_INGRESS
+  frontDoorAltHost: GAMEON_DUMMY_INGRESS
   mode: development
   data:
 # Global: interservice communication
@@ -27,14 +28,14 @@ global:
 
 auth:
   data:
-    FACEBOOK_APP_ID: ''
-    FACEBOOK_APP_SECRET: ''
-    GITHUB_APP_ID: ''
-    GITHUB_APP_SECRET: ''
-    GOOGLE_APP_ID: ''
-    GOOGLE_APP_SECRET: ''
-    TWITTER_CONSUMER_KEY: ''
-    TWITTER_CONSUMER_SECRET: ''
+    FACEBOOK_APP_ID: 'x'
+    FACEBOOK_APP_SECRET: 'x'
+    GITHUB_APP_ID: 'x'
+    GITHUB_APP_SECRET: 'x'
+    GOOGLE_APP_ID: 'x'
+    GOOGLE_APP_SECRET: 'x'
+    TWITTER_CONSUMER_KEY: 'x'
+    TWITTER_CONSUMER_SECRET: 'x'
 
 ingress:
   enabled: GAMEON_NO_ISTIO
