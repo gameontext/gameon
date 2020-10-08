@@ -27,6 +27,7 @@ services:
     image: gameontext/gameon-auth:lastgood
     volumes:
       - 'keystore:/opt/ol/wlp/usr/servers/defaultServer/resources/security'
+      - 'keystore:/etc/certs'
     depends_on:
       kafka:
         condition: service_healthy
