@@ -36,7 +36,7 @@ spec:
         app: {{ .Chart.Name}}-couchdb
     spec:
       containers:
-      - image: couchdb:2.2
+      - image: couchdb:2.3.1
         name: couchdb
         ports:
         - containerPort: 5984
