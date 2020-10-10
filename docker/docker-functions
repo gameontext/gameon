@@ -68,7 +68,7 @@ get_gameontext_hostip() {
 
   elif [ "${NAME}" != "empty" ] && [ "${NAME}" != "" ]; then
     GAMEON_IP=$(docker-machine ip $NAME)
-    rc=$?    
+    rc=$?
     if [ $rc != 0 ] || [ -z ${DOCKER_HOST} ]
     then
      echo "Is your docker host running? Did you start docker-machine, e.g.
