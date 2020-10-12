@@ -66,7 +66,7 @@ If you want to contribute to the game's core services, no worries! Assuming you'
         $ alias go-run               # confirm path  (docker or kubernetes)
 
 
-2. Obtain the source for the project that you want to change. The easiest way is to take advantage of [git submodules](https://gameontext.gitbooks.io/gameon-gitbook/content/walkthroughs/git.html).
+2. Obtain the source for the project that you want to change. The easiest way is to take advantage of [git submodules](https://www.gameontext.org/walkthroughs/core/git.html).
 
         $ git submodule init map
         $ git submodule update map
