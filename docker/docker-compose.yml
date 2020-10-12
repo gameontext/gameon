@@ -27,6 +27,7 @@ services:
     image: gameontext/gameon-auth:lastgood
     volumes:
       - 'keystore:/opt/ol/wlp/usr/servers/defaultServer/resources/security'
+      - 'keystore:/etc/certs'
     depends_on:
       kafka:
         condition: service_healthy
@@ -161,7 +162,7 @@ services:
 
 #### Local CouchDb Backend #########
   couchdb:
-    image: couchdb:2.2
+    image: couchdb:2.3.1
     volumes:
       - 'keystore:/etc/cert'
       - 'couchdb-data:/opt/couchdb/data'

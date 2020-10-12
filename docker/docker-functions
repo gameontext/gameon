@@ -49,9 +49,10 @@ docker_versions() {
 # Some environment variable munging to sort what the external host/port will be
 # (that can  be used in scripts to echo how to reach the running game)
 get_gameontext_hostip() {
-  GAMEON_HOST=127.0.0.1
-  HTTP_HOSTPORT=127.0.0.1 #80
-  HTTPS_HOSTPORT=127.0.0.1 #443
+  GAMEON_IP=127.0.0.1
+  GAMEON_HOST=gameon.${GAMEON_IP}.xip.io
+  GAMEON_HTTP_PORT=80
+  GAMEON_HTTPS_PORT=443
 
   # Docker machine / Docker toolbox is less common, but did allow use of several
   # different machines side-by-side. Here, we are checking if it is set (setting
@@ -62,11 +63,11 @@ get_gameontext_hostip() {
 
   if [ "$NAME" == "vagrant" ]; then
     # Our Vagrant configuration maps guest ports to localhost
-    HTTP_HOSTPORT=127.0.0.1:9980
-    HTTPS_HOSTPORT=127.0.0.1:9943
+    GAMEON_HTTP_PORT=9980
+    GAMEON_HTTPS_PORT=9443
 
   elif [ "${NAME}" != "empty" ] && [ "${NAME}" != "" ]; then
-    GAMEON_HOST=$(docker-machine ip $NAME)
+    GAMEON_IP=$(docker-machine ip $NAME)
     rc=$?
     if [ $rc != 0 ] || [ -z ${DOCKER_HOST} ]
     then
@@ -75,11 +76,10 @@ get_gameontext_hostip() {
   eval \$(docker-machine env default)"
       exit 1
     fi
-    HTTP_HOSTPORT=${GAMEON_HOST}
-    HTTPS_HOSTPORT=${GAMEON_HOST}
+    GAMEON_HOST=gameon.${GAMEON_IP}.xip.io
   fi
 
-  export GAMEON_HOST HTTP_HOSTPORT HTTPS_HOSTPORT
+  export GAMEON_HOST GAMEON_IP GAMEON_HTTP_PORT GAMEON_HTTPS_PORT
 }
 
 build_webapp() {

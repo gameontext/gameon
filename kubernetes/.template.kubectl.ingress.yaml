@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: gameon-ingress
@@ -6,12 +6,15 @@ metadata:
   annotations: {}
 
 spec:
-  backend:
-    serviceName: webapp
-    servicePort: 8080
+  defaultBackend:
+    service:
+      name: webapp
+      port:
+        number: 8080
 # TLS block causes automatic redirection of http -> https
   tls:
   - hosts:
+    - GAMEON_DUMMY_INGRESS
     - GAMEON_INGRESS
     secretName: GAMEON_INGRESS_SECRET
   rules:
@@ -19,26 +22,54 @@ spec:
     http:
       paths:
       - path: /auth
+        pathType: Prefix
         backend:
-          serviceName: auth
-          servicePort: 9080
+          service:
+            name: auth
+            port:
+              number: 9080
       - path: /map
+        pathType: Prefix
         backend:
-          serviceName: map
-          servicePort: 9080
+          service:
+            name: map
+            port:
+              number: 9080
       - path: /mediator
+        pathType: Prefix
         backend:
-          serviceName: mediator
-          servicePort: 9080
+          service:
+            name: mediator
+            port:
+              number: 9080
       - path: /players
+        pathType: Prefix
         backend:
-          serviceName: player
-          servicePort: 9080
+          service:
+            name: player
+            port:
+              number: 9080
       - path: /rooms
+        pathType: Prefix
         backend:
-          serviceName: room
-          servicePort: 9080
+          service:
+            name: room
+            port:
+              number: 9080
       - path: /swagger
+        pathType: Prefix
         backend:
-          serviceName: swagger
-          servicePort: 8080
+          service:
+            name: swagger
+            port:
+              number: 8080
+  - host: GAMEON_DUMMY_INGRESS
+    http:
+      paths:
+      - path: /auth
+        pathType: Prefix
+        backend:
+          service:
+            name: auth
+            port:
+              number: 9080

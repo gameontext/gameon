@@ -1,0 +1,176 @@
+{{- if .Values.routes.enabled }}
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: gameon-route
+  namespace: gameon-system
+  annotations: {}
+  labels:
+    app: gameon  
+spec:
+  host: {{ .Values.global.frontDoorHost }}
+  port:
+    targetPort: http
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: webapp
+    weight: 100
+  wildcardPolicy: None  
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: gameon-auth-route
+  namespace: gameon-system
+  annotations: {}
+  labels:
+    app: gameon-auth
+spec:
+  host: {{ .Values.global.frontDoorHost }}
+  path: /auth
+  port:
+    targetPort: http
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: auth
+    weight: 100
+  wildcardPolicy: None
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: gameon-dummy-auth-route
+  namespace: gameon-system
+  annotations: {}
+  labels:
+    app: gameon-auth
+spec:
+  host: {{ .Values.global.frontDoorAltHost }}
+  path: /auth
+  port:
+    targetPort: http
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: auth
+    weight: 100
+  wildcardPolicy: None  
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: gameon-map-route
+  namespace: gameon-system
+  annotations: {}
+  labels:
+    app: gameon-map
+spec:
+  host: {{ .Values.global.frontDoorHost }}
+  path: /map
+  port:
+    targetPort: http
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: map
+    weight: 100
+  wildcardPolicy: None
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: gameon-mediator-route
+  namespace: gameon-system
+  annotations: {}
+  labels:
+    app: gameon-mediator
+spec:
+  host: {{ .Values.global.frontDoorHost }}
+  path: /mediator
+  port:
+    targetPort: http
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: mediator
+    weight: 100
+  wildcardPolicy: None
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: gameon-player-route
+  namespace: gameon-system
+  annotations: {}
+  labels:
+    app: gameon-player
+spec:
+  host: {{ .Values.global.frontDoorHost }}
+  path: /players
+  port:
+    targetPort: http
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: player
+    weight: 100
+  wildcardPolicy: None
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: gameon-room-route
+  namespace: gameon-system
+  annotations: {}
+  labels:
+    app: gameon-room
+spec:
+  host: {{ .Values.global.frontDoorHost }}
+  path: /rooms
+  port:
+    targetPort: http
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: room
+    weight: 100
+  wildcardPolicy: None
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: gameon-swagger-route
+  namespace: gameon-system
+  annotations: {}
+  labels:
+    app: gameon-swagger
+spec:
+  host: {{ .Values.global.frontDoorHost }}
+  path: /swagger
+  port:
+    targetPort: http
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: swagger
+    weight: 100
+  wildcardPolicy: None
+{{- end }}

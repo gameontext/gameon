@@ -130,10 +130,13 @@ setup() {
   SOURCE=$SCRIPTDIR/gameon.env
   TARGET=$SCRIPTDIR/gameon.${DOCKER_MACHINE_NAME}env
   if [ ! -f $TARGET ]; then
-    cat $SOURCE | sed -e 's/FRONT_END_\\(.*\\)127.0.0.1\\(.*\\)/FRONT_END_\\1'${HTTPS_HOSTPORT}'\\2/g' > $TARGET
+    echo "Creating $TARGET"
+    cat $SOURCE | sed -e 's#FRONT_END_\(.*\)127.0.0.1\([^/]*\)/\(.*\)#FRONT_END_\1'${GAMEON_IP}'\2:'${GAMEON_HTTPS_PORT}'/\3#g' > $TARGET
     ok "Created gameon.${DOCKER_MACHINE_NAME}env to contain environment variable overrides"
-    echo "This file will use the docker host ip address ($GAMEON_HOST), but will re-map ports for forwarding from the VM."
-  fi
+    echo "This file will use the docker host ip address ($GAMEON_IP), but will re-map ports for forwarding from the VM."
+  else
+    echo "$TARGET pre-existing, will not alter it."
+  fi 
 
   # Attempt to pull all images except for util, which is built locally
   local LIST="$PROJECTS $COREPROJECTS"
@@ -156,7 +159,7 @@ setup() {
     eval \$(./docker/go-run.sh env)
 
   Check for all services being ready:
-    https://${HTTP_HOSTPORT}/site_alive
+    https://${GAMEON_HOST}:${GAMEON_HTTPS_PORT}/site_alive
 
   Wait for all game services to finish starting:
     ./docker/go-run.sh wait
@@ -168,7 +171,7 @@ setup() {
   OR (with alias):
     go-run rebuild
 
-  The game will be running at https://${HTTPS_HOSTPORT}/ when you're all done.
+  The game will be running at https://${GAMEON_HOST}:${GAMEON_HTTPS_PORT}/ when you're all done.
 
   "
 }
@@ -278,23 +281,23 @@ case "$ACTION" in
     NOLOGS=1
     platform_up
     up_log $PROJECTS
-    echo "To test for readiness: http://${HTTP_HOSTPORT}/site_alive"
+    echo "To test for readiness: http://${GAMEON_HOST}:${GAMEON_HTTPS_PORT}/site_alive"
     echo 'To wait for readiness: ./docker/go-run.sh wait'
     echo 'To watch progress :popcorn: ./docker/go-run.sh logs'
     echo 'To type less: eval $(./docker/go-run.sh env)'
   ;;
   wait)
-    echo "Waiting until http://${HTTP_HOSTPORT}/site_alive returns OK."
+    echo "Waiting until http://${GAMEON_HOST}:${GAMEON_HTTPS_PORT}/site_alive returns OK."
     echo "This may take awhile, as it is starting a number of containers at the same time."
     echo "If you're curious, cancel this, and use './docker/go-run.sh logs' to watch what is happening"
 
-    until $(curl --output /dev/null --silent --head --fail http://${GAMEON_HOST}/site_alive 2>/dev/null)
+    until $(curl --output /dev/null --silent --head --fail http://${GAMEON_HOST}:${GAMEON_HTTPS_PORT}/site_alive 2>/dev/null)
     do
       printf '.'
       sleep 5s
     done
     echo ""
-    echo "Game On! You're ready to play: https://${HTTPS_HOSTPORT}/"
+    echo "Game On! You're ready to play: https://${GAMEON_HOST}:${GAMEON_HTTPS_PORT}/"
   ;;
   *)
     usage

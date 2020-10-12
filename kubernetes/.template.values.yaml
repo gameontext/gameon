@@ -1,13 +1,15 @@
 global:
   frontDoor: GAME_FRONT_DOOR
+  frontDoorAlt: GAMEON_DUMMY
   frontDoorHost: GAMEON_INGRESS
+  frontDoorAltHost: GAMEON_DUMMY_INGRESS
   mode: development
   data:
 # Global: interservice communication
     MAP_SERVICE_URL: http://map.gameon-system.svc.cluster.local:9080/map/v1/sites
     MAP_HEALTH_SERVICE_URL: http://map.gameon-system.svc.cluster.local:9080/map/v1/health
     PLAYER_SERVICE_URL: http://player.gameon-system.svc.cluster.local:9080/players/v1/accounts
-    RECROOM_SERVICE_URL: wss://GAME_FRONT_DOOR/rooms
+    RECROOM_SERVICE_URL: ws://room.gameon-system.svc.cluster.local:9080/rooms
 # Global: Common backing services
     COUCHDB_USER: mapUser
     COUCHDB_PASSWORD: myCouchDBSecret
@@ -26,14 +28,19 @@ global:
 
 auth:
   data:
-    FACEBOOK_APP_ID: ''
-    FACEBOOK_APP_SECRET: ''
-    GITHUB_APP_ID: ''
-    GITHUB_APP_SECRET: ''
-    GOOGLE_APP_ID: ''
-    GOOGLE_APP_SECRET: ''
-    TWITTER_CONSUMER_KEY: ''
-    TWITTER_CONSUMER_SECRET: ''
+# (Note, these can't be empty, as an empty var is stil
+#  a defined var, and a defined var means spring will
+#  try to use the value, which leads to the auth service
+#  being unable to start, as it cannot tolerate empty 
+#  values being used.)
+    FACEBOOK_APP_ID: 'x'
+    FACEBOOK_APP_SECRET: 'x'
+    GITHUB_APP_ID: 'x'
+    GITHUB_APP_SECRET: 'x'
+    GOOGLE_APP_ID: 'x'
+    GOOGLE_APP_SECRET: 'x'
+    TWITTER_CONSUMER_KEY: 'x'
+    TWITTER_CONSUMER_SECRET: 'x'
 
 ingress:
   enabled: GAMEON_NO_ISTIO
@@ -48,6 +55,9 @@ ingress:
   backend:
     serviceName: webapp
     servicePort: 8080
+
+routes:
+  enabled: GAMEON_OPENSHIFT
 
 ####
 # Core services:

@@ -1,5 +1,5 @@
 {{- if .Values.ingress.enabled }}
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ .Chart.Name }}-ingress
@@ -14,14 +14,17 @@ metadata:
 
 spec:
 {{- with .Values.ingress.backend }}
-  backend:
-    serviceName: {{ .serviceName }}
-    servicePort: {{ .servicePort }}
+  defaultBackend:
+    service:
+      name: {{ .serviceName }}
+      port:
+        number: {{ .servicePort }}
 {{- end }}
 # TLS block causes automatic redirection of http -> https
   tls:
     - hosts:
       - {{ .Values.global.frontDoorHost }}
+      - {{ .Values.global.frontDoorAltHost }}
 {{- with .Values.ingress.secretName }}
       secretName: {{ . }}
 {{- end }}
@@ -32,9 +35,23 @@ spec:
         {{- range .Values.coreServices }}
         {{- if eq (.skipIngress | default false) false }}
         - path: {{ .path }}
+          pathType: Prefix
           backend:
-            serviceName: {{ .serviceName }}
-            servicePort: {{ .servicePort }}
+            service:
+              name: {{ .serviceName }}
+              port:
+                number: {{ .servicePort }}
         {{- end }}
         {{- end }}
+#TODO: values for auth really should come from values.
+    - host: {{ .Values.global.frontDoorAltHost }}
+      http:
+        paths:
+          - path: /auth
+            pathType: Prefix
+            backend:
+              service:
+                name: auth
+                port:
+                  number: 9080
 {{- end }}
