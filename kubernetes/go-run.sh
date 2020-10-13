@@ -22,7 +22,7 @@ fi
 usage() {
   echo "
   Actions:
-    setup  -- set up k8s secrets, prompt for helm
+    setup    -- set up k8s secrets, prompt for helm
     reset    -- reset generated files
     env      -- eval-compatible commands to create aliases
     host     -- manually set host information about your k8s cluster

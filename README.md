@@ -16,8 +16,9 @@ This is the TL;DR version.
   * SSH: `git clone git@github.com:gameontext/gameon.git`
 
 2. Change to the gameon directory
-
-        $ cd gameon                  # cd into the project directory
+    ```bash
+    $ cd gameon                  # cd into the project directory
+    ```
 
 3. (Optional / Docker Compose only) Use Vagrant for your development environment
    1. Install Vagrant
@@ -32,17 +33,19 @@ This is the TL;DR version.
 4. (Kubernetes only) [Create or retrieve credentials for your cluster](kubernetes/README.md#set-up-a-kubernetes-cluster).
 
 5. Set up required keystores and environment variables. This step also pulls the initial images required for running the system.
-
-        $ ./go-admin.sh choose       # choose Docker Compose or Kubernetes
-        $ eval $(./go-admin.sh env)  # set aliases for admin scripts
-        $ alias go-run               # confirm path  (docker or kubernetes)
-        $ go-admin setup
+    ```bash
+    $ ./go-admin.sh choose       # choose Docker Compose or Kubernetes
+    $ eval $(./go-admin.sh env)  # set aliases for admin scripts
+    $ alias go-run               # confirm path  (docker or kubernetes)
+    $ go-admin setup
+    ```
 
     Note: it is safe to run `setup` again, e.g. to check dependencies or regenerate files if IP addresses change
 
 6. Start the game (supporting platform and core services):
-
-        $ go-admin up
+    ```bash
+    $ go-admin up
+    ```
 
     Note: Services in Kubernetes will start in the `gameon-system` namespace, which will need to be specified on the command line: `kubectl -n gameon-system ...`. A shortcut for this has been created in the `go-run` script: `go-run k get all`, for example. A similar shortcut exists for `istioctl`: `go-run i get all`. For more details on Game On! and Kubernetes, see the [Kubernetes README](kubernetes/README.md)
 
@@ -51,25 +54,26 @@ This is the TL;DR version.
 8. **Carry on with [building your rooms](https://gameontext.gitbooks.io/gameon-gitbook/content/walkthroughs/createRoom.html)!**
 
 9. Stop / Clean up
-
-        $ go-admin down
-
+    ```bash
+    $ go-admin down
+    ```
 
 ## Core Service Development (Optional)
 
 If you want to contribute to the game's core services, no worries! Assuming you've performed the steps above at least once (and using the `map` service as an example):
 
 1. Change to the gameon directory, set aliases to save typing
-
-        $ cd gameon                  # cd into the project directory
-        $ eval $(./go-admin.sh env)  # set aliases for admin scripts
-        $ alias go-run               # confirm path  (docker or kubernetes)
-
+    ```bash
+    $ cd gameon                  # cd into the project directory
+    $ eval $(./go-admin.sh env)  # set aliases for admin scripts
+    $ alias go-run               # confirm path  (docker or kubernetes)
+    ```
 
 2. Obtain the source for the project that you want to change. The easiest way is to take advantage of [git submodules](https://www.gameontext.org/walkthroughs/core/git.html).
-
-        $ git submodule init map
-        $ git submodule update map
+    ```bash
+    $ git submodule init map
+    $ git submodule update map
+    ```
 
 Updating the game environment once you've made changes varies by deployment:
 * [Iterative development with Docker Compose](docker/README.md#iterative-development-with-docker-compose)

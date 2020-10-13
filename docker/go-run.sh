@@ -136,7 +136,7 @@ setup() {
     echo "This file will use the docker host ip address ($GAMEON_IP), but will re-map ports for forwarding from the VM."
   else
     echo "$TARGET pre-existing, will not alter it."
-  fi 
+  fi
 
   # Attempt to pull all images except for util, which is built locally
   local LIST="$PROJECTS $COREPROJECTS"
@@ -159,7 +159,9 @@ setup() {
     eval \$(./docker/go-run.sh env)
 
   Check for all services being ready:
-    https://${GAMEON_HOST}:${GAMEON_HTTPS_PORT}/site_alive
+    ./docker/go-run.sh status
+  OR (with alias):
+    go-run status
 
   Wait for all game services to finish starting:
     ./docker/go-run.sh wait
@@ -281,17 +283,17 @@ case "$ACTION" in
     NOLOGS=1
     platform_up
     up_log $PROJECTS
-    echo "To test for readiness: http://${GAMEON_HOST}:${GAMEON_HTTPS_PORT}/site_alive"
+    echo 'To check for readiness: ./docker/go-run.sh status'
     echo 'To wait for readiness: ./docker/go-run.sh wait'
     echo 'To watch progress :popcorn: ./docker/go-run.sh logs'
     echo 'To type less: eval $(./docker/go-run.sh env)'
   ;;
   wait)
-    echo "Waiting until http://${GAMEON_HOST}:${GAMEON_HTTPS_PORT}/site_alive returns OK."
+    echo "Waiting until https://${GAMEON_HOST}:${GAMEON_HTTPS_PORT}/health returns OK."
     echo "This may take awhile, as it is starting a number of containers at the same time."
     echo "If you're curious, cancel this, and use './docker/go-run.sh logs' to watch what is happening"
 
-    until $(curl --output /dev/null --silent --head --fail http://${GAMEON_HOST}:${GAMEON_HTTPS_PORT}/site_alive 2>/dev/null)
+    until $(curl --output /dev/null --silent --head --fail -k https://${GAMEON_HOST}:${GAMEON_HTTPS_PORT}/health 2>/dev/null)
     do
       printf '.'
       sleep 5s
