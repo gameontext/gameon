@@ -80,7 +80,6 @@ case "$ACTION" in
     ok "Docker Compose resources reset"
     echo "======= "
     echo "Stopping the game and removing all Game On! kubernetes artifacts"
-    ./kubernetes/go-run.sh down
     ./kubernetes/go-run.sh reset
     ok "Kubernetes resources reset"
   ;;

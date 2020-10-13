@@ -9,9 +9,6 @@ services:
 #    ports:
 #      - "9089:9080"
 #      - "9449:9443"
-#    volumes:
-#      - '$HOME:$HOME'
-#      - '../auth/auth-wlpcfg/servers/gameon-auth:/opt/ol/wlp/usr/servers/defaultServer'
 
 #  map:
 #    image: gameontext/gameon-map:latest
@@ -20,9 +17,6 @@ services:
 #    ports:
 #      - "9099:9080"
 #      - "9447:9443"
-#    volumes:
-#      - '$HOME:$HOME'
-#      - '../map/map-wlpcfg/servers/gameon-map:/opt/ol/wlp/usr/servers/defaultServer'
 
 #  mediator:
 #    image: gameontext/gameon-mediator:latest
@@ -31,9 +25,6 @@ services:
 #    ports:
 #      - "9086:9080"
 #      - "9446:9443"
-#    volumes:
-#      - '$HOME:$HOME'
-#      - '../mediator/mediator-wlpcfg/servers/gameon-mediator:/opt/ol/wlp/usr/servers/defaultServer'
 
 #  player:
 #    image: gameontext/gameon-player:latest
@@ -42,9 +33,6 @@ services:
 #    ports:
 #      - "9082:9080"
 #      - "9448:9443"
-#    volumes:
-#      - '$HOME:$HOME'
-#      - '../player/player-wlpcfg/servers/gameon-player:/opt/ol/wlp/usr/servers/defaultServer'
 
 #  proxy:
 #    image: gameontext/gameon-proxy:latest
@@ -60,9 +48,6 @@ services:
 #    ports:
 #      - "9080:9080"
 #      - "9445:9443"
-#    volumes:
-#      - '$HOME:$HOME'
-#      - '../room/room-wlpcfg/servers/gameon-room:/opt/ol/wlp/usr/servers/defaultServer'
 
 #  swagger:
 #    image: gameontext/gameon-swagger:latest
