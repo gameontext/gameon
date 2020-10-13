@@ -26,7 +26,6 @@ services:
   auth:
     image: gameontext/gameon-auth:lastgood
     volumes:
-      - 'keystore:/opt/ol/wlp/usr/servers/defaultServer/resources/security'
       - 'keystore:/etc/certs'
     depends_on:
       kafka:
@@ -84,9 +83,15 @@ services:
     environment:
       - DNS_TCP_ADDR=127.0.0.11
       - DNS_TCP_PORT=53
+    depends_on:
+      - auth
+      - mediator
+      - map
+      - player
+      - room
     ports:
-      - "80:80"
-      - "443:443"
+      - "80:8080"
+      - "443:8443"
     container_name: proxy
     networks:
       - gameontext
