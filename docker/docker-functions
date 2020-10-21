@@ -7,7 +7,7 @@ PLATFORM="kafka redis couchdb util"
 COREPROJECTS="auth map mediator player proxy room swagger webapp"
 
 OVERRIDE=
-if [ -f $SCRIPTDIR/docker-compose.override.yml ]
+if [ -e $SCRIPTDIR/docker-compose.override.yml ]
 then
   OVERRIDE="-f $SCRIPTDIR/docker-compose.override.yml"
 fi
