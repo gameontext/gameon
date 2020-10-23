@@ -141,7 +141,16 @@ ensure_keystore() {
       -v ${GO_DIR}/.gameontext.onlycert.pem:/tmp/server.pem \
       -v ${GO_DIR}/.gameontext.onlykey.pem:/tmp/private.pem \
       -v ${DOCKERPATHPREFIX}${IMG_DIR}/ltpa.keys:/tmp/ltpa.keys \
-      -w /tmp --rm util bash ./gen-keystore.sh
+      -w /tmp --rm util bash ./gen-keystore.sh /tmp /keystore local
+    rc=$?
+    if [ $rc -ne 0 ]
+    then
+      fixme "Failure creating keystore volume."
+      read -p 'Continue? (y|N)' answer
+      if [ "$answer" != "y" ] && [ "$answer" != "Y" ]; then
+        exit 1
+      fi
+    fi
   fi
 
   ## Ensure volume exists for node modules (avoid putting in filesystem because of OS differences)
