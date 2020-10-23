@@ -83,8 +83,8 @@ RC=7
 count=0
 while [ $RC -eq 7 ]; do
   check_limit
-  echo "**${count}: Testing connection to ${COUCHDB_SERVICE_URL}"
-  curl -s --fail -X GET ${COUCHDB_SERVICE_URL}
+  echo "**${count}: Testing connection to ${COUCHDB_SERVICE_URL}/_up"
+  curl -s --fail -X GET ${COUCHDB_SERVICE_URL}/_up
   RC=$?
 
   if [ $RC -eq 7 ]; then
