@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 echo "** Create key and trust stores **"
 
