@@ -54,7 +54,7 @@ fi
 
 if [ "$3" == "local" ]; then
   local_dev=0
-  touch .local.volume
+  touch ${target_dir}/.local.volume
 
   if [ ! -f ${src_dir}/server.pem ]; then
     echo "Missing server certificate: ${src_dir}/server.pem"
