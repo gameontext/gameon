@@ -62,10 +62,6 @@ get_deployment() {
 
 #configure docker command
 DOCKER_CMD="docker"
-if [ "$(uname)" != "Darwin" ] && [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]
-then
-    DOCKER_CMD="sudo docker"
-fi
 
 wrap_docker() {
   echo "

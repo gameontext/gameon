@@ -12,11 +12,11 @@
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 source $SCRIPTDIR/docker-functions
 
-GO_DEPLOYMENT=docker
-get_gameontext_hostip
-
 # Ensure we're executing from project root directory
 cd "${SCRIPTDIR}"/..
+
+GO_DEPLOYMENT=docker
+get_gameontext_hostip
 
 #set the action, default to help if none passed.
 ACTION=help
@@ -128,11 +128,11 @@ setup() {
   ensure_keystore
 
   SOURCE=$SCRIPTDIR/gameon.env
-  TARGET=$SCRIPTDIR/gameon.${DOCKER_MACHINE_NAME}env
+  TARGET=$SCRIPTDIR/gameon.${GAMEON_NAMED}env
   if [ ! -f $TARGET ]; then
     echo "Creating $TARGET"
     cat $SOURCE | sed -e 's#FRONT_END_\(.*\)127.0.0.1\([^/]*\)/\(.*\)#FRONT_END_\1'${GAMEON_IP}'\2:'${GAMEON_HTTPS_PORT}'/\3#g' > $TARGET
-    ok "Created gameon.${DOCKER_MACHINE_NAME}env to contain environment variable overrides"
+    ok "Created gameon.${GAMEON_NAMED}env to contain environment variable overrides"
     echo "This file will use the docker host ip address ($GAMEON_IP), but will re-map ports for forwarding from the VM."
   else
     echo "$TARGET pre-existing, will not alter it."
@@ -221,6 +221,7 @@ case "$ACTION" in
     platform_down
   ;;
   env)
+    echo "export GAMEON_NAMED=$GAMEON_NAMED;"
     echo "alias go-compose='${COMPOSE}';"
     echo "alias go-run='${SCRIPTDIR}/go-run.sh';"
     # global setup | up | down

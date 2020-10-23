@@ -16,12 +16,8 @@ if [ -z ${DOCKER_MACHINE_NAME+x} ]; then
   export DOCKER_MACHINE_NAME=
 fi
 
-#configure docker compose command
+# configure docker compose command
 COMPOSE="docker-compose -f $SCRIPTDIR/docker-compose.yml ${OVERRIDE}"
-if [ "$(uname)" != "Darwin" ] && [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]
-then
-    COMPOSE="sudo DOCKER_MACHINE_NAME=${DOCKER_MACHINE_NAME} ${COMPOSE}"
-fi
 
 wrap_compose() {
   echo "
@@ -49,37 +45,43 @@ docker_versions() {
 # Some environment variable munging to sort what the external host/port will be
 # (that can  be used in scripts to echo how to reach the running game)
 get_gameontext_hostip() {
-  GAMEON_IP=127.0.0.1
-  GAMEON_HOST=gameon.${GAMEON_IP}.xip.io
-  GAMEON_HTTP_PORT=80
-  GAMEON_HTTPS_PORT=443
 
-  # Docker machine / Docker toolbox is less common, but did allow use of several
-  # different machines side-by-side. Here, we are checking if it is set (setting
-  # a value of "empty" if it is not)
-  # Our Vagrantfile defines this variable as "vagrant" so we can handle that
-  # case, too.
-  NAME=${DOCKER_MACHINE_NAME-empty}
-
-  if [ "$NAME" == "vagrant" ]; then
-    # Our Vagrant configuration maps guest ports to localhost
-    GAMEON_HTTP_PORT=9980
-    GAMEON_HTTPS_PORT=9443
-
-  elif [ "${NAME}" != "empty" ] && [ "${NAME}" != "" ]; then
-    GAMEON_IP=$(docker-machine ip $NAME)
-    rc=$?
-    if [ $rc != 0 ] || [ -z ${DOCKER_HOST} ]
-    then
-     echo "Is your docker host running? Did you start docker-machine, e.g.
-  docker-machine start default
-  eval \$(docker-machine env default)"
-      exit 1
-    fi
+  if [ -e .gameontext.docker.preset.env ]; then
+    source .gameontext.docker.preset.env
+  else
+    GAMEON_IP=127.0.0.1
     GAMEON_HOST=gameon.${GAMEON_IP}.xip.io
+    GAMEON_HTTP_PORT=80
+    GAMEON_HTTPS_PORT=443
+
+    # Docker machine / Docker toolbox is less common, but did allow use of several
+    # different machines side-by-side. Here, we are checking if it is set (setting
+    # a value of "empty" if it is not)
+    # Our Vagrantfile defines this variable as "vagrant" so we can handle that
+    # case, too.
+    name=${DOCKER_MACHINE_NAME-empty}
+
+    if [ "$name" == "vagrant" ]; then
+      # Our Vagrant configuration maps guest ports to localhost
+      GAMEON_HTTP_PORT=9980
+      GAMEON_HTTPS_PORT=9443
+      GAMEON_NAMED=${GAMEON_NAMED-vagrant}
+    elif [ "${name}" != "empty" ] && [ "${name}" != "" ]; then
+      GAMEON_IP=$(docker-machine ip $name)
+      rc=$?
+      if [ $rc != 0 ] || [ -z ${DOCKER_HOST} ]
+      then
+        echo "Is your docker host running? Did you start docker-machine, e.g.
+    docker-machine start default
+    eval \$(docker-machine env default)"
+        exit 1
+      fi
+      GAMEON_HOST=gameon.${GAMEON_IP}.xip.io
+      GAMEON_NAMED=${GAMEON_NAMED-$name}
+    fi
   fi
 
-  export GAMEON_HOST GAMEON_IP GAMEON_HTTP_PORT GAMEON_HTTPS_PORT
+  export GAMEON_HOST GAMEON_IP GAMEON_HTTP_PORT GAMEON_HTTPS_PORT GAMEON_NAMED
 }
 
 build_webapp() {

@@ -30,7 +30,7 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
-    env_file: gameon.${DOCKER_MACHINE_NAME}env
+    env_file: gameon.${GAMEON_NAMED}env
     container_name: auth
     networks:
       - gameontext
@@ -44,7 +44,7 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
-    env_file: gameon.${DOCKER_MACHINE_NAME}env
+    env_file: gameon.${GAMEON_NAMED}env
     container_name: map
     networks:
       - gameontext
@@ -56,7 +56,7 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
-    env_file: gameon.${DOCKER_MACHINE_NAME}env
+    env_file: gameon.${GAMEON_NAMED}env
     container_name: mediator
     networks:
       - gameontext
@@ -70,7 +70,7 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
-    env_file: gameon.${DOCKER_MACHINE_NAME}env
+    env_file: gameon.${GAMEON_NAMED}env
     container_name: player
     networks:
       - gameontext
@@ -79,7 +79,7 @@ services:
     image: gameontext/gameon-proxy:lastgood
     volumes:
       - 'keystore:/etc/cert'
-    env_file: gameon.${DOCKER_MACHINE_NAME}env
+    env_file: gameon.${GAMEON_NAMED}env
     environment:
       - DNS_TCP_ADDR=127.0.0.11
       - DNS_TCP_PORT=53
@@ -103,21 +103,21 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
-    env_file: gameon.${DOCKER_MACHINE_NAME}env
+    env_file: gameon.${GAMEON_NAMED}env
     container_name: room
     networks:
       - gameontext
 
   swagger:
     image: gameontext/gameon-swagger:lastgood
-    env_file: gameon.${DOCKER_MACHINE_NAME}env
+    env_file: gameon.${GAMEON_NAMED}env
     container_name: swagger
     networks:
       - gameontext
 
   webapp:
     image: gameontext/gameon-webapp:lastgood
-    env_file: gameon.${DOCKER_MACHINE_NAME}env
+    env_file: gameon.${GAMEON_NAMED}env
     container_name: webapp
     networks:
       - gameontext
@@ -127,13 +127,10 @@ services:
     build:
       context: ../images/util
     image: gameon-util
-    depends_on:
-      couchdb:
-        condition: service_healthy
     volumes:
       - 'keystore:/keystore'
       - 'couchdb-data:/opt/couchdb/data'
-    env_file: gameon.${DOCKER_MACHINE_NAME}env
+    env_file: gameon.${GAMEON_NAMED}env
     container_name: util
     networks:
       - gameontext
@@ -169,11 +166,10 @@ services:
   couchdb:
     image: couchdb:2.3.1
     volumes:
-      - 'keystore:/etc/cert'
       - 'couchdb-data:/opt/couchdb/data'
     container_name: couchdb
     healthcheck:
-      test: curl http://localhost:5984/
+      test: curl http://localhost:5984/_up
       timeout: 10s
       retries: 3
     networks:
