@@ -26,6 +26,7 @@ services:
   auth:
     image: gameontext/gameon-auth:lastgood
     volumes:
+      - 'keystore:/auth/ssl'
       - 'keystore:/etc/certs'
     depends_on:
       kafka:
@@ -102,6 +103,8 @@ services:
       - 'keystore:/opt/ol/wlp/usr/servers/defaultServer/resources/security'
     depends_on:
       kafka:
+        condition: service_healthy
+      map:
         condition: service_healthy
     env_file: gameon.${GAMEON_NAMED}env
     container_name: room
