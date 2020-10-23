@@ -16,11 +16,9 @@ global:
     COUCHDB_SERVICE_URL: http://couchdb.gameon-system.svc.cluster.local:5984
     COUCHDB_HOST_AND_PORT: couchdb.gameon-system.svc.cluster.local:5984
     KAFKA_SERVICE_URL: kafka.gameon-system.svc.cluster.local:9092
-    MESSAGEHUB_USER: ''
-    MESSAGEHUB_PASSWORD: ''
 # Global configuration vars for running locally
     TARGET_PLATFORM: local
-    SYSTEM_ID: game-on.org
+    SYSTEM_ID: gameontext.org
     ADMIN_PASSWORD: admin
     MAP_KEY: fish
     SWEEP_ID: sweep
@@ -31,7 +29,7 @@ auth:
 # (Note, these can't be empty, as an empty var is stil
 #  a defined var, and a defined var means spring will
 #  try to use the value, which leads to the auth service
-#  being unable to start, as it cannot tolerate empty 
+#  being unable to start, as it cannot tolerate empty
 #  values being used.)
     FACEBOOK_APP_ID: 'x'
     FACEBOOK_APP_SECRET: 'x'

@@ -15,12 +15,10 @@ data:
   COUCHDB_SERVICE_URL: http://couchdb.gameon-system.svc.cluster.local:5984
   COUCHDB_HOST_AND_PORT: couchdb.gameon-system.svc.cluster.local:5984
   KAFKA_SERVICE_URL: kafka.gameon-system.svc.cluster.local:9092
-  MESSAGEHUB_USER: ''
-  MESSAGEHUB_PASSWORD: ''
 # Global configuration vars for running locally
   GAMEON_MODE: development
   TARGET_PLATFORM: local
-  SYSTEM_ID: game-on.org
+  SYSTEM_ID: gameontext.org
   ADMIN_PASSWORD: admin
   MAP_KEY: fish
   SWEEP_ID: sweep
