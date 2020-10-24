@@ -44,8 +44,6 @@ fi
 
 src_dir=$1
 target_dir=$2
-orig_dir=${pwd}
-local_dev=1
 
 if [ ! -f ${src_dir}/cert.pem ]; then
   echo "Missing certificate: ${src_dir}/cert.pem"
@@ -68,7 +66,7 @@ if [ "$3" == "local" ]; then
     exit 1
   fi
 elif [ -f ${target_dir}/.local.volume ]; then
-  echo "Using keystores created in a shared volume"
+  echo "### Using keystores created in a shared volume"
   exit 0
 fi
 
@@ -89,12 +87,25 @@ inspect_jks() {
   fi
 }
 
-cp ${src_dir}/*.pem ${target_dir}
-cp ${src_dir}/*.keys ${target_dir}
+if [ -f ${target_dir}/cert.pem ]; then
+  if cmp -s ${src_dir}/cert.pem ${target_dir}/cert.pem; then
+    echo "### Using previously created keys"
+    exit 0
+  fi
+fi
 
-echo "Building keystore/truststore from cert.pem"
+cp -f ${src_dir}/*.pem ${target_dir}
+cp -f ${src_dir}/*.keys ${target_dir}
+
+echo "### Building keystore/truststore from cert.pem"
+
 echo " # cd ${target_dir}"
 cd ${target_dir}
+
+# Clear previous files
+rm -f cert.pkcs12
+rm -f key.pkcs12
+rm -f truststore.jks
 
 echo " # converting pem to pkcs12"
 openssl pkcs12 -passin pass:keystore -passout pass:keystore -export -out cert.pkcs12 -in cert.pem
@@ -120,8 +131,6 @@ keytool -import -alias gameontext -v -noprompt \
   -trustcacerts  \
   -file cert.pem \
   -keystore truststore.jks -storepass gameontext-trust
-
-cd ${orig_dir}
 
 if [ -f ${target_dir}/.local.volume ]; then
   echo "** Contents of ${target_dir}"
