@@ -88,7 +88,7 @@ inspect_jks() {
 }
 
 if [ -f ${target_dir}/cert.pem ]; then
-  if cmp -s ${src_dir}/cert.pem ${target_dir}/cert.pem; then
+  if diff -sq ${src_dir}/cert.pem ${target_dir}/cert.pem; then
     echo "### Using previously created keys"
     exit 0
   fi
