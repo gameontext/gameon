@@ -87,13 +87,6 @@ inspect_jks() {
   fi
 }
 
-if [ -f ${target_dir}/cert.pem ]; then
-  if diff -sq ${src_dir}/cert.pem ${target_dir}/cert.pem; then
-    echo "### Using previously created keys"
-    exit 0
-  fi
-fi
-
 cp -f ${src_dir}/*.pem ${target_dir}
 cp -f ${src_dir}/*.keys ${target_dir}
 
