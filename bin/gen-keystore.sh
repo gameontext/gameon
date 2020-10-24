@@ -53,7 +53,6 @@ if [ ! -f ${src_dir}/cert.pem ]; then
 fi
 
 if [ "$3" == "local" ]; then
-  local_dev=0
   touch ${target_dir}/.local.volume
 
   if [ ! -f ${src_dir}/server.pem ]; then
@@ -74,7 +73,7 @@ elif [ -f ${target_dir}/.local.volume ]; then
 fi
 
 inspect() {
-  if [ $local_dev ] ; then
+  if [ -f ${target_dir}/.local.volume ] ; then
     echo "inspect $1 $2"
     keytool -list \
         -keystore $1 -storepass $2 -storetype PKCS12
@@ -82,7 +81,7 @@ inspect() {
   fi
 }
 inspect_jks() {
-  if [ $local_dev ] ; then
+  if [ -f ${target_dir}/.local.volume ] ; then
     echo "inspect $1 $2"
     keytool -list \
         -keystore $1 -storepass $2
@@ -124,7 +123,7 @@ keytool -import -alias gameontext -v -noprompt \
 
 cd ${orig_dir}
 
-if [ $local_dev ]; then
+if [ -f ${target_dir}/.local.volume ]; then
   echo "** Contents of ${target_dir}"
   ls -al ${target_dir}
 
