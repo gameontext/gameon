@@ -104,7 +104,7 @@ coreServices:
   path: /swagger/
   image: gameontext/gameon-swagger:lastgood
   readinessProbe:
-    path: /
+    path: /health
     initialDelaySeconds: 40
 # room service
 - serviceName: room
