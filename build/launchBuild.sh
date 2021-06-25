@@ -19,8 +19,10 @@ case "${TRAVIS_EVENT_TYPE}" in
     echo "Launch submodule build for push"
     ;;
   *)
-    echo "No submodule build for ${TRAVIS_EVENT_TYPE} builds"
-    exit 0
+    if [ -z "${FORCE_SUBMODULE}" ]; then
+      echo "No submodule build for ${TRAVIS_EVENT_TYPE} builds"
+      exit 0
+    fi
     ;;
 esac
 
