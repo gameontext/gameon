@@ -13,6 +13,7 @@ echo TRAVIS_BRANCH=${TRAVIS_BRANCH}
 echo TRAVIS_COMMIT=${TRAVIS_COMMIT}
 echo TRAVIS_BUILD_NUMBER=${TRAVIS_BUILD_NUMBER}
 echo SUBMODULE=${SUBMODULE}
+echo FORCE_SUBMODULE=${FORCE_SUBMODULE}
 
 case "${TRAVIS_EVENT_TYPE}" in
   "push")
@@ -48,7 +49,9 @@ then
     }
   }}'
 
-  curl -s -X POST \
+  echo "requesting a build to update the submodule version:\n${body}"
+
+  curl -s -S -X POST \
      -H "Content-Type: application/json" \
      -H "Accept: application/json" \
      -H "Travis-API-Version: 3" \
