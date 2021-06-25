@@ -96,4 +96,4 @@ Updating the game environment once you've made changes varies by deployment:
 
 Want to help! Pile On!
 
-[Contributing to Game On!](https://github.com/gameontext/gameon/blob/master/CONTRIBUTING.md)
+[Contributing to Game On!](https://github.com/gameontext/gameon/blob/main/CONTRIBUTING.md)
