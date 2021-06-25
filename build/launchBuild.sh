@@ -54,7 +54,7 @@ then
      -H "Travis-API-Version: 3" \
      -H "Authorization: token ${TRAVIS_TOKEN}" \
      -d "$body" \
-     https://api.travis-ci.org/repo/gameontext%2Fgameon/requests
+     https://api.travis-ci.com/repo/gameontext%2Fgameon/requests
 else
   echo "${TRAVIS_BRANCH} does not exist in gameontext/gameon"
 fi
