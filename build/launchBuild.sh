@@ -49,7 +49,8 @@ then
     }
   }}'
 
-  echo "requesting a build to update the submodule version:\n${body}"
+  echo "requesting a build to update the submodule version:
+  ${body}"
 
   curl -s -S -X POST \
      -H "Content-Type: application/json" \

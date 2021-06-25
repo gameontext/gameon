@@ -70,7 +70,7 @@ if git diff --quiet; then
   exit 0
 fi
 
-# Now that we're all set up, we can push the altered submodule to master
+# Now that we're all set up, we can push the altered submodule to ${TRAVIS_BRANCH}
 echo "-- Git commit -- "
 git commit -a -m ":arrow_up: Updating ${SUBMODULE}..." || true
 

@@ -37,7 +37,7 @@ docker build \
      -t ${BUILD_TAG} ${DOCKER_BUILDDIR}
 echo "Build complete ${DOCKER_IMAGE}"
 
-if [ "$TRAVIS_BRANCH" == "master" ]; then
+if [ "$TRAVIS_BRANCH" == "main" ]; then
   echo "Tagging with  ${LATEST_TAG}"
   docker tag ${BUILD_TAG} ${LATEST_TAG}
 
@@ -48,5 +48,5 @@ if [ "$TRAVIS_BRANCH" == "master" ]; then
   docker logout
   echo "Push complete"
 else
-  echo "Not master branch, skipping docker publish"
+  echo "Not main branch, skipping docker publish"
 fi
