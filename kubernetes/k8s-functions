@@ -460,8 +460,8 @@ test_kubernetes() {
   then
     echo "Detected minishift, using `minishift ip`"
     GAMEON_LOCAL=minishift
-    GAMEON_INGRESS=gameon.$(minishift ip).xip.io
-    GAMEON_DUMMY_INGRESS=dummy.$(minishift ip).xip.io
+    GAMEON_INGRESS=gameon.$(minishift ip).nip.io
+    GAMEON_DUMMY_INGRESS=dummy.$(minishift ip).nip.io
     ok "`minishift addons enable prometheus`"
     ok "`minishift addons enable admin-user`"
   fi
@@ -472,8 +472,8 @@ test_kubernetes() {
     then
       echo "Detected CRC, using `crc ip`"
       GAMEON_LOCAL=crc
-      GAMEON_INGRESS=gameon.$(crc ip).xip.io
-      GAMEON_DUMMY_INGRESS=dummy.$(crc ip).xip.io
+      GAMEON_INGRESS=gameon.$(crc ip).nip.io
+      GAMEON_DUMMY_INGRESS=dummy.$(crc ip).nip.io
     fi
   fi
 
@@ -495,8 +495,8 @@ test_kubernetes() {
   if [[ $certauth =~ minikube ]]; then
     echo "Detected minikube, using 'minikube ip'"
     GAMEON_LOCAL=minikube
-    GAMEON_INGRESS=gameon.$(minikube ip).xip.io
-    GAMEON_DUMMY_INGRESS=dummy.$(minikube ip).xip.io
+    GAMEON_INGRESS=gameon.$(minikube ip).nip.io
+    GAMEON_DUMMY_INGRESS=dummy.$(minikube ip).nip.io
     ok "`minikube addons enable ingress`"
   fi
 

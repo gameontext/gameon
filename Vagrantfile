@@ -126,7 +126,7 @@ Vagrant.configure("2") do |config|
     echo '> ./go-admin.sh setup'
     echo '> ./go-admin.sh up'
     echo ""
-    echo 'To test for readiness: https://gameon.127.0.0.1.xip.io/health'
+    echo 'To test for readiness: https://gameon.127.0.0.1.nip.io/health'
     echo ""
     echo 'To wait for readiness:'
     echo '> ./docker/go-run.sh wait'

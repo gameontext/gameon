@@ -50,7 +50,7 @@ get_gameontext_hostip() {
     source .gameontext.docker.preset.env
   else
     GAMEON_IP=127.0.0.1
-    GAMEON_HOST=gameon.${GAMEON_IP}.xip.io
+    GAMEON_HOST=gameon.${GAMEON_IP}.nip.io
     GAMEON_HTTP_PORT=80
     GAMEON_HTTPS_PORT=443
 
@@ -76,7 +76,7 @@ get_gameontext_hostip() {
     eval \$(docker-machine env default)"
         exit 1
       fi
-      GAMEON_HOST=gameon.${GAMEON_IP}.xip.io
+      GAMEON_HOST=gameon.${GAMEON_IP}.nip.io
       GAMEON_NAMED=${GAMEON_NAMED-$name}
     fi
   fi
