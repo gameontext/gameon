@@ -1,4 +1,6 @@
 # gameon: The Root Repository / Quick start developers guide.
+[![Discord](https://img.shields.io/discord/1034557784424988723)](https://discord.gg/jkc5JFHb4p)
+
 
 This is the TL;DR version.
 * [Local room development](#local-room-development)
