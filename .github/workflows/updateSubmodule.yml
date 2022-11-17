@@ -1,0 +1,100 @@
+name: Update submodule
+
+on:
+  workflow_dispatch:
+    inputs:
+      submodule:
+        description: "Name of submodule"
+        required: false
+        type: string
+      submodule_ref:
+        description: "Commit or branch"
+        default: 'main'
+        required: false
+        type: string
+      target_branch:
+        description: "Target root branch"
+        default: 'main'
+        required: false
+        type: string
+
+  workflow_call:
+    inputs:
+      submodule:
+        required: false
+        type: string
+      submodule_ref:
+        default: 'main'
+        required: false
+        type: string
+      target_branch:
+        default: 'main'
+        required: false
+        type: string
+
+env:
+  GH_BOT_EMAIL: "41898282+github-actions[bot]@users.noreply.github.com"
+  GH_BOT_NAME: "GitHub Action"
+
+jobs:
+  checkout:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Check branch ${{ inputs.target_branch }}
+        id: check
+        run: |
+          if git ls-remote --exit-code --heads https://github.com/gameontext/gameon.git ${{ inputs.target_branch }}; then
+            echo "continue=true" >> $GITHUB_OUTPUT
+          else
+            echo "🔹 Target branch does not exist in root repo."
+            echo "continue=false" >> $GITHUB_OUTPUT
+          fi
+
+      - uses: actions/checkout@v3
+        if: github.event_name == 'workflow_dispatch' && steps.check.outputs.continue
+        with:
+          ref: ${{ inputs.target_branch }}
+          fetch-depth: 0
+
+      - uses: actions/checkout@v3
+        if: github.event_name != 'workflow_dispatch' && steps.check.outputs.continue
+        with:
+          repository: gameontext/gameon
+          ref: ${{ inputs.target_branch }}
+          token: ${{ secrets.GO_MODULE_TOKEN }}
+          fetch-depth: 0
+
+      - name: Configure Git author
+        if: steps.check.outputs.continue
+        run: |
+          git config user.name ${{ env.GH_BOT_NAME }}
+          git config user.email ${{ env.GH_BOT_EMAIL }}
+
+      - name: Update submodule
+        if: steps.check.outputs.continue
+        run: |
+
+          echo "-- Checkout submodule --"
+          git submodule update --init --remote --no-fetch ${{ inputs.submodule }}
+          cd ${{ inputs.submodule }}
+          git checkout ${{ inputs.submodule_ref }}
+          cd ..
+
+          echo "-- Git status --"
+          git status
+          git diff
+          if git diff --quiet; then
+            echo "🔹 No changes to the output. Exiting."
+            exit 0
+          fi
+
+          echo "-- Git commit -- "
+        git commit -a -m ":arrow_up: Updating ${{ inputs.submodule }}" || true
+
+          echo "-- Git push -- "
+          echo git push origin ${{ inputs.target_branch }}
+          git push origin ${{ inputs.target_branch }} || true
+
+
+
